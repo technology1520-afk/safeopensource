@@ -97,3 +97,4 @@ if __name__ == '__main__':
     target = sys.argv[1] if len(sys.argv) > 1 else 'jellyfin/jellyfin'
     result = evaluate_repo(target)
     print(json.dumps(result, indent=2))
+

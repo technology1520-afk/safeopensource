@@ -98,7 +98,7 @@ export interface ToolData {
   ai_report: string;
   scanned_at: string;
   language: string;
-  self_host_difficulty: "Easy" | "Medium" | "Advanced";
+  self_host_difficulty: "Easy" | "Medium" | "Moderate" | "Advanced";
   install_commands: InstallCommands;
   website_url?: string;
   // Expanded What/How/Who & Momentum stack

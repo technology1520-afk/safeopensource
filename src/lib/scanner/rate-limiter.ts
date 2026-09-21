@@ -113,3 +113,4 @@ export function checkScanRateLimit(ip: string, email?: string): ScanRateLimitRes
     queueDepth,
   };
 }
+

@@ -226,7 +226,7 @@ export function addTool(
       releases: 88,
     },
     language: 'TypeScript',
-    self_host_difficulty: 'Moderate',
+    self_host_difficulty: 'Medium',
     install_commands: {
       docker: `docker run -d --name ${slug} ${repo}:latest`,
     },

@@ -367,6 +367,7 @@ export function getToolDossier(tool: ToolData): ToolDossier {
   const difficultyMap: Record<string, "Beginner-friendly" | "Intermediate" | "Needs a sysadmin"> = {
     Easy: 'Beginner-friendly',
     Medium: 'Intermediate',
+    Moderate: 'Intermediate',
     Advanced: 'Needs a sysadmin'
   };
 
