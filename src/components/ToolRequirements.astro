@@ -1,0 +1,100 @@
+---
+import type { ToolRequirements as ToolReqs } from '../types/tool';
+
+interface Props {
+  requirements: ToolReqs;
+  class?: string;
+}
+
+const { requirements, class: className = '' } = Astro.props;
+
+// Meter segments for self-host difficulty
+const difficultyConfig = {
+  'Beginner-friendly': { level: 1, color: 'bg-emerald-500', label: 'Beginner-Friendly', text: 'text-emerald-400' },
+  'Intermediate': { level: 2, color: 'bg-blue-500', label: 'Intermediate Homelab', text: 'text-blue-400' },
+  'Needs a sysadmin': { level: 3, color: 'bg-amber-500', label: 'Needs a Sysadmin', text: 'text-amber-400' }
+};
+
+const diff = difficultyConfig[requirements.difficulty] || difficultyConfig['Intermediate'];
+---
+
+<div class={`space-y-4 ${className}`}>
+  <!-- Hardware Specs Grid -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+    <!-- RAM -->
+    <div class="p-3.5 rounded-xl border border-app-border bg-[#0A0B0E]">
+      <div class="flex items-center gap-2 text-app-subtle text-micro font-mono mb-1">
+        <svg class="w-3.5 h-3.5 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="2" width="20" height="8" rx="2" ry="2" />
+          <rect x="2" y="14" width="20" height="8" rx="2" ry="2" />
+          <line x1="6" y1="6" x2="6.01" y2="6" />
+          <line x1="6" y1="18" x2="6.01" y2="18" />
+        </svg>
+        <span>MEMORY (RAM)</span>
+      </div>
+      <div class="font-mono text-xs font-bold text-app-text">{requirements.ram}</div>
+    </div>
+
+    <!-- Disk -->
+    <div class="p-3.5 rounded-xl border border-app-border bg-[#0A0B0E]">
+      <div class="flex items-center gap-2 text-app-subtle text-micro font-mono mb-1">
+        <svg class="w-3.5 h-3.5 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="12" x2="2" y2="12" />
+          <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
+          <line x1="6" y1="16" x2="6.01" y2="16" />
+          <line x1="10" y1="16" x2="10.01" y2="16" />
+        </svg>
+        <span>STORAGE ALLOCATION</span>
+      </div>
+      <div class="font-mono text-xs font-bold text-app-text">{requirements.disk}</div>
+    </div>
+
+    <!-- CPU -->
+    <div class="p-3.5 rounded-xl border border-app-border bg-[#0A0B0E]">
+      <div class="flex items-center gap-2 text-app-subtle text-micro font-mono mb-1">
+        <svg class="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="4" width="16" height="16" rx="2" />
+          <rect x="9" y="9" width="6" height="6" />
+          <line x1="9" y1="1" x2="9" y2="4" />
+          <line x1="15" y1="1" x2="15" y2="4" />
+          <line x1="9" y1="20" x2="9" y2="23" />
+          <line x1="15" y1="20" x2="15" y2="23" />
+          <line x1="20" y1="9" x2="23" y2="9" />
+          <line x1="20" y1="14" x2="23" y2="14" />
+          <line x1="1" y1="9" x2="4" y2="9" />
+          <line x1="1" y1="14" x2="4" y2="14" />
+        </svg>
+        <span>PROCESSOR ARCH</span>
+      </div>
+      <div class="font-mono text-xs font-bold text-app-text">{requirements.cpu}</div>
+    </div>
+  </div>
+
+  <!-- Runtime & Skill Meter -->
+  <div class="p-4 rounded-xl border border-app-border bg-[#0A0B0E] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <!-- Runtime dependencies -->
+    <div>
+      <span class="text-micro text-app-subtle font-mono block mb-1.5">TESTED RUNTIME STACK</span>
+      <div class="flex flex-wrap items-center gap-1.5">
+        {requirements.runtime.map((rt) => (
+          <span class="px-2 py-0.5 rounded-md bg-[#131519] border border-app-border text-[11px] font-mono text-app-text">
+            {rt}
+          </span>
+        ))}
+      </div>
+    </div>
+
+    <!-- Self-host difficulty meter -->
+    <div class="shrink-0">
+      <div class="flex items-center justify-between gap-2 mb-1">
+        <span class="text-micro text-app-subtle font-mono">DIFFICULTY METER</span>
+        <span class={`text-[11px] font-mono font-bold ${diff.text}`}>{diff.label}</span>
+      </div>
+      <div class="flex items-center gap-1.5 w-44">
+        <div class={`h-2 flex-1 rounded-full ${diff.level >= 1 ? diff.color : 'bg-app-border'}`}></div>
+        <div class={`h-2 flex-1 rounded-full ${diff.level >= 2 ? diff.color : 'bg-app-border'}`}></div>
+        <div class={`h-2 flex-1 rounded-full ${diff.level >= 3 ? diff.color : 'bg-app-border'}`}></div>
+      </div>
+    </div>
+  </div>
+</div>

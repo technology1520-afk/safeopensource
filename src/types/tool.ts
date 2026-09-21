@@ -17,6 +17,35 @@ export interface InstallCommands {
   curl?: string;
 }
 
+export interface ToolRequirements {
+  ram: string;
+  disk: string;
+  cpu: string;
+  runtime: string[];
+  difficulty: "Beginner-friendly" | "Intermediate" | "Needs a sysadmin";
+}
+
+export interface HowToUseStep {
+  level: "Beginner" | "Comfortable" | "Developer";
+  title: string;
+  description: string;
+  command?: string;
+  url: string;
+  estimatedTime: string;
+}
+
+export interface ToolAudience {
+  perfectFor: string[];
+  skipIf: string[];
+}
+
+export interface ToolMomentum {
+  scoreDelta: number;
+  deltaReason?: string;
+  starGrowth?: number;
+  sparkline: number[]; // 7-point scan history
+}
+
 export interface ToolData {
   slug: string;
   repo: string;
@@ -39,6 +68,12 @@ export interface ToolData {
   self_host_difficulty: "Easy" | "Medium" | "Advanced";
   install_commands: InstallCommands;
   website_url?: string;
+  // Expanded What/How/Who & Momentum stack
+  use_cases?: string[];
+  how_to_use?: HowToUseStep[];
+  requirements?: ToolRequirements;
+  audience?: ToolAudience;
+  momentum?: ToolMomentum;
 }
 
 export interface CategoryData {
@@ -57,5 +92,11 @@ export interface StarterKit {
   difficulty: "Beginner" | "Intermediate" | "Advanced";
   estimated_time: string;
   tools: string[]; // slugs
+  combined_verdict?: string;
+  total_cost?: string;
+  setup_time?: string;
+  target_audience?: string;
+  total_ram?: string;
+  goal_tag?: string;
 }
 

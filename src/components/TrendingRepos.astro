@@ -1,0 +1,212 @@
+---
+import { getTrendingByFilter, type TrendingItem } from '../data/trending';
+import VerdictBadge from './VerdictBadge.astro';
+
+interface Props {
+  activeFilter?: 'velocity' | 'new-entrants' | 'score-drops';
+  class?: string;
+}
+
+const { activeFilter = 'velocity', class: className = '' } = Astro.props;
+const items: TrendingItem[] = getTrendingByFilter(activeFilter);
+
+// Helper to compute SVG path for 7-point sparkline
+function generateSparklineSvg(points: number[], width = 120, height = 36): { path: string; isPositive: boolean } {
+  if (!points || points.length === 0) return { path: '', isPositive: true };
+  
+  const min = Math.min(...points);
+  const max = Math.max(...points);
+  const range = max - min === 0 ? 1 : max - min;
+  const padding = 4;
+  const usableHeight = height - padding * 2;
+  const stepX = width / (points.length - 1);
+
+  const coords = points.map((val, idx) => {
+    const x = Math.round(idx * stepX);
+    // Invert Y because SVG 0 is at top
+    const y = Math.round(height - padding - ((val - min) / range) * usableHeight);
+    return `${x},${y}`;
+  });
+
+  const path = `M ${coords.join(' L ')}`;
+  const isPositive = points[points.length - 1] >= points[0];
+  return { path, isPositive };
+}
+
+function formatScanDate(isoDate: string): string {
+  try {
+    const d = new Date(isoDate);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  } catch {
+    return isoDate;
+  }
+}
+---
+
+<section class={`my-14 rounded-2xl border border-app-border bg-[#0a0c10] p-6 sm:p-8 ${className}`} id="trending">
+  <!-- Section Title & Real Filter Tabs -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-app-border mb-6">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span class="text-micro text-emerald-400">TELEMETRY MOMENTUM & DRIFT</span>
+      </div>
+      <h2 class="text-xl sm:text-2xl font-bold tracking-tight text-app-text">
+        Trending Repositories
+      </h2>
+      <p class="text-xs text-app-muted mt-1 leading-relaxed">
+        Velocity and volatility over raw popularity. We highlight rapid security upgrades, vulnerability regressions, and new entrants.
+      </p>
+    </div>
+
+    <!-- Navigation Filter Tabs with Real URLs -->
+    <nav class="flex items-center gap-1.5 p-1 rounded-xl bg-[#131519] border border-app-border font-mono text-xs" aria-label="Trending filter tabs">
+      <a
+        href="/trending"
+        class={`px-3 py-1.5 rounded-lg transition-colors ${
+          activeFilter === 'velocity'
+            ? 'bg-blue-600 text-white font-medium shadow-xs'
+            : 'text-app-muted hover:text-white hover:bg-app-surface'
+        }`}
+      >
+        Velocity (7d)
+      </a>
+      <a
+        href="/trending/new-entrants"
+        class={`px-3 py-1.5 rounded-lg transition-colors ${
+          activeFilter === 'new-entrants'
+            ? 'bg-blue-600 text-white font-medium shadow-xs'
+            : 'text-app-muted hover:text-white hover:bg-app-surface'
+        }`}
+      >
+        New Entrants
+      </a>
+      <a
+        href="/trending/score-drops"
+        class={`px-3 py-1.5 rounded-lg transition-colors ${
+          activeFilter === 'score-drops'
+            ? 'bg-blue-600 text-white font-medium shadow-xs'
+            : 'text-app-muted hover:text-white hover:bg-app-surface'
+        }`}
+      >
+        Score Drops (Risks)
+      </a>
+    </nav>
+  </div>
+
+  <!-- Cards Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+    {items.map((item) => {
+      const hasTelemetry = item.momentum !== null;
+      const spark = hasTelemetry ? generateSparklineSvg(item.momentum!.sparkline) : null;
+      const isNegative = hasTelemetry && item.momentum!.scoreDelta < 0;
+
+      return (
+        <div class="rounded-xl border border-app-border bg-[#131519] p-5 flex flex-col justify-between hover:border-blue-500/30 transition-all group">
+          <div>
+            <!-- Header Row: Name & Verdict -->
+            <div class="flex items-start justify-between gap-3 mb-2">
+              <div class="min-w-0">
+                <a
+                  href={`/tools/${item.slug}`}
+                  class="font-bold text-base text-app-text group-hover:text-blue-400 transition-colors truncate block"
+                >
+                  {item.name}
+                </a>
+                <span class="text-micro font-mono text-app-subtle truncate block">
+                  {item.repo}
+                </span>
+              </div>
+              <VerdictBadge verdict={item.verdict} size="sm" />
+            </div>
+
+            <!-- Tagline -->
+            <p class="text-xs text-app-muted leading-relaxed line-clamp-2 mb-4">
+              {item.tagline}
+            </p>
+
+            <!-- Momentum Metrics or Honest Zero-State -->
+            {hasTelemetry ? (
+              <div class="p-3.5 rounded-lg bg-[#0A0B0E] border border-app-border space-y-2 mb-4">
+                <!-- Delta & Sparkline Row -->
+                <div class="flex items-center justify-between gap-2">
+                  <div>
+                    <span class="text-[10px] text-app-subtle font-mono block">7D SCORE DRIFT</span>
+                    <span class={`font-mono text-sm font-extrabold flex items-center gap-1 ${
+                      isNegative ? 'text-rose-400' : 'text-emerald-400'
+                    }`}>
+                      {item.momentum!.scoreDelta > 0 ? '▲' : '▼'} {Math.abs(item.momentum!.scoreDelta).toFixed(1)}
+                      <span class="text-[10px] text-app-subtle font-normal">pts</span>
+                    </span>
+                  </div>
+
+                  <!-- SVG Sparkline -->
+                  <div class="shrink-0 text-right">
+                    <svg
+                      viewBox="0 0 120 36"
+                      class="w-24 h-7 overflow-visible"
+                      fill="none"
+                      aria-label="7-day score sparkline"
+                    >
+                      <path
+                        d={spark!.path}
+                        stroke={isNegative ? '#EF4444' : '#10B981'}
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                    <span class="text-[9px] font-mono text-app-subtle block">7-point cadence</span>
+                  </div>
+                </div>
+
+                <!-- Reason / Context Note -->
+                {item.momentum!.deltaReason && (
+                  <p class={`text-[11px] font-mono leading-tight pt-1.5 border-t border-app-border/60 ${
+                    isNegative ? 'text-rose-300/90' : 'text-emerald-300/90'
+                  }`}>
+                    {item.momentum!.deltaReason}
+                  </p>
+                )}
+              </div>
+            ) : (
+              /* Honest Zero-State: Repo added recently, never fake trends */
+              <div class="p-3.5 rounded-lg bg-[#0A0B0E] border border-dashed border-app-border mb-4 font-mono">
+                <div class="flex items-center gap-2 mb-1.5">
+                  <span class="w-2 h-2 rounded-full bg-blue-400 animate-ping"></span>
+                  <span class="text-[11px] text-blue-400 font-bold uppercase">Recently Added to Watchlist</span>
+                </div>
+                <p class="text-[11px] text-app-subtle leading-relaxed mb-2">
+                  Baseline telemetry calibration in progress. No synthetic trend is rendered until 7 full daily audit cycles complete.
+                </p>
+                <div class="flex items-center justify-between text-[10px] text-app-subtle pt-2 border-t border-app-border/40">
+                  <span>First audit: {formatScanDate(item.scannedAt)}</span>
+                  <span class="text-blue-400 font-semibold">Calibrating</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <!-- Bottom Footer -->
+          <div class="pt-3 border-t border-app-border flex items-center justify-between font-mono text-xs text-app-subtle">
+            {hasTelemetry && item.momentum!.starGrowth ? (
+              <span class="text-emerald-400 font-medium">
+                +{item.momentum!.starGrowth.toLocaleString()} stars this week
+              </span>
+            ) : (
+              <span>Score: <strong class="text-white font-bold">{item.safetyScore}/100</strong></span>
+            )}
+
+            <a
+              href={`/tools/${item.slug}`}
+              class="text-blue-400 hover:text-blue-300 font-semibold inline-flex items-center gap-1 transition-colors"
+            >
+              <span>Audit details</span>
+              <span>&rarr;</span>
+            </a>
+          </div>
+        </div>
+      );
+    })}
+  </div>
+</section>

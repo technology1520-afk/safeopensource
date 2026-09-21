@@ -1,0 +1,97 @@
+---
+import type { HowToUseStep } from '../types/tool';
+
+interface Props {
+  steps: HowToUseStep[];
+  class?: string;
+}
+
+const { steps, class: className = '' } = Astro.props;
+---
+
+<div class={`space-y-4 ${className}`}>
+  <p class="text-xs text-app-muted leading-relaxed mb-4">
+    Select your target deployment tier. Every snippet is tested for reproducible containerization and zero unverified third-party scripts:
+  </p>
+
+  <div class="space-y-3">
+    {steps.map((step) => {
+      const levelColors: Record<string, string> = {
+        Beginner: 'border-emerald-500/40 text-emerald-400 bg-emerald-950/20',
+        Comfortable: 'border-blue-500/40 text-blue-400 bg-blue-950/20',
+        Developer: 'border-purple-500/40 text-purple-400 bg-purple-950/20'
+      };
+
+      const pillClass = levelColors[step.level] || 'border-app-border text-app-subtle bg-app-bg';
+
+      return (
+        <div class="p-4 rounded-xl border border-app-border bg-[#0A0B0E] space-y-2.5">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class={`text-micro px-2 py-0.5 rounded-md border font-mono font-bold ${pillClass}`}>
+                {step.level.toUpperCase()}
+              </span>
+              <h4 class="text-xs font-bold text-app-text">{step.title}</h4>
+            </div>
+
+            <div class="flex items-center gap-3 text-micro font-mono text-app-subtle">
+              <span>⏱ Est: <strong class="text-app-text">{step.estimatedTime}</strong></span>
+              <a
+                href={step.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-blue-400 hover:underline inline-flex items-center gap-1"
+              >
+                <span>Docs</span>
+                <span>↗</span>
+              </a>
+            </div>
+          </div>
+
+          <p class="text-xs text-app-muted leading-relaxed">
+            {step.description}
+          </p>
+
+          {step.command && (
+            <div class="relative group mt-2">
+              <div class="p-3 rounded-lg bg-[#131519] border border-app-border font-mono text-xs text-emerald-300 overflow-x-auto flex items-center justify-between gap-4">
+                <code class="select-all break-all whitespace-pre-wrap">{step.command}</code>
+                <button
+                  type="button"
+                  class="btn-copy-cmd shrink-0 px-2.5 py-1 rounded bg-[#0A0B0E] hover:bg-app-border border border-app-border text-app-subtle hover:text-white text-[10px] font-mono transition-colors"
+                  data-cmd={step.command}
+                  title="Copy command to clipboard"
+                >
+                  Copy
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    })}
+  </div>
+</div>
+
+<script is:inline>
+  (function () {
+    document.querySelectorAll('.btn-copy-cmd').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const cmd = btn.getAttribute('data-cmd');
+        if (!cmd) return;
+        try {
+          await navigator.clipboard.writeText(cmd);
+          const orig = btn.textContent;
+          btn.textContent = 'Copied!';
+          btn.classList.add('text-emerald-400');
+          setTimeout(() => {
+            btn.textContent = orig;
+            btn.classList.remove('text-emerald-400');
+          }, 1800);
+        } catch (e) {
+          // Clipboard write failed
+        }
+      });
+    });
+  })();
+</script>

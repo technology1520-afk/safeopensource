@@ -1,0 +1,28 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import TopRepos from '../../components/TopRepos.astro';
+import TrustBand from '../../components/TrustBand.astro';
+import AdSlot from '../../components/AdSlot.astro';
+import { getAllTools } from '../../utils/tools';
+
+const tools = getAllTools();
+---
+
+<Layout
+  title="Best Open-Source Tools for Beginners — SafeOpenSource"
+  description="Verified open-source repositories with simple one-click or single-container deployments and highest safety scores."
+>
+  <nav class="flex items-center gap-2 text-xs font-mono text-app-subtle mb-6" aria-label="Breadcrumb">
+    <a href="/" class="hover:text-app-text">Home</a>
+    <span>/</span>
+    <span class="text-app-text font-medium">Leaderboard (Best for Beginners)</span>
+  </nav>
+
+  <TrustBand class="mb-8" />
+
+  <TopRepos tools={tools} activeSort="beginners" />
+
+  <section class="my-8">
+    <AdSlot format="leaderboard" />
+  </section>
+</Layout>

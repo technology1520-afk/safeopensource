@@ -1,0 +1,132 @@
+---
+interface Props {
+  class?: string;
+}
+
+const { class: className = '' } = Astro.props;
+---
+
+<section class={`my-14 rounded-2xl border border-app-border bg-[#0a0c10] p-6 sm:p-8 ${className}`} id="stack-quiz">
+  <div class="max-w-2xl mx-auto text-center mb-8">
+    <div class="inline-flex items-center gap-2 mb-1">
+      <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+      <span class="text-micro text-emerald-400 font-mono">INTERACTIVE ARCHITECTURE MATCHER</span>
+    </div>
+    <h2 class="text-xl sm:text-2xl font-bold tracking-tight text-app-text">
+      Find Your Ideal Open-Source Blueprint
+    </h2>
+    <p class="text-xs text-app-muted mt-1 leading-relaxed">
+      Answer 3 operational questions to calculate your optimal pre-screened toolchain. Functions with zero JavaScript.
+    </p>
+  </div>
+
+  <!-- Pure HTML GET Form / Instant Match Container -->
+  <form action="/starter-kits" method="GET" class="max-w-3xl mx-auto space-y-6">
+    <!-- Question 1 -->
+    <fieldset class="p-5 rounded-xl border border-app-border bg-[#131519]">
+      <legend class="font-mono text-xs font-bold text-blue-400 px-2 uppercase tracking-wider">
+        01 / Primary Objective
+      </legend>
+      <p class="text-xs text-app-muted mb-4 mt-1">What core service or capability are you building today?</p>
+      
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 font-mono text-xs">
+        <label class="flex items-start gap-3 p-3 rounded-lg border border-app-border/70 bg-[#0A0B0E] hover:border-blue-500/50 cursor-pointer has-[:checked]:border-blue-500 has-[:checked]:bg-blue-950/20 transition-all">
+          <input type="radio" name="goal" value="private-google-stack" checked class="mt-1 text-blue-600 focus:ring-0" />
+          <div>
+            <strong class="text-app-text block font-sans font-bold">Replace Google & iCloud</strong>
+            <span class="text-[11px] text-app-subtle font-normal block mt-0.5">Photos, Drive, Contacts, and Password vault</span>
+          </div>
+        </label>
+
+        <label class="flex items-start gap-3 p-3 rounded-lg border border-app-border/70 bg-[#0A0B0E] hover:border-blue-500/50 cursor-pointer has-[:checked]:border-blue-500 has-[:checked]:bg-blue-950/20 transition-all">
+          <input type="radio" name="goal" value="run-ai-at-home" class="mt-1 text-blue-600 focus:ring-0" />
+          <div>
+            <strong class="text-app-text block font-sans font-bold">Run AI & Automation Locally</strong>
+            <span class="text-[11px] text-app-subtle font-normal block mt-0.5">Neural image models, n8n agents, fast vector search</span>
+          </div>
+        </label>
+
+        <label class="flex items-start gap-3 p-3 rounded-lg border border-app-border/70 bg-[#0A0B0E] hover:border-blue-500/50 cursor-pointer has-[:checked]:border-blue-500 has-[:checked]:bg-blue-950/20 transition-all">
+          <input type="radio" name="goal" value="team-wiki-in-an-afternoon" class="mt-1 text-blue-600 focus:ring-0" />
+          <div>
+            <strong class="text-app-text block font-sans font-bold">Team Wiki & Git Hub</strong>
+            <span class="text-[11px] text-app-subtle font-normal block mt-0.5">Docs, code repos, and SSO without per-seat fees</span>
+          </div>
+        </label>
+
+        <label class="flex items-start gap-3 p-3 rounded-lg border border-app-border/70 bg-[#0A0B0E] hover:border-blue-500/50 cursor-pointer has-[:checked]:border-blue-500 has-[:checked]:bg-blue-950/20 transition-all">
+          <input type="radio" name="goal" value="first-home-server" class="mt-1 text-blue-600 focus:ring-0" />
+          <div>
+            <strong class="text-app-text block font-sans font-bold">First Home Command Center</strong>
+            <span class="text-[11px] text-app-subtle font-normal block mt-0.5">Network ad blocking, smart devices, uptime alerts</span>
+          </div>
+        </label>
+      </div>
+    </fieldset>
+
+    <!-- Question 2 -->
+    <fieldset class="p-5 rounded-xl border border-app-border bg-[#131519]">
+      <legend class="font-mono text-xs font-bold text-emerald-400 px-2 uppercase tracking-wider">
+        02 / Hosting Environment
+      </legend>
+      <p class="text-xs text-app-muted mb-4 mt-1">Where will this architecture run?</p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono text-xs">
+        <label class="flex items-center gap-3 p-3 rounded-lg border border-app-border/70 bg-[#0A0B0E] hover:border-emerald-500/50 cursor-pointer has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-950/20 transition-all">
+          <input type="radio" name="host" value="homelab" checked class="text-emerald-500 focus:ring-0" />
+          <span class="text-app-text font-sans font-bold">Mini PC / Raspberry Pi</span>
+        </label>
+
+        <label class="flex items-center gap-3 p-3 rounded-lg border border-app-border/70 bg-[#0A0B0E] hover:border-emerald-500/50 cursor-pointer has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-950/20 transition-all">
+          <input type="radio" name="host" value="vps" class="text-emerald-500 focus:ring-0" />
+          <span class="text-app-text font-sans font-bold">Cloud VPS ($5/mo)</span>
+        </label>
+
+        <label class="flex items-center gap-3 p-3 rounded-lg border border-app-border/70 bg-[#0A0B0E] hover:border-emerald-500/50 cursor-pointer has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-950/20 transition-all">
+          <input type="radio" name="host" value="metal" class="text-emerald-500 focus:ring-0" />
+          <span class="text-app-text font-sans font-bold">Dedicated Server / NAS</span>
+        </label>
+      </div>
+    </fieldset>
+
+    <!-- Question 3 -->
+    <fieldset class="p-5 rounded-xl border border-app-border bg-[#131519]">
+      <legend class="font-mono text-xs font-bold text-purple-400 px-2 uppercase tracking-wider">
+        03 / Technical Comfort Level
+      </legend>
+      <p class="text-xs text-app-muted mb-4 mt-1">What is your operational preference?</p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono text-xs">
+        <label class="flex items-center gap-3 p-3 rounded-lg border border-app-border/70 bg-[#0A0B0E] hover:border-purple-500/50 cursor-pointer has-[:checked]:border-purple-500 has-[:checked]:bg-purple-950/20 transition-all">
+          <input type="radio" name="level" value="Beginner" checked class="text-purple-500 focus:ring-0" />
+          <span class="text-app-text font-sans font-bold">Beginner (1-Line Docker)</span>
+        </label>
+
+        <label class="flex items-center gap-3 p-3 rounded-lg border border-app-border/70 bg-[#0A0B0E] hover:border-purple-500/50 cursor-pointer has-[:checked]:border-purple-500 has-[:checked]:bg-purple-950/20 transition-all">
+          <input type="radio" name="level" value="Intermediate" class="text-purple-500 focus:ring-0" />
+          <span class="text-app-text font-sans font-bold">Intermediate (Compose YAML)</span>
+        </label>
+
+        <label class="flex items-center gap-3 p-3 rounded-lg border border-app-border/70 bg-[#0A0B0E] hover:border-purple-500/50 cursor-pointer has-[:checked]:border-purple-500 has-[:checked]:bg-purple-950/20 transition-all">
+          <input type="radio" name="level" value="Advanced" class="text-purple-500 focus:ring-0" />
+          <span class="text-app-text font-sans font-bold">Advanced (Sysadmin / CLI)</span>
+        </label>
+      </div>
+    </fieldset>
+
+    <!-- Form Submit Action Bar -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-[#131519] border border-app-border">
+      <div class="text-xs font-mono text-app-subtle">
+        <span>Zero cookies stored. Generates deterministic static blueprints.</span>
+      </div>
+
+      <button
+        type="submit"
+        class="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-mono font-bold text-xs shadow-lg transition-colors flex items-center justify-center gap-2"
+      >
+        <span>View Matched Recommendation Bundle</span>
+        <span>&rarr;</span>
+      </button>
+    </div>
+  </form>
+</section>

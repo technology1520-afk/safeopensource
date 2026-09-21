@@ -1,0 +1,28 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import TopRepos from '../../components/TopRepos.astro';
+import TrustBand from '../../components/TrustBand.astro';
+import AdSlot from '../../components/AdSlot.astro';
+import { getAllTools } from '../../utils/tools';
+
+const tools = getAllTools();
+---
+
+<Layout
+  title="Top Repositories by GitHub Stars — SafeOpenSource"
+  description="Explore the most starred open-source projects rated by verified OpenSSF security and vitality metrics."
+>
+  <nav class="flex items-center gap-2 text-xs font-mono text-app-subtle mb-6" aria-label="Breadcrumb">
+    <a href="/" class="hover:text-app-text">Home</a>
+    <span>/</span>
+    <span class="text-app-text font-medium">Leaderboard (Most Starred)</span>
+  </nav>
+
+  <TrustBand class="mb-8" />
+
+  <TopRepos tools={tools} activeSort="stars" />
+
+  <section class="my-8">
+    <AdSlot format="leaderboard" />
+  </section>
+</Layout>

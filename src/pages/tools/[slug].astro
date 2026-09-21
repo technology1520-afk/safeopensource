@@ -9,6 +9,8 @@ import InstallTabs from '../../components/InstallTabs.astro';
 import ToolCard from '../../components/ToolCard.astro';
 import ScanChip from '../../components/ScanChip.astro';
 import AdSlot from '../../components/AdSlot.astro';
+import TrustBand from '../../components/TrustBand.astro';
+import ToolDossier from '../../components/ToolDossier.astro';
 import { getAllTools, getAlternatives } from '../../utils/tools';
 import { getCategoryBySlug } from '../../data/categories';
 import type { ToolData } from '../../types/tool';
@@ -71,7 +73,7 @@ const jsonLd = {
   jsonLd={jsonLd}
 >
   <!-- Breadcrumb navigation -->
-  <nav class="flex items-center gap-2 text-xs font-mono text-app-subtle mb-6" aria-label="Breadcrumb">
+  <nav class="flex items-center gap-2 text-xs font-mono text-app-subtle mb-4" aria-label="Breadcrumb">
     <a href="/" class="hover:text-app-text">Home</a>
     <span>/</span>
     <a href="/#categories" class="hover:text-app-text">Categories</a>
@@ -82,6 +84,15 @@ const jsonLd = {
     <span>/</span>
     <span class="text-app-text font-medium">{tool.name}</span>
   </nav>
+
+  <!-- Scoped Trust Band -->
+  <TrustBand
+    scoped={true}
+    repo={tool.repo}
+    scorecard={tool.scorecard}
+    license={tool.license_spdx}
+    class="mb-6"
+  />
 
   <!-- 1. Header Area: Name, Tagline, Verdict, ScoreRing, Stats Row -->
   <header class="rounded-2xl border border-app-border bg-app-surface p-6 sm:p-8 mb-8">
@@ -169,6 +180,9 @@ const jsonLd = {
       ))}
     </div>
   </section>
+
+  <!-- Operational Technical Dossier (4 Collapsible <details> Cards) -->
+  <ToolDossier tool={tool} class="mb-8" />
 
   <!-- 3. Score Breakdown (4 Horizontal Bars with Weights) -->
   <section class="rounded-2xl border border-app-border bg-app-surface p-6 sm:p-8 mb-8">

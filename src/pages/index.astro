@@ -8,6 +8,11 @@ import BentoRow from '../components/BentoRow.astro';
 import CategoryCard from '../components/CategoryCard.astro';
 import AdSlot from '../components/AdSlot.astro';
 import SearchDialog from '../components/SearchDialog';
+import TrustBand from '../components/TrustBand.astro';
+import TopRepos from '../components/TopRepos.astro';
+import TrendingRepos from '../components/TrendingRepos.astro';
+import StackBundles from '../components/StackBundles.astro';
+import MatchQuiz from '../components/MatchQuiz.astro';
 import { categories } from '../data/categories';
 import { getAllTools, getSafestTools, getToolsByCategory } from '../utils/tools';
 
@@ -84,18 +89,33 @@ const categoriesWithStats = categories.map((cat) => {
     </div>
   </section>
 
+  <!-- Global High-Credibility Trust Band -->
+  <TrustBand class="my-6" />
+
+  <!-- 1. Top Ranked Repositories Leaderboard -->
+  <TopRepos tools={allTools} activeSort="score" />
+
+  <!-- 2. Momentum & Velocity Telemetry -->
+  <TrendingRepos activeFilter="velocity" />
+
   <!-- Reserved Zero-CLS AdSlot Container -->
   <section class="my-6">
     <AdSlot format="leaderboard" />
   </section>
 
-  <!-- 2. The Flag Wall (Incident Feed Section) -->
+  <!-- 3. The Flag Wall (Incident Feed Section) -->
   <FlagWall />
 
-  <!-- 3. Category Radar (13 Sectors SVG Grid) -->
+  <!-- 4. Category Radar (13 Sectors SVG Grid) -->
   <CategoryRadar />
 
-  <!-- 4. Safest This Month Bento Grid -->
+  <!-- 5. "The Right Stack for You" Recommendation Bundles -->
+  <StackBundles />
+
+  <!-- 6. 3-Question Architecture Matcher Quiz -->
+  <MatchQuiz />
+
+  <!-- 7. Safest This Month Bento Grid -->
   <section class="my-14">
     <div class="flex items-center justify-between gap-4 mb-6">
       <div>

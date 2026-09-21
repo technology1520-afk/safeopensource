@@ -1,0 +1,27 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import TrendingRepos from '../../components/TrendingRepos.astro';
+import TrustBand from '../../components/TrustBand.astro';
+import AdSlot from '../../components/AdSlot.astro';
+---
+
+<Layout
+  title="New Entrants on Watchlist — SafeOpenSource"
+  description="Recently added open-source repositories undergoing baseline telemetry calibration. 100% transparent audit progress."
+>
+  <nav class="flex items-center gap-2 text-xs font-mono text-app-subtle mb-6" aria-label="Breadcrumb">
+    <a href="/" class="hover:text-app-text">Home</a>
+    <span>/</span>
+    <a href="/trending" class="hover:text-app-text">Trending</a>
+    <span>/</span>
+    <span class="text-app-text font-medium">New Entrants</span>
+  </nav>
+
+  <TrustBand class="mb-8" />
+
+  <TrendingRepos activeFilter="new-entrants" />
+
+  <section class="my-8">
+    <AdSlot format="leaderboard" />
+  </section>
+</Layout>

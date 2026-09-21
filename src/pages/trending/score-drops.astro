@@ -1,0 +1,27 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import TrendingRepos from '../../components/TrendingRepos.astro';
+import TrustBand from '../../components/TrustBand.astro';
+import AdSlot from '../../components/AdSlot.astro';
+---
+
+<Layout
+  title="Score Drops & Security Regressions — SafeOpenSource"
+  description="Telemetry alerts for projects experiencing security regressions, unmerged vulnerability advisories, or unmaintained base images."
+>
+  <nav class="flex items-center gap-2 text-xs font-mono text-app-subtle mb-6" aria-label="Breadcrumb">
+    <a href="/" class="hover:text-app-text">Home</a>
+    <span>/</span>
+    <a href="/trending" class="hover:text-app-text">Trending</a>
+    <span>/</span>
+    <span class="text-app-text font-medium">Score Drops & Risks</span>
+  </nav>
+
+  <TrustBand class="mb-8" />
+
+  <TrendingRepos activeFilter="score-drops" />
+
+  <section class="my-8">
+    <AdSlot format="leaderboard" />
+  </section>
+</Layout>

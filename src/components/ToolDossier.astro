@@ -1,0 +1,122 @@
+---
+import type { ToolData } from '../types/tool';
+import { getToolDossier } from '../utils/tool-dossier';
+import ToolUseCases from './ToolUseCases.astro';
+import ToolHowToUse from './ToolHowToUse.astro';
+import ToolRequirements from './ToolRequirements.astro';
+import ToolAudience from './ToolAudience.astro';
+
+interface Props {
+  tool: ToolData;
+  class?: string;
+}
+
+const { tool, class: className = '' } = Astro.props;
+const dossier = getToolDossier(tool);
+---
+
+<section class={`space-y-4 mb-8 ${className}`} aria-label="Technical dossier & operational guides">
+  <div class="flex items-center justify-between gap-4 mb-2">
+    <div>
+      <span class="text-micro text-emerald-400 font-mono block">OPERATIONAL DOSSIER</span>
+      <h3 class="text-lg sm:text-xl font-bold text-app-text">
+        Technical Specifications & Usage Profiles
+      </h3>
+    </div>
+    <span class="text-micro font-mono text-app-subtle">
+      DOC-ID: SOC-{tool.slug.toUpperCase()}
+    </span>
+  </div>
+
+  <!-- DOSSIER CARD 1: What it's used for (DEFAULT OPEN) -->
+  <details open class="group rounded-xl border border-app-border bg-app-surface overflow-hidden transition-colors duration-150">
+    <summary class="flex items-center justify-between p-4 sm:p-5 cursor-pointer select-none font-mono hover:bg-app-surface-hover list-none">
+      <div class="flex items-center gap-3">
+        <span class="text-micro px-2 py-0.5 rounded bg-blue-950/40 text-blue-400 border border-blue-500/30 font-bold">
+          SEC-01
+        </span>
+        <span class="font-sans font-bold text-sm sm:text-base text-app-text">
+          What It's Used For
+        </span>
+      </div>
+      <div class="flex items-center gap-2 text-xs text-app-subtle">
+        <span class="hidden sm:inline text-micro text-app-subtle font-mono">PRIMARY WORKLOADS</span>
+        <svg class="w-4 h-4 text-app-subtle group-open:rotate-180 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </div>
+    </summary>
+    <div class="p-4 sm:p-6 pt-0 border-t border-app-border/40 bg-app-surface">
+      <ToolUseCases useCases={dossier.useCases} />
+    </div>
+  </details>
+
+  <!-- DOSSIER CARD 2: How to use it (DEFAULT OPEN) -->
+  <details open class="group rounded-xl border border-app-border bg-app-surface overflow-hidden transition-colors duration-150">
+    <summary class="flex items-center justify-between p-4 sm:p-5 cursor-pointer select-none font-mono hover:bg-app-surface-hover list-none">
+      <div class="flex items-center gap-3">
+        <span class="text-micro px-2 py-0.5 rounded bg-blue-950/40 text-blue-400 border border-blue-500/30 font-bold">
+          SEC-02
+        </span>
+        <span class="font-sans font-bold text-sm sm:text-base text-app-text">
+          How to Deploy & Use It (3 Paths)
+        </span>
+      </div>
+      <div class="flex items-center gap-2 text-xs text-app-subtle">
+        <span class="hidden sm:inline text-micro text-app-subtle font-mono">BEGINNER &middot; COMFORTABLE &middot; DEVELOPER</span>
+        <svg class="w-4 h-4 text-app-subtle group-open:rotate-180 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </div>
+    </summary>
+    <div class="p-4 sm:p-6 pt-0 border-t border-app-border/40 bg-app-surface">
+      <ToolHowToUse steps={dossier.howToUse} />
+    </div>
+  </details>
+
+  <!-- DOSSIER CARD 3: Requirements to run it (DEFAULT CLOSED) -->
+  <details class="group rounded-xl border border-app-border bg-app-surface overflow-hidden transition-colors duration-150">
+    <summary class="flex items-center justify-between p-4 sm:p-5 cursor-pointer select-none font-mono hover:bg-app-surface-hover list-none">
+      <div class="flex items-center gap-3">
+        <span class="text-micro px-2 py-0.5 rounded bg-purple-950/40 text-purple-400 border border-purple-500/30 font-bold">
+          SEC-03
+        </span>
+        <span class="font-sans font-bold text-sm sm:text-base text-app-text">
+          Hardware & Runtime Requirements
+        </span>
+      </div>
+      <div class="flex items-center gap-2 text-xs text-app-subtle">
+        <span class="hidden sm:inline text-micro text-app-subtle font-mono">{dossier.requirements.ram.split(' ')[0]} {dossier.requirements.ram.split(' ')[1]} RAM MIN</span>
+        <svg class="w-4 h-4 text-app-subtle group-open:rotate-180 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </div>
+    </summary>
+    <div class="p-4 sm:p-6 pt-0 border-t border-app-border/40 bg-app-surface">
+      <ToolRequirements requirements={dossier.requirements} />
+    </div>
+  </details>
+
+  <!-- DOSSIER CARD 4: Who is it for / not for (DEFAULT CLOSED) -->
+  <details class="group rounded-xl border border-app-border bg-app-surface overflow-hidden transition-colors duration-150">
+    <summary class="flex items-center justify-between p-4 sm:p-5 cursor-pointer select-none font-mono hover:bg-app-surface-hover list-none">
+      <div class="flex items-center gap-3">
+        <span class="text-micro px-2 py-0.5 rounded bg-emerald-950/40 text-emerald-400 border border-emerald-500/30 font-bold">
+          SEC-04
+        </span>
+        <span class="font-sans font-bold text-sm sm:text-base text-app-text">
+          Target Audience & Honest Limitations
+        </span>
+      </div>
+      <div class="flex items-center gap-2 text-xs text-app-subtle">
+        <span class="hidden sm:inline text-micro text-app-subtle font-mono">PERFECT FOR vs SKIP IT IF</span>
+        <svg class="w-4 h-4 text-app-subtle group-open:rotate-180 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </div>
+    </summary>
+    <div class="p-4 sm:p-6 pt-0 border-t border-app-border/40 bg-app-surface">
+      <ToolAudience audience={dossier.audience} />
+    </div>
+  </details>
+</section>
