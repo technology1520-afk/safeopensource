@@ -73,6 +73,40 @@ const avgScore = tools.length > 0
     </div>
   </header>
 
+  <!-- Special AI Agents Sector Safety Advisory & Guide Callout -->
+  {category.slug === 'ai-agents' && (
+    <div class="mb-8 p-5 rounded-2xl border border-amber-500/40 bg-gradient-to-r from-amber-950/30 to-app-surface text-amber-200">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="space-y-1">
+          <div class="flex items-center gap-2">
+            <span class="inline-block w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+            <span class="font-mono text-xs font-bold uppercase tracking-wider text-amber-300">
+              HIGH-PRIVILEGE SECTOR NOTICE
+            </span>
+          </div>
+          <p class="text-xs sm:text-sm text-zinc-300 font-sans leading-relaxed max-w-2xl">
+            Autonomous AI agents execute shell commands with local operator credentials. To reflect this host-level risk, SafeOpenSource weights <strong>Security Health at 55%</strong> for all tools in this category.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-3 shrink-0 font-mono text-xs">
+          <a
+            href="/how-we-score"
+            class="text-amber-400 hover:text-white underline"
+          >
+            Why 55% Weight?
+          </a>
+          <a
+            href="/how-to-run-an-ai-agent-safely"
+            class="px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-bold inline-flex items-center gap-1.5 transition-colors shadow-xs"
+          >
+            Run Agents Safely Guide →
+          </a>
+        </div>
+      </div>
+    </div>
+  )}
+
   <!-- Reserved Zero-CLS AdSlot Container -->
   <section class="my-6">
     <AdSlot format="leaderboard" />

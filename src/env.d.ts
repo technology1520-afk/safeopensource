@@ -5,3 +5,4 @@ declare namespace App {
     auth?: import('./lib/admin/auth').AuthContext;
   }
 }
+

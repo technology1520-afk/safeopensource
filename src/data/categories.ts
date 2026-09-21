@@ -91,6 +91,13 @@ export const categories: CategoryData[] = [
     tagline: 'Zero-based envelope budgeting, double-entry ledgers, and transaction synchronizers.',
     icon: 'DollarSign',
     intro: 'Financial sovereignty begins with knowing your net worth without transmitting bank credentials to aggressive commercial aggregators. Self-hosted personal finance systems utilize local encryption keys and zero-based budgeting principles to help households take control of capital allocation. Always verify that personal finance software has end-to-end encrypted synchronization and a stable data persistence model.'
+  },
+  {
+    slug: 'ai-agents',
+    name: 'AI Agents & Autonomous Systems',
+    tagline: 'Autonomous terminal, coding, and workflow agents with credential and shell access.',
+    icon: 'Bot',
+    intro: 'Autonomous AI agents execute shell commands, manage local filesystems, and interact with web applications using operator credentials by design. Because a compromised agent or prompt injection represents an immediate threat to the entire host system, SafeOpenSource bumps the Security Health weight from the standard 0.40 to 0.55 for this category. Prioritize agents featuring isolated Docker sandboxes, strict human-in-the-loop confirmation gates, and verified vulnerability disclosure policies.'
   }
 ];
 

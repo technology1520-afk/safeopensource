@@ -19,3 +19,4 @@ export const POST: APIRoute = async ({ cookies, locals, redirect }) => {
 
   return redirect('/');
 };
+

@@ -306,3 +306,4 @@ export function rescanTool(slugOrRepo: string, principal: 'owner' | 'agent', ip:
 
   return { tool, diff };
 }
+

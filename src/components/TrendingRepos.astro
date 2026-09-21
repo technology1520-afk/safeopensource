@@ -1,5 +1,7 @@
 ---
 import { getTrendingByFilter, type TrendingItem } from '../data/trending';
+import { getAllTools } from '../utils/tools';
+import { categories } from '../data/categories';
 import VerdictBadge from './VerdictBadge.astro';
 
 interface Props {
@@ -9,6 +11,8 @@ interface Props {
 
 const { activeFilter = 'velocity', class: className = '' } = Astro.props;
 const items: TrendingItem[] = getTrendingByFilter(activeFilter);
+const totalTools = getAllTools().length;
+const totalCategories = categories.length;
 
 // Calculate honest 7-point SVG sparkline with area fill, coordinates, and endpoints
 function getSparklineData(points: number[], width = 220, height = 48) {
@@ -314,16 +318,16 @@ const showGhostCard = items.length % 3 !== 0;
             COMPLETE WATCHLIST REGISTRY
           </span>
           <h3 class="text-lg font-bold text-white mb-2 group-hover:text-blue-400 transition-colors">
-            Browse All 39 Cataloged Tools
+            Browse All {totalTools} Cataloged Tools
           </h3>
           <p class="text-xs text-app-muted leading-relaxed font-sans mb-6">
-            Filter all 39 audited open-source projects across 13 sectors with deterministic 0–100 Safety Scores, license obligations, and supply-chain telemetry.
+            Filter all {totalTools} audited open-source projects across {totalCategories} sectors with deterministic 0–100 Safety Scores, license obligations, and supply-chain telemetry.
           </p>
 
           <div class="space-y-2 text-xs font-mono text-app-subtle mb-6">
             <div class="flex items-center justify-between pb-1 border-b border-app-border/40">
               <span>Monitored Taxonomies:</span>
-              <span class="text-white font-bold">13 Sectors</span>
+              <span class="text-white font-bold">{totalCategories} Sectors</span>
             </div>
             <div class="flex items-center justify-between pb-1 border-b border-app-border/40">
               <span>Automated Sweeps:</span>

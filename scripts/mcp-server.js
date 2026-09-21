@@ -168,3 +168,4 @@ main().catch((err) => {
   console.error('[SafeOpenSource MCP] Fatal startup error:', err);
   process.exit(1);
 });
+

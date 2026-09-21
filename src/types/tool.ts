@@ -46,6 +46,37 @@ export interface ToolMomentum {
   sparkline: number[]; // 7-point scan history
 }
 
+export interface ToolCve {
+  id: string; // e.g. "CVE-2026-35650"
+  summary: string;
+  severity: 'critical' | 'high' | 'moderate' | 'low';
+  fixed_in?: string;
+  fix_status: 'fixed' | 'unpatched' | 'mitigated';
+  published_at: string;
+  url?: string;
+}
+
+export interface AgentPermissionModel {
+  asks_before_destructive: boolean;
+  approval_prompt_detail: string;
+  execution_environment: string; // e.g. "Docker Container", "Raw Host Shell"
+  filesystem_access: string; // e.g. "Scoped Workspace Only", "Unrestricted Host Filesystem"
+  network_access: string; // e.g. "Egress Proxy Filtered", "Unrestricted Internet Access"
+  verdict: string; // Human-written verdict
+  review_status: 'approved' | 'draft';
+}
+
+export interface AgentIncident {
+  id: string; // e.g. "CVE-2026-35650"
+  title: string;
+  date: string;
+  type: 'prompt-injection' | 'sandbox-escape' | 'credential-exfiltration' | 'tool-abuse';
+  severity: 'critical' | 'high' | 'medium';
+  description: string;
+  link?: string;
+  mitigation: string;
+}
+
 export interface ToolData {
   slug: string;
   repo: string;
@@ -74,6 +105,10 @@ export interface ToolData {
   requirements?: ToolRequirements;
   audience?: ToolAudience;
   momentum?: ToolMomentum;
+  // AI Agents Enhanced Safety Signals
+  cves?: ToolCve[];
+  permission_model?: AgentPermissionModel;
+  incident_history?: AgentIncident[];
 }
 
 export interface CategoryData {

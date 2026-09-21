@@ -120,3 +120,4 @@ export function listRecentJobs(limit = 15): PipelineJob[] {
     return Array.from(jobsCache.values()).slice(-limit).reverse();
   }
 }
+

@@ -80,3 +80,4 @@ run().catch((err) => {
   console.error('Failed to generate admin secrets:', err);
   process.exit(1);
 });
+

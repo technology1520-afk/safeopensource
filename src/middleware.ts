@@ -111,3 +111,4 @@ export const onRequest = defineMiddleware(async (context, next) => {
   context.locals.auth = auth;
   return next();
 });
+

@@ -11,6 +11,7 @@ import ScanChip from '../../components/ScanChip.astro';
 import AdSlot from '../../components/AdSlot.astro';
 import TrustBand from '../../components/TrustBand.astro';
 import ToolDossier from '../../components/ToolDossier.astro';
+import AgentSafetySignals from '../../components/AgentSafetySignals.astro';
 import { getAllTools, getAlternatives } from '../../utils/tools';
 import { getCategoryBySlug } from '../../data/categories';
 import type { ToolData } from '../../types/tool';
@@ -30,6 +31,7 @@ interface Props {
 const { tool } = Astro.props;
 const category = getCategoryBySlug(tool.category);
 const alternatives = getAlternatives(tool, 3);
+const isAiAgent = tool.category === 'ai-agents';
 
 // Format stats
 function formatStars(count: number): string {
@@ -161,6 +163,9 @@ const jsonLd = {
     </div>
   </header>
 
+  <!-- AI Agents Enhanced Safety Signals (Warning Chip, Permission Model, CVEs, Incidents) -->
+  {isAiAgent && <AgentSafetySignals tool={tool} class="mb-8" />}
+
   <!-- 2. AI Repo Scan Panel -->
   <section class="rounded-2xl border border-app-border bg-app-surface p-6 sm:p-8 mb-8" aria-labelledby="ai-scan-heading">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 pb-4 border-b border-app-border">
@@ -199,25 +204,25 @@ const jsonLd = {
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <ScoreBar
         label="Security Health & Supply Chain"
-        weight={35}
+        weight={isAiAgent ? 55 : 35}
         score={tool.components.security_health}
-        description="Branch protections, dependency pinning, CodeQL static analysis, and zero known unpatched CVEs."
+        description={isAiAgent ? "Elevated 55% weight for autonomous agents. Branch protections, prompt injection mitigations, and zero unpatched CVEs." : "Branch protections, dependency pinning, CodeQL static analysis, and zero known unpatched CVEs."}
       />
       <ScoreBar
         label="Maintenance & Commit Cadence"
-        weight={30}
+        weight={isAiAgent ? 25 : 30}
         score={tool.components.maintenance}
         description="Days since last commit, pull request turnaround time, and issue closure velocity."
       />
       <ScoreBar
         label="Community & Governance"
-        weight={20}
+        weight={isAiAgent ? 10 : 20}
         score={tool.components.community}
         description="Contributor diversity, non-single-point-of-failure governance, and organizational sponsorship."
       />
       <ScoreBar
         label="Releases & Provenance"
-        weight={15}
+        weight={isAiAgent ? 10 : 15}
         score={tool.components.releases}
         description="Predictable semantic versioning, cryptographically signed artifacts, and container provenance."
       />

@@ -1,0 +1,235 @@
+---
+import Layout from '../layouts/Layout.astro';
+import ToolCard from '../components/ToolCard.astro';
+import { getToolsByCategory } from '../utils/tools';
+
+const agentTools = getToolsByCategory('ai-agents');
+---
+
+<Layout
+  title="How to Run an AI Agent Safely: Sandbox Isolation & Credential Hygiene | SafeOpenSource"
+  description="Production operational guide for running open-source autonomous AI agents safely: rootless container isolation, dedicated credential boundaries, read-only mounts, and mandatory approval gates."
+>
+  <!-- Breadcrumb navigation -->
+  <nav class="flex items-center gap-2 text-xs font-mono text-app-subtle mb-6" aria-label="Breadcrumb">
+    <a href="/" class="hover:text-app-text">Home</a>
+    <span>/</span>
+    <a href="/categories/ai-agents" class="hover:text-app-text">AI Agents</a>
+    <span>/</span>
+    <span class="text-app-text font-medium">Safety Blueprint</span>
+  </nav>
+
+  <!-- Hero Header -->
+  <header class="py-6 sm:py-10 max-w-3xl mb-8">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber-500/30 bg-amber-950/30 text-amber-400 text-micro mb-4">
+      <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+      <span>Security Blueprint & Defensive Playbook</span>
+    </div>
+
+    <h1 class="text-3xl sm:text-5xl font-extrabold text-white tracking-tight mb-4">
+      How to Run an Autonomous AI Agent Safely
+    </h1>
+
+    <p class="text-sm sm:text-base text-app-muted leading-relaxed">
+      Autonomous AI agents execute shell commands, manage filesystems, and automate web actions with <strong>your local privileges and credentials</strong> by design. This production guide details the 5 non-negotiable defensive perimeters required to prevent prompt injections from escaping into your host OS.
+    </p>
+  </header>
+
+  <!-- Threat Model Callout -->
+  <section class="p-6 rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-950/30 to-app-surface mb-10 text-amber-200">
+    <div class="flex items-start gap-4">
+      <div class="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center shrink-0 text-amber-400">
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+      </div>
+
+      <div class="space-y-2">
+        <h2 class="font-mono text-base font-bold text-white uppercase tracking-wider">
+          The Fundamental Threat Model: Why Agents Are Different
+        </h2>
+        <p class="text-xs sm:text-sm text-zinc-300 leading-relaxed font-sans">
+          Unlike standard developer utilities, an AI agent operates in a continuous read-reason-execute loop. When instructed to inspect a third-party git repository, clone an open-source project, or summarize a web page, the agent ingests untrusted text. If that text contains an <strong>indirect prompt injection</strong>, the malicious instruction can command the agent to read <code class="text-amber-300 font-mono">~/.ssh/id_rsa</code>, modify <code class="text-amber-300 font-mono">~/.bashrc</code>, or transmit local secrets to an attacker server via curl.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- The 5 Defensive Rules -->
+  <div class="space-y-8 mb-12">
+    <!-- Rule 1 -->
+    <section class="p-6 sm:p-8 rounded-2xl border border-app-border bg-app-surface">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="w-8 h-8 rounded-lg bg-blue-500/20 border border-blue-500/30 flex items-center justify-center font-mono font-bold text-sm text-blue-400">
+          01
+        </span>
+        <h2 class="text-xl font-bold text-white">Rule 1: Never Run on Bare Metal — Enforce Container Isolation</h2>
+      </div>
+
+      <p class="text-xs sm:text-sm text-app-muted leading-relaxed mb-4 font-sans">
+        Never install or run autonomous agents directly in your primary host terminal without an OS-level sandbox boundary. Always launch agents inside disposable Docker or Podman containers configured with dropped capabilities and non-root users.
+      </p>
+
+      <div class="rounded-xl border border-app-border bg-black/60 p-4 font-mono text-xs overflow-x-auto text-zinc-300 mb-4">
+        <div class="text-zinc-500 mb-2"># Recommended hardened Docker invocation:</div>
+        <code>docker run -it --rm \<br/>
+  &nbsp;&nbsp;--cap-drop=ALL \<br/>
+  &nbsp;&nbsp;--security-opt=no-new-privileges:true \<br/>
+  &nbsp;&nbsp;--user 1000:1000 \<br/>
+  &nbsp;&nbsp;--network=bridge \<br/>
+  &nbsp;&nbsp;-v /path/to/project:/workspace:rw \<br/>
+  &nbsp;&nbsp;agent-runtime-image:latest</code>
+      </div>
+
+      <ul class="text-xs text-app-subtle space-y-2 list-disc list-inside font-mono">
+        <li><strong class="text-white">--cap-drop=ALL:</strong> Strips root capabilities inside the container, preventing raw socket manipulation and kernel probing.</li>
+        <li><strong class="text-white">no-new-privileges:</strong> Prevents suid binaries from escalating permissions inside the guest OS.</li>
+        <li><strong class="text-white">Ephemeral Containers (--rm):</strong> Destroys the container environment immediately upon task completion.</li>
+      </ul>
+    </section>
+
+    <!-- Rule 2 -->
+    <section class="p-6 sm:p-8 rounded-2xl border border-app-border bg-app-surface">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center font-mono font-bold text-sm text-emerald-400">
+          02
+        </span>
+        <h2 class="text-xl font-bold text-white">Rule 2: Credential Hygiene — Dedicated Scoped Tokens</h2>
+      </div>
+
+      <p class="text-xs sm:text-sm text-app-muted leading-relaxed mb-4 font-sans">
+        Never grant an autonomous agent access to master cloud accounts, personal GitHub personal access tokens, or persistent SSH keys.
+      </p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-sans">
+        <div class="p-4 rounded-xl border border-red-500/30 bg-red-950/10">
+          <strong class="text-rose-400 font-mono block mb-1">HIGH DANGER: What to Avoid</strong>
+          <ul class="space-y-1 text-zinc-300 list-disc list-inside text-[11px] font-mono">
+            <li>Mounting <code class="text-rose-300">~/.ssh</code> into the agent</li>
+            <li>Mounting <code class="text-rose-300">~/.aws</code> or cloud CLI configs</li>
+            <li>Using an unrestricted OpenAI or Anthropic API key</li>
+            <li>Exposing production database credentials in .env</li>
+          </ul>
+        </div>
+
+        <div class="p-4 rounded-xl border border-emerald-500/30 bg-emerald-950/10">
+          <strong class="text-emerald-400 font-mono block mb-1">BEST PRACTICE: Defensive Perimeter</strong>
+          <ul class="space-y-1 text-zinc-300 list-disc list-inside text-[11px] font-mono">
+            <li>Generate a fine-grained GitHub token scoped to one repo</li>
+            <li>Enforce a hard daily spend limit (e.g. $5/day) on LLM keys</li>
+            <li>Pass environment variables explicitly via CLI flags</li>
+            <li>Use short-lived STS tokens for cloud infra tasks</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Rule 3 -->
+    <section class="p-6 sm:p-8 rounded-2xl border border-app-border bg-app-surface">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="w-8 h-8 rounded-lg bg-purple-500/20 border border-purple-500/30 flex items-center justify-center font-mono font-bold text-sm text-purple-400">
+          03
+        </span>
+        <h2 class="text-xl font-bold text-white">Rule 3: Strict Filesystem Boundaries & Read-Only Mounts</h2>
+      </div>
+
+      <p class="text-xs sm:text-sm text-app-muted leading-relaxed mb-4 font-sans">
+        Scope the agent's filesystem visibility exclusively to the active working folder. If the agent needs to reference external documentation, corporate libraries, or code repositories, mount those paths with explicit read-only flags (<code class="text-purple-300 font-mono">:ro</code>).
+      </p>
+
+      <div class="rounded-xl border border-app-border bg-black/60 p-4 font-mono text-xs overflow-x-auto text-zinc-300">
+        <div class="text-zinc-500 mb-2"># Multi-mount volume strategy:</div>
+        <code>-v /home/user/code/active-project:/workspace:rw \<br/>
+-v /home/user/code/docs-reference:/reference:ro \<br/>
+-v /tmp/agent-cache:/cache:rw</code>
+      </div>
+    </section>
+
+    <!-- Rule 4 -->
+    <section class="p-6 sm:p-8 rounded-2xl border border-app-border bg-app-surface">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center font-mono font-bold text-sm text-amber-400">
+          04
+        </span>
+        <h2 class="text-xl font-bold text-white">Rule 4: Keep the Human in the Loop — Approval Gates</h2>
+      </div>
+
+      <p class="text-xs sm:text-sm text-app-muted leading-relaxed mb-4 font-sans">
+        Autonomous agents frequently offer continuous execution switches (e.g. <code class="text-amber-300 font-mono">--continuous</code> or <code class="text-amber-300 font-mono">-y</code>). Never run autonomous continuous mode on production repositories or when connected to unmonitored networks. Always enforce interactive approval for:
+      </p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono text-xs">
+        <div class="p-3 rounded-lg bg-black/40 border border-app-border text-center">
+          <span class="text-amber-400 font-bold block mb-1">Git Commits / Pushes</span>
+          <span class="text-zinc-400 text-[11px] font-sans">Inspect atomic diffs before remote push.</span>
+        </div>
+        <div class="p-3 rounded-lg bg-black/40 border border-app-border text-center">
+          <span class="text-rose-400 font-bold block mb-1">File Deletions (rm / unlink)</span>
+          <span class="text-zinc-400 text-[11px] font-sans">Require explicit console confirmation.</span>
+        </div>
+        <div class="p-3 rounded-lg bg-black/40 border border-app-border text-center">
+          <span class="text-blue-400 font-bold block mb-1">Package Installation (npm / pip)</span>
+          <span class="text-zinc-400 text-[11px] font-sans">Prevent dependency hallucination attacks.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Rule 5 -->
+    <section class="p-6 sm:p-8 rounded-2xl border border-app-border bg-app-surface">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center font-mono font-bold text-sm text-cyan-400">
+          05
+        </span>
+        <h2 class="text-xl font-bold text-white">Rule 5: Network Egress Filtering & SSRF Prevention</h2>
+      </div>
+
+      <p class="text-xs sm:text-sm text-app-muted leading-relaxed font-sans">
+        Autonomous web-browsing agents can be coerced into scanning internal private subnets or querying cloud metadata IP endpoints (<code class="text-cyan-300 font-mono">169.254.169.254</code>). Restrict container outbound egress to required LLM API gateways or route all browser traffic through an egress proxy with strict private IP blocking.
+      </p>
+    </section>
+  </div>
+
+  <!-- Internal Link Matrix: Monitored AI Agents Directory -->
+  <section class="my-12">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-app-border">
+      <div>
+        <span class="text-micro text-blue-400 font-mono block mb-1">SECTOR REGISTRY</span>
+        <h2 class="text-xl sm:text-2xl font-bold text-white">
+          Audited AI Agents in the SafeOpenSource Catalog
+        </h2>
+      </div>
+      <a
+        href="/categories/ai-agents"
+        class="font-mono text-xs text-blue-400 hover:text-blue-300 underline"
+      >
+        View Category Sector View →
+      </a>
+    </div>
+
+    <p class="text-xs sm:text-sm text-app-muted leading-relaxed mb-6 font-sans">
+      Explore the comprehensive security audits, sandboxing architectures, and CVE histories for all cataloged open-source agents:
+    </p>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {agentTools.map((tool) => (
+        <ToolCard tool={tool} />
+      ))}
+    </div>
+  </section>
+
+  <!-- Methodology Cross-Link -->
+  <footer class="p-6 rounded-2xl border border-app-border bg-app-surface flex flex-col sm:flex-row sm:items-center justify-between gap-4 font-mono text-xs">
+    <span class="text-zinc-400">
+      Interested in how SafeOpenSource mathematically weights autonomous agent security?
+    </span>
+    <a
+      href="/how-we-score"
+      class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold inline-flex items-center gap-1.5 transition-colors shrink-0"
+    >
+      Read Scoring Methodology (55% Weight) →
+    </a>
+  </footer>
+</Layout>
+
