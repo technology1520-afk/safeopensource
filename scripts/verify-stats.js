@@ -68,3 +68,4 @@ if (errors > 0) {
 } else {
   console.log('✓ All telemetry stats verified and corroborated by dataset!');
 }
+
