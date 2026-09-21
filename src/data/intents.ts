@@ -98,3 +98,4 @@ export const allIntents: IntentSuggestion[] = [
     description: 'Zero-based budgeting with local-first client-side encryption.'
   }
 ];
+
