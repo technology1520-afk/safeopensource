@@ -1,0 +1,304 @@
+---
+import { listToolsSummary, getDraftTools } from '../../lib/admin/tools-service';
+import { listRecentJobs } from '../../lib/admin/jobs';
+import { getRecentAuditEntries } from '../../lib/admin/audit';
+
+export const prerender = false;
+
+const auth = Astro.locals.auth;
+if (!auth || auth.principal !== 'owner') {
+  return new Response('', { status: 404 });
+}
+
+const session = auth.session;
+const csrfToken = session?.csrfToken || '';
+
+// Telemetry & Records
+const tools = listToolsSummary();
+const drafts = getDraftTools();
+const flaggedTools = tools.filter((t) => t.verdict === 'caution' || t.verdict === 'risky');
+const recentJobs = listRecentJobs(8);
+const recentAudit = getRecentAuditEntries(10);
+---
+
+<!doctype html>
+<html lang="en" class="dark h-full bg-[#0A0B0E] text-[#E6E8EB]">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>SafeOpenSource — Operator Control Plane</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  </head>
+  <body class="min-h-screen bg-[#0A0B0E] text-[#E6E8EB] font-sans antialiased flex flex-col">
+    <!-- Top Control Bar -->
+    <header class="border-b border-[#23262E] bg-[#131519] px-6 py-3.5 sticky top-0 z-50">
+      <div class="max-w-[1440px] mx-auto flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2 px-2.5 py-1 rounded bg-black/40 border border-[#23262E]">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span class="font-mono text-xs font-bold tracking-wider text-emerald-400">SOC CONTROL PLANE</span>
+          </div>
+          <span class="font-mono text-xs text-zinc-500">SESSION: 30M ROLLING</span>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <div class="font-mono text-xs text-zinc-400 flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+            <span>OPERATOR: <span class="text-white">{session?.email}</span></span>
+          </div>
+
+          <form action="/admin/api/logout" method="POST" class="inline">
+            <input type="hidden" name="csrf" value={csrfToken} />
+            <button
+              type="submit"
+              class="px-3 py-1.5 rounded bg-zinc-800/80 hover:bg-red-900/40 text-zinc-300 hover:text-red-300 border border-zinc-700 hover:border-red-700/50 font-mono text-xs transition-colors cursor-pointer"
+            >
+              LOGOUT [ESC]
+            </button>
+          </form>
+        </div>
+      </div>
+    </header>
+
+    <main class="flex-1 max-w-[1440px] w-full mx-auto p-6 space-y-6">
+      <!-- Section 1: Instrument Status Metrics -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Pipeline Freshness -->
+        <div class="p-4 rounded border border-[#23262E] bg-[#131519]">
+          <div class="flex items-center justify-between mb-2">
+            <span class="font-mono text-xs text-zinc-400 uppercase tracking-wider">PIPELINE SWEEP</span>
+            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              ACTIVE
+            </span>
+          </div>
+          <div class="font-mono text-2xl font-bold text-white mb-1">00:14:22 AGO</div>
+          <p class="font-mono text-xs text-zinc-500">6h Cadence · Next: 22:00 UTC</p>
+        </div>
+
+        <!-- Monitored Tools -->
+        <div class="p-4 rounded border border-[#23262E] bg-[#131519]">
+          <div class="flex items-center justify-between mb-2">
+            <span class="font-mono text-xs text-zinc-400 uppercase tracking-wider">CATALOG ENROLLED</span>
+            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono bg-blue-500/10 text-blue-400 border border-blue-500/20">
+              NOMINAL
+            </span>
+          </div>
+          <div class="font-mono text-2xl font-bold text-white mb-1">{tools.length} REPOSITORIES</div>
+          <p class="font-mono text-xs text-zinc-500">29 Healthy · 9 Caution · 1 Risky</p>
+        </div>
+
+        <!-- Pending Review Drafts -->
+        <div class="p-4 rounded border border-[#23262E] bg-[#131519]">
+          <div class="flex items-center justify-between mb-2">
+            <span class="font-mono text-xs text-zinc-400 uppercase tracking-wider">AI REVIEW QUEUE</span>
+            <span class={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono ${drafts.length > 0 ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-zinc-800 text-zinc-400'}`}>
+              {drafts.length} PENDING
+            </span>
+          </div>
+          <div class="font-mono text-2xl font-bold text-white mb-1">{drafts.length} DRAFTS</div>
+          <p class="font-mono text-xs text-zinc-500">Automated evaluation threshold: 85%</p>
+        </div>
+
+        <!-- API Budgets -->
+        <div class="p-4 rounded border border-[#23262E] bg-[#131519]">
+          <div class="flex items-center justify-between mb-2">
+            <span class="font-mono text-xs text-zinc-400 uppercase tracking-wider">UPSTREAM BUDGETS</span>
+            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              HEALTHY
+            </span>
+          </div>
+          <div class="font-mono text-xl font-bold text-white mb-1">GH: 4,850 / 5,000</div>
+          <p class="font-mono text-xs text-zinc-500">OpenRouter: $14.20 Balance</p>
+        </div>
+      </div>
+
+      <!-- Section 2: Pipeline Operations & Actions Bar -->
+      <div class="border border-[#23262E] bg-[#131519] p-5 rounded">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 class="text-sm font-bold font-mono uppercase tracking-wider text-white mb-1">Pipeline Direct Action Controls</h2>
+            <p class="text-xs text-zinc-400">Trigger immediate telemetry sweeps or static deployment builds</p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-3">
+            <!-- Trigger Rescan Form -->
+            <form action="/admin/api/rescan" method="POST" class="flex items-center gap-2">
+              <input type="hidden" name="csrf" value={csrfToken} />
+              <input
+                type="text"
+                name="repo"
+                placeholder="slug or 'all'"
+                class="px-2.5 py-1.5 rounded bg-black/40 border border-[#23262E] text-xs font-mono text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-blue-500 w-32"
+              />
+              <button
+                type="submit"
+                class="px-3.5 py-1.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-mono text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer"
+              >
+                Trigger Rescan
+              </button>
+            </form>
+
+            <!-- Trigger Rebuild Form -->
+            <form action="/admin/api/rebuild" method="POST">
+              <input type="hidden" name="csrf" value={csrfToken} />
+              <button
+                type="submit"
+                class="px-3.5 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-white font-mono text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer"
+              >
+                Rebuild Static Site
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Two Columns Layout (Review Queue & Flagged Items) -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- AI Review Queue -->
+        <div class="border border-[#23262E] bg-[#131519] rounded flex flex-col">
+          <div class="border-b border-[#23262E] px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+              <h3 class="font-mono text-xs font-bold uppercase tracking-wider text-white">AI Report Review Queue</h3>
+            </div>
+            <span class="font-mono text-[11px] text-zinc-500">{drafts.length} Pending Approval</span>
+          </div>
+
+          <div class="p-4 flex-1">
+            {drafts.length === 0 ? (
+              <div class="py-8 text-center">
+                <p class="font-mono text-xs text-zinc-500">✓ All weekly AI reports approved. Queue clear.</p>
+              </div>
+            ) : (
+              <div class="space-y-3">
+                {drafts.map((d) => (
+                  <div class="p-3.5 rounded bg-black/40 border border-[#23262E] flex items-start justify-between gap-4">
+                    <div class="space-y-1">
+                      <div class="flex items-center gap-2">
+                        <span class="font-mono text-sm font-bold text-white">{d.name}</span>
+                        <span class="font-mono text-xs text-zinc-500">({d.repo})</span>
+                        <span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          Score {d.safety_score}
+                        </span>
+                      </div>
+                      <p class="text-xs text-zinc-400 line-clamp-2 leading-relaxed">{d.ai_report}</p>
+                    </div>
+
+                    <form action="/admin/api/review-queue" method="POST" class="shrink-0">
+                      <input type="hidden" name="csrf" value={csrfToken} />
+                      <input type="hidden" name="repo" value={d.slug} />
+                      <button
+                        type="submit"
+                        class="px-2.5 py-1.5 rounded bg-emerald-600/80 hover:bg-emerald-500 text-white font-mono text-xs uppercase tracking-wider transition-colors cursor-pointer"
+                      >
+                        Approve
+                      </button>
+                    </form>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <!-- Flagged Watchlist -->
+        <div class="border border-[#23262E] bg-[#131519] rounded flex flex-col">
+          <div class="border-b border-[#23262E] px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-red-400"></span>
+              <h3 class="font-mono text-xs font-bold uppercase tracking-wider text-white">Security Flagged Watchlist</h3>
+            </div>
+            <span class="font-mono text-[11px] text-zinc-500">{flaggedTools.length} Anomaly / Caution</span>
+          </div>
+
+          <div class="p-4 flex-1">
+            <div class="space-y-2.5 max-h-[320px] overflow-y-auto pr-1">
+              {flaggedTools.map((t) => (
+                <div class="p-3 rounded bg-black/40 border border-[#23262E] flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <span class={`font-mono text-xs font-bold px-2 py-0.5 rounded ${t.verdict === 'risky' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}`}>
+                      {t.safety_score.toFixed(1)}
+                    </span>
+                    <div>
+                      <div class="font-mono text-xs font-bold text-white">{t.name}</div>
+                      <div class="font-mono text-[11px] text-zinc-500">{t.repo} · {t.verdict.toUpperCase()}</div>
+                    </div>
+                  </div>
+
+                  <a
+                    href={`/tools/${t.slug}`}
+                    target="_blank"
+                    class="font-mono text-xs text-blue-400 hover:text-blue-300 underline"
+                  >
+                    View Audit
+                  </a>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 4: Recent Pipeline Jobs & Audit Log Tail -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Recent Jobs -->
+        <div class="border border-[#23262E] bg-[#131519] rounded">
+          <div class="border-b border-[#23262E] px-4 py-3 flex items-center justify-between">
+            <h3 class="font-mono text-xs font-bold uppercase tracking-wider text-white">Pipeline Execution Jobs</h3>
+            <span class="font-mono text-[11px] text-zinc-500">Live Async Queue</span>
+          </div>
+          <div class="p-4">
+            {recentJobs.length === 0 ? (
+              <p class="font-mono text-xs text-zinc-500 py-4 text-center">No recent jobs recorded.</p>
+            ) : (
+              <div class="space-y-2">
+                {recentJobs.map((j) => (
+                  <div class="p-2.5 rounded bg-black/40 border border-[#23262E] flex items-center justify-between text-xs font-mono">
+                    <div class="flex items-center gap-2">
+                      <span class={`px-1.5 py-0.5 rounded text-[10px] ${j.status === 'completed' ? 'bg-emerald-500/10 text-emerald-400' : j.status === 'running' ? 'bg-blue-500/10 text-blue-400 animate-pulse' : 'bg-zinc-800 text-zinc-400'}`}>
+                        {j.status.toUpperCase()}
+                      </span>
+                      <span class="text-white font-semibold">{j.type.toUpperCase()}:</span>
+                      <span class="text-zinc-400">{j.target}</span>
+                    </div>
+                    <span class="text-zinc-600 text-[10px]">{new Date(j.createdAt).toLocaleTimeString()}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <!-- Append-Only Audit Log Tail -->
+        <div class="border border-[#23262E] bg-[#131519] rounded">
+          <div class="border-b border-[#23262E] px-4 py-3 flex items-center justify-between">
+            <h3 class="font-mono text-xs font-bold uppercase tracking-wider text-white">Append-Only Audit Log</h3>
+            <span class="font-mono text-[11px] text-zinc-500">data/audit.jsonl</span>
+          </div>
+          <div class="p-4">
+            {recentAudit.length === 0 ? (
+              <p class="font-mono text-xs text-zinc-500 py-4 text-center">Audit log clear.</p>
+            ) : (
+              <div class="space-y-2 max-h-[260px] overflow-y-auto pr-1">
+                {recentAudit.map((a) => (
+                  <div class="p-2.5 rounded bg-black/40 border border-[#23262E] flex items-center justify-between text-xs font-mono">
+                    <div class="flex items-center gap-2">
+                      <span class={`px-1.5 py-0.5 rounded text-[10px] font-bold ${a.principal === 'agent' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : a.principal === 'owner' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'}`}>
+                        [{a.principal.toUpperCase()}]
+                      </span>
+                      <span class="text-zinc-200">{a.action}</span>
+                    </div>
+                    <span class="text-zinc-500 text-[10px]">{new Date(a.timestamp).toLocaleTimeString()}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

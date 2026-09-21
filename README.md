@@ -215,3 +215,123 @@ The design system adheres to the **"dark data-forward" (Linear/Vercel)** school:
 - [x] All colors pass WCAG AA contrast
 - [x] Zero tool data hardcoded in components (proven via automated grep)
 
+---
+
+## The /admin Control Plane (Owner + AI Agent Only)
+
+The site includes an isolated, high-security control plane designed strictly for two principals:
+1. **Owner (Human)**: Single hardcoded account with Argon2id password hash, 30-minute rolling session cookies, and CSRF protection on all mutating forms.
+2. **AI Agent (MCP Client)**: Non-interactive programmatic access via dual 256-bit API keys (`ADMIN_API_KEY` for write/control, `ADMIN_API_KEY_READONLY` for monitoring), constant-time token comparison, and rate-limiting.
+
+### Hard Security & Stealth Guarantees
+- **Stealth 404**: Unauthenticated requests to `/admin` or `/admin/api/*` return an empty HTTP 404 (`body.length === 0`). Port scanners and crawlers find no indication that `/admin` exists.
+- **Zero Public Exposure**: Zero mentions of `/admin` in `robots.txt` or `sitemap-index.xml`.
+- **Sliding-Window Rate Limiting**: Max 5 failed auth attempts per minute per IP. 6th attempt triggers HTTP 429 lockout.
+- **Append-Only Audit Log**: Every action (owner logins, agent rescans, content edits, auth failures) is logged to `data/audit.jsonl` with IP, timestamp, and before/after diffs.
+
+---
+
+### 1. Owner Setup (Secrets & First Login)
+
+Run the secret generator script to generate production credentials:
+
+```bash
+# Generate secrets and automatically write to local .env (git-ignored)
+node scripts/gen-admin-secrets.mjs --email admin@safeopensource.org --password "YourStrongPasswordHere" --write-env
+```
+
+This generates:
+- `ADMIN_EMAIL`: Owner login identifier
+- `ADMIN_PASSWORD_HASH`: Argon2id hash of the password
+- `ADMIN_API_KEY`: 32-byte hex key for Agent full write access
+- `ADMIN_API_KEY_READONLY`: 32-byte hex key for Agent monitoring access
+
+#### First Login:
+1. Start the server (`npm run build && npm run preview`).
+2. Navigate directly to `http://localhost:4321/admin/login`.
+3. Sign in with `ADMIN_EMAIL` and your password.
+4. The server validates Argon2id, issues a 30-minute `sos_session` cookie (`HttpOnly; SameSite=Strict; Path=/admin`), and redirects to `/admin`.
+
+---
+
+### 2. Double-Gate Reverse Proxy Setup (Caddy)
+
+For internet-facing production deployments, use Caddy as a double gate in front of the application:
+1. **Layer 1**: IP allowlist + HTTP Basic Auth in Caddy for the human UI path (`/admin`).
+2. **Layer 2**: Internal Argon2id session + CSRF token in the application.
+
+```caddyfile
+safeopensource.org {
+    # Public routes proxied to Astro Node server
+    reverse_proxy 127.0.0.1:4321
+
+    # Double gate for /admin human interface
+    @admin_ui {
+        path /admin /admin/*
+        not path /admin/api/*
+    }
+    handle @admin_ui {
+        # Layer 1A: IP Allowlist (trusted VPN / home IP)
+        remote_ip 192.168.1.0/24 10.0.0.0/8 203.0.113.195/32
+
+        # Layer 1B: Basic Auth
+        basicauth {
+            admin $2a$14$Z1...hash...
+        }
+
+        # Forward to app for Layer 2 app session
+        reverse_proxy 127.0.0.1:4321
+    }
+}
+```
+
+---
+
+### 3. AI Agent & Model Context Protocol (MCP) Integration
+
+The control plane exposes an official MCP server at `scripts/mcp-server.js` using `@modelcontextprotocol/sdk`.
+
+#### Exposed MCP Tools:
+| Tool Name | Parameters | Description |
+| :--- | :--- | :--- |
+| `sos_rescan` | `repos?: string[]` | Triggers immediate security scorecard & commit sweep for one or all tools. |
+| `sos_add_tool` | `repo: string, category: string, name?: string` | Enrolls a new repository, generates safety score and draft AI report. |
+| `sos_update_content`| `repo: string, fields: object` | Updates human-written fields (tagline, use_cases, requirements, who_for). Scores remain pipeline-owned. |
+| `sos_status` | *(none)* | Returns pipeline freshness, cron status, GitHub API budget, and flagged tools. |
+
+#### MCP Client Configuration (`claude_desktop_config.json` or Antigravity / Cursor):
+```json
+{
+  "mcpServers": {
+    "safeopensource": {
+      "command": "node",
+      "args": ["/var/www/safeopensource/scripts/mcp-server.js"],
+      "env": {
+        "ADMIN_API_URL": "http://localhost:4321/admin/api",
+        "ADMIN_API_KEY": "YOUR_32_BYTE_HEX_KEY"
+      }
+    }
+  }
+}
+```
+
+---
+
+### 4. Control Plane Automated Test Suite
+
+Run the automated verification suite to validate all security rules and capabilities:
+
+```bash
+node scripts/verify-admin.js
+```
+
+Verifies:
+- Stealth 404 (empty body) for unauthenticated visitors
+- Agent Bearer token authentication (Read vs Write permissions)
+- Rate limiting (5 failed attempts per min $\rightarrow$ HTTP 429)
+- Owner Argon2id authentication and 30-minute session lifecycle
+- CSRF protection (mutations without token $\rightarrow$ HTTP 403)
+- End-to-end agent rescan and append-only audit trail logging
+- Absence of `/admin` in `robots.txt`, `sitemap-index.xml`, and public HTML
+
+
