@@ -25,7 +25,7 @@ const defaultBlip = blips.find((b) => b.isFlagged) || blips[0];
       <div class="flex items-center gap-3 text-app-subtle text-[11px]">
         <span>WATCHLIST: <strong class="text-white">{telemetry.totalWatched} REPOS</strong></span>
         <span>·</span>
-        <span>SWEEP CADENCE: <strong class="text-white">4.0s CYCLE</strong></span>
+        <span>SECTOR DOMAINS: <strong class="text-white">14 TAXONOMIES</strong></span>
         <span>·</span>
         <span>LAST SWEEP: <strong class="text-emerald-400">{telemetry.latestSweepTimestamp}</strong></span>
       </div>
@@ -37,14 +37,6 @@ const defaultBlip = blips.find((b) => b.isFlagged) || blips[0];
       <!-- RADAR SCOPE SCREEN (7 cols) -->
       <div class="lg:col-span-7 flex flex-col items-center">
         <div class="relative w-[320px] h-[320px] sm:w-[360px] sm:h-[360px] flex items-center justify-center select-none">
-          
-          <!-- Conic-Gradient Sweep Beam Overlay (True angular decay, brightest at leading edge) -->
-          <div
-            class="radar-conic-sweep absolute w-[320px] h-[320px] rounded-full pointer-events-none z-10"
-            style="background: conic-gradient(from 0deg at 50% 50%, rgba(96, 165, 250, 0.45) 0deg, rgba(96, 165, 250, 0.20) 25deg, rgba(96, 165, 250, 0.04) 55deg, transparent 60deg);"
-            aria-hidden="true"
-          ></div>
-
           <!-- Base SVG Scope -->
           <svg
             viewBox="0 0 360 360"
@@ -276,8 +268,8 @@ const defaultBlip = blips.find((b) => b.isFlagged) || blips[0];
     <!-- Bottom Status Strip -->
     <div class="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-app-border font-mono text-[11px] text-app-subtle">
       <div class="flex items-center gap-2">
-        <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-        <span>INSTRUMENT STATUS: CONTINUOUS ACTIVE SWEEP (4.0s REPEAT)</span>
+        <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+        <span>INSTRUMENT STATUS: STATIC POLAR TELEMETRY SCOPE</span>
       </div>
       <div>
         <span>COORDINATES DERIVED MATHEMATICALLY FROM OPENSSF SCORECARD V4</span>
@@ -287,62 +279,8 @@ const defaultBlip = blips.find((b) => b.isFlagged) || blips[0];
 </div>
 
 <style>
-  /* 4-second Conic Beam Sweep Animation */
-  .radar-conic-sweep {
-    animation: radar-sweep 4s linear infinite;
-  }
-
-  .radar-leading-edge {
-    animation: radar-sweep 4s linear infinite;
-  }
-
-  @keyframes radar-sweep {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  /* Phosphor Decay Animation: Flashes on sweep contact, decays to 40% ember over ~3s */
-  @keyframes phosphor-decay {
-    0% {
-      opacity: 1;
-      filter: drop-shadow(0 0 4px currentColor);
-    }
-    15% {
-      opacity: 0.9;
-      filter: drop-shadow(0 0 2px currentColor);
-    }
-    40% {
-      opacity: 0.65;
-      filter: none;
-    }
-    75% {
-      opacity: 0.40;
-      filter: none;
-    }
-    98% {
-      opacity: 0.38;
-      filter: none;
-    }
-    100% {
-      opacity: 1;
-      filter: drop-shadow(0 0 4px currentColor);
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .radar-conic-sweep,
-    .radar-leading-edge,
-    .blip-dot {
-      animation: none !important;
-      opacity: 0.85 !important;
-    }
-    .radar-conic-sweep {
-      transform: rotate(45deg);
-    }
+  .blip-dot {
+    opacity: 0.9;
   }
 </style>
 

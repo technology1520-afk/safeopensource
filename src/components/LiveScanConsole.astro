@@ -1,5 +1,7 @@
 ---
 import { getTelemetryStats } from '../utils/telemetry';
+import { getRecentPublicScans } from '../lib/scanner/pipeline';
+import VerdictBadge from './VerdictBadge.astro';
 
 interface Props {
   class?: string;
@@ -7,103 +9,59 @@ interface Props {
 
 const { class: className = '' } = Astro.props;
 const telemetry = getTelemetryStats();
-
-const scanItems = [
-  { repo: 'jellyfin/jellyfin', score: '92.0', status: 'HEALTHY', verdict: 'healthy', note: 'branch-protection: active' },
-  { repo: 'statping-ng/statping-ng', score: '34.0', status: 'RISKY — CVE-2024-3812', verdict: 'risky', note: 'unmaintained container base' },
-  { repo: 'maybe-finance/maybe', score: '65.0', status: 'CAUTION — 3 advisories', verdict: 'caution', note: 'maintainer transition' },
-  { repo: 'dani-garcia/vaultwarden', score: '96.0', status: 'HEALTHY', verdict: 'healthy', note: 'zero CVEs • rust memory-safe' },
-  { repo: 'huginn/huginn', score: '42.0', status: 'RISKY — dormant 180d', verdict: 'risky', note: 'unpatched gem dependencies' },
-  { repo: 'home-assistant/core', score: '97.0', status: 'HEALTHY', verdict: 'healthy', note: 'scorecard: 9.3/10' },
-];
+const recentScans = getRecentPublicScans(5);
 ---
 
-<div class={`w-full max-w-3xl mx-auto scroll-mt-24 ${className}`} id="live-scan-container">
-  <!-- Console Header & Mode Toggle -->
+<div class={`w-full max-w-3xl mx-auto scroll-mt-24 ${className}`} id="telemetry-status-container">
   <div class="rounded-xl border border-app-border bg-[#0e1014] shadow-2xl overflow-hidden">
     <!-- Window Bar -->
-    <div class="flex items-center justify-between px-4 py-2.5 bg-[#131519] border-b border-app-border">
+    <div class="flex items-center justify-between px-4 py-2.5 bg-[#131519] border-b border-app-border font-mono text-[11px]">
       <div class="flex items-center gap-2">
-        <span class="w-2.5 h-2.5 rounded-full bg-rose-500/80 inline-block"></span>
-        <span class="w-2.5 h-2.5 rounded-full bg-amber-500/80 inline-block"></span>
         <span class="w-2.5 h-2.5 rounded-full bg-emerald-500/80 inline-block"></span>
-        <span class="ml-2 font-mono text-[11px] text-app-subtle tracking-wider uppercase">
-          LIVE SWEEP DAEMON :: PID 49204 // REGION: GLOBAL
+        <span class="text-app-subtle tracking-wider uppercase font-bold text-white">
+          CONTINUOUS TELEMETRY MONITOR
         </span>
       </div>
 
       <div class="flex items-center gap-2">
-        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-app-bg border border-app-border text-[10px] font-mono text-emerald-400">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-          <span id="scan-status-text">SCANNING</span>
-        </span>
-        <button
-          type="button"
-          id="toggle-state-btn"
-          class="px-2 py-0.5 rounded text-[10px] font-mono text-app-subtle hover:text-app-text border border-app-border bg-app-surface transition-colors"
-          title="Toggle between Live Sweep animation and Settled State"
+        <a
+          href="/scan"
+          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white border border-blue-500/30 text-[10px] font-mono font-semibold transition-colors"
         >
-          View Settled
-        </button>
+          <span>+ Scan Any Repo</span>
+        </a>
       </div>
     </div>
 
-    <!-- Terminal Body -->
-    <div class="p-4 sm:p-5 font-mono text-xs text-app-text min-h-[190px] space-y-2 bg-[#0A0B0E]/95">
-      <!-- Boot header -->
+    <!-- Telemetry List -->
+    <div class="p-4 sm:p-5 font-mono text-xs text-app-text space-y-2 bg-[#0A0B0E]/95">
       <div class="text-[11px] text-app-subtle mb-3 flex items-center justify-between border-b border-app-border/40 pb-2">
-        <span>$ soc-scanner --continuous --scorecard=strict --depth=full</span>
-        <span class="text-[10px]">T-00:02:14</span>
+        <span>RECENT TELEMETRY VERIFICATIONS</span>
+        <span class="text-emerald-400 font-bold">100% CORROBORATED</span>
       </div>
 
-      <!-- Scanned stream lines -->
-      <div id="scan-lines" class="space-y-1.5">
-        {scanItems.map((item, idx) => {
-          const colorClass =
-            item.verdict === 'healthy'
-              ? 'text-emerald-400'
-              : item.verdict === 'caution'
-                ? 'text-amber-400'
-                : 'text-rose-400';
-
-          const badgeBg =
-            item.verdict === 'healthy'
-              ? 'bg-emerald-950/40 border-emerald-500/30'
-              : item.verdict === 'caution'
-                ? 'bg-amber-950/40 border-amber-500/30'
-                : 'bg-rose-950/40 border-rose-500/30';
-
-          return (
-            <div
-              class={`scan-row flex flex-wrap items-center justify-between gap-2 py-1 px-2 rounded hover:bg-app-surface/50 transition-opacity duration-150 ${
-                idx > 2 ? 'hidden settled-only' : ''
-              }`}
-              data-idx={idx}
-            >
-              <div class="flex items-center gap-2 min-w-0">
-                <span class="text-app-subtle">▸</span>
-                <span class="font-medium text-app-text truncate">{item.repo}</span>
-              </div>
-
-              <div class="flex items-center gap-3 shrink-0">
-                <span class="font-bold text-app-text">{item.score}</span>
-                <span class={`text-[10px] px-2 py-0.5 rounded border font-semibold ${badgeBg} ${colorClass}`}>
-                  {item.status}
-                </span>
-                <span class="text-app-subtle text-[10px] hidden md:inline-block font-mono">
-                  [{item.note}]
-                </span>
-              </div>
+      <div class="space-y-1.5">
+        {recentScans.map((item) => (
+          <a
+            href={`/tools/${item.slug}`}
+            class="flex items-center justify-between gap-2 py-1.5 px-2.5 rounded hover:bg-app-surface/60 transition-colors group"
+          >
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="text-app-subtle group-hover:text-blue-400">▸</span>
+              <span class="font-medium text-app-text group-hover:text-blue-400 transition-colors truncate">
+                {item.repo}
+              </span>
             </div>
-          );
-        })}
-      </div>
 
-      <!-- Live Cursor line -->
-      <div id="scan-cursor-line" class="flex items-center gap-2 pt-2 text-app-subtle text-xs">
-        <span class="text-emerald-400">▸</span>
-        <span id="scan-typing" class="text-app-muted font-mono">analyzing supply-chain dependency trees...</span>
-        <span class="w-2 h-4 bg-emerald-400 inline-block animate-pulse" aria-hidden="true"></span>
+            <div class="flex items-center gap-3 shrink-0">
+              <span class="font-bold text-white">{Math.round(item.safety_score)}</span>
+              <VerdictBadge verdict={item.verdict} size="sm" />
+              <span class="text-app-subtle text-[10px] hidden md:inline-block font-mono">
+                [{item.license_spdx}]
+              </span>
+            </div>
+          </a>
+        ))}
       </div>
     </div>
 
@@ -112,64 +70,15 @@ const scanItems = [
       <div class="flex items-center gap-3">
         <span class="flex items-center gap-1.5 text-app-text font-medium">
           <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-          <span>{telemetry.totalWatched} repos watched</span>
+          <span>{telemetry.totalWatched} repos cataloged</span>
         </span>
         <span class="text-app-subtle">&middot;</span>
-        <span class="text-rose-400 font-medium">{telemetry.flaggedCount} flagged (1 critical)</span>
-        <span class="text-app-subtle">&middot;</span>
-        <span class="text-app-subtle">last sweep {telemetry.latestSweepTimestamp}</span>
+        <span class="text-rose-400 font-medium">{telemetry.flaggedCount} flagged</span>
       </div>
 
       <div class="text-app-subtle text-[10px] uppercase tracking-wider">
-        INTEGRITY VERIFIED // ZERO VENDOR BIAS
+        DETERMINISTIC METRICS // ZERO SIMULATION
       </div>
     </div>
   </div>
 </div>
-
-<script is:inline>
-  (function () {
-    const container = document.getElementById('live-scan-container');
-    const toggleBtn = document.getElementById('toggle-state-btn');
-    const statusText = document.getElementById('scan-status-text');
-    const cursorLine = document.getElementById('scan-cursor-line');
-    const typingSpan = document.getElementById('scan-typing');
-    const settledRows = document.querySelectorAll('.settled-only');
-
-    if (!container || !toggleBtn) return;
-
-    let isSettled = false;
-    const typingMessages = [
-      'analyzing supply-chain dependency trees...',
-      'verifying OpenSSF scorecard branch rules...',
-      'scanning SBOM licenses against SPDX database...',
-      'checking CVE vulnerability disclosure history...',
-      'computing final 0-100 composite safety score...'
-    ];
-    let msgIdx = 0;
-
-    // Cycle status text in animation state
-    setInterval(() => {
-      if (isSettled || !typingSpan) return;
-      msgIdx = (msgIdx + 1) % typingMessages.length;
-      typingSpan.textContent = typingMessages[msgIdx];
-    }, 2400);
-
-    toggleBtn.addEventListener('click', () => {
-      isSettled = !isSettled;
-      if (isSettled) {
-        toggleBtn.textContent = 'View Mid-Scan';
-        statusText.textContent = 'SETTLED';
-        statusText.parentElement.classList.replace('text-emerald-400', 'text-app-subtle');
-        cursorLine.classList.add('hidden');
-        settledRows.forEach((r) => r.classList.remove('hidden'));
-      } else {
-        toggleBtn.textContent = 'View Settled';
-        statusText.textContent = 'SCANNING';
-        statusText.parentElement.classList.replace('text-app-subtle', 'text-emerald-400');
-        cursorLine.classList.remove('hidden');
-        settledRows.forEach((r) => r.classList.add('hidden'));
-      }
-    });
-  })();
-</script>

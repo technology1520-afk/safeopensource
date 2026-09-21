@@ -1,0 +1,627 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getRecentPublicScans } from '../lib/scanner/pipeline';
+import { getActiveScanQueueDepth } from '../lib/scanner/rate-limiter';
+import VerdictBadge from '../components/VerdictBadge.astro';
+
+export const prerender = false;
+
+const initialRecent = getRecentPublicScans(5);
+const queueDepth = getActiveScanQueueDepth();
+---
+
+<Layout
+  title="Scan Any GitHub Repo — Real-Time Open-Source Safety Audit | SafeOpenSource"
+  description="Paste any public GitHub repository to run an objective on-demand security audit. Live OpenSSF Scorecard evaluation, advisory checks, and deterministic 0–100 Safety Score."
+>
+  <div class="max-w-4xl mx-auto py-4 sm:py-8">
+    <!-- Breadcrumb & Instrument Bar -->
+    <nav class="flex items-center justify-between gap-4 text-xs font-mono text-app-subtle mb-6 pb-3 border-b border-app-border">
+      <div class="flex items-center gap-2">
+        <a href="/" class="hover:text-app-text">Home</a>
+        <span>/</span>
+        <span class="text-app-text font-bold">On-Demand Scanner</span>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-950/40 border border-emerald-500/30 text-[10px] text-emerald-400 font-bold">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          PIPELINE ACTIVE
+        </span>
+        <span class="hidden sm:inline text-[11px] text-app-subtle">
+          QUEUE: <strong class="text-white" id="header-queue-depth">{queueDepth} WAITING</strong>
+        </span>
+      </div>
+    </nav>
+
+    <!-- Scanner Hero & Console -->
+    <header class="text-center max-w-2xl mx-auto mb-8">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/30 bg-blue-950/20 text-blue-400 text-micro font-mono uppercase tracking-wider mb-3">
+        <span>Deterministic Security Telemetry</span>
+      </div>
+      <h1 class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight mb-3">
+        Scan Any GitHub Repository
+      </h1>
+      <p class="text-xs sm:text-sm text-app-muted leading-relaxed font-sans">
+        Paste a public repository URL to run a live OpenSSF Scorecard sweep, GitHub advisory check, and deterministic 0–100 Safety Score report. Zero simulation.
+      </p>
+    </header>
+
+    <!-- Scan Input Card -->
+    <div class="rounded-2xl border border-app-border bg-[#0d1117] p-5 sm:p-7 mb-8 shadow-xl">
+      <form id="scan-form" class="space-y-4">
+        <div>
+          <label for="repo-url" class="block font-mono text-xs text-app-subtle uppercase tracking-wider mb-2">
+            Repository URL or Identifier:
+          </label>
+          <div class="flex flex-col sm:flex-row items-stretch gap-2">
+            <div class="relative flex-1">
+              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-500">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
+                  <path d="M9 18c-4.51 2-5-2-7-2" />
+                </svg>
+              </div>
+              <input
+                type="text"
+                id="repo-url"
+                name="url"
+                required
+                placeholder="github.com/owner/repo or owner/repo"
+                class="w-full pl-10 pr-4 py-3 rounded-xl border border-app-border bg-black/60 text-white placeholder-zinc-500 text-sm font-mono focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                autocomplete="off"
+                spellcheck="false"
+              />
+            </div>
+            <button
+              type="submit"
+              id="submit-scan-btn"
+              class="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-mono text-xs font-bold transition-colors shrink-0 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg class="w-4 h-4 stroke-current" viewBox="0 0 24 24" fill="none" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+              <span>Run Security Audit</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Optional Email for Higher Limits -->
+        <div class="pt-2 border-t border-app-border/40 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-mono text-app-subtle">
+          <div class="flex items-center gap-2">
+            <span class="text-zinc-400">Rate Limit:</span>
+            <span class="text-white">3 scans/hr (anonymous)</span>
+            <span>·</span>
+            <span class="text-blue-400">20/hr with free email</span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <input
+              type="email"
+              id="email-input"
+              placeholder="Optional: operator@example.com (20/hr)"
+              class="px-3 py-1 rounded bg-black/40 border border-app-border text-xs text-white placeholder-zinc-600 font-mono focus:outline-none focus:border-blue-500"
+            />
+          </div>
+        </div>
+
+        <!-- Inline Error Container -->
+        <div
+          id="scan-error"
+          class="hidden p-3.5 rounded-xl border border-rose-500/40 bg-rose-950/20 text-rose-300 text-xs font-mono flex items-start gap-2.5"
+          role="alert"
+        >
+          <svg class="w-4 h-4 text-rose-400 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          <div class="flex-1" id="scan-error-msg"></div>
+        </div>
+      </form>
+
+      <!-- Instant Cached Result Callout -->
+      <div
+        id="cached-banner"
+        class="hidden mt-6 p-4 rounded-xl border border-amber-500/30 bg-amber-950/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+      >
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+          </div>
+          <div>
+            <span class="font-mono text-xs font-bold text-amber-300 block" id="cached-title">
+              RECENTLY AUDITED REPOSITORY
+            </span>
+            <span class="text-xs text-zinc-300 font-sans" id="cached-desc">
+              Scanned 2 days ago. The verified report is ready immediately.
+            </span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 shrink-0 font-mono text-xs">
+          <a
+            href="#"
+            id="cached-view-link"
+            class="px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold transition-colors"
+          >
+            View Existing Report &rarr;
+          </a>
+          <button
+            type="button"
+            id="force-rescan-btn"
+            class="px-3 py-2 rounded-lg border border-app-border bg-app-surface hover:bg-zinc-700 text-zinc-300 hover:text-white transition-colors cursor-pointer"
+          >
+            Rescan Anyway
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Progress Instrument Panel (Honest 5-Stage Pipeline) -->
+    <section id="scan-instrument" class="hidden rounded-2xl border border-app-border bg-[#0a0c10] p-6 sm:p-8 mb-8 shadow-2xl">
+      <!-- Instrument Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-5 border-b border-app-border">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="w-2 h-2 rounded-full bg-blue-400 animate-ping"></span>
+            <span class="text-micro font-mono text-blue-400 uppercase font-bold tracking-wider">
+              LIVE TELEMETRY EXECUTION
+            </span>
+          </div>
+          <h2 class="text-lg font-bold text-white font-mono" id="instrument-target-name">
+            Scanning repository...
+          </h2>
+        </div>
+
+        <div class="flex items-center gap-2 font-mono text-xs">
+          <span class="px-2.5 py-1 rounded bg-[#131519] border border-app-border text-app-subtle">
+            ELAPSED: <strong class="text-white" id="live-elapsed-timer">0.0s</strong>
+          </span>
+          <span class="px-2.5 py-1 rounded bg-[#131519] border border-app-border text-app-subtle">
+            STATUS: <strong class="text-blue-400" id="live-job-status">RUNNING</strong>
+          </span>
+        </div>
+      </div>
+
+      <!-- Progressive Partial Data Reveal Card (Reveals at Stage 1 before score exists) -->
+      <div id="partial-data-card" class="hidden mb-6 p-4 rounded-xl border border-app-border bg-[#131519] grid grid-cols-2 sm:grid-cols-4 gap-3 font-mono text-xs">
+        <div>
+          <span class="text-micro text-app-subtle block">STARS</span>
+          <span class="font-bold text-white text-sm" id="partial-stars">--</span>
+        </div>
+        <div>
+          <span class="text-micro text-app-subtle block">LICENSE</span>
+          <span class="font-bold text-emerald-400 text-sm" id="partial-license">--</span>
+        </div>
+        <div>
+          <span class="text-micro text-app-subtle block">LANGUAGE</span>
+          <span class="font-bold text-blue-400 text-sm" id="partial-language">--</span>
+        </div>
+        <div>
+          <span class="text-micro text-app-subtle block">REPO NAME</span>
+          <span class="font-bold text-white text-sm truncate block" id="partial-name">--</span>
+        </div>
+      </div>
+
+      <!-- 5-Stage Progress List -->
+      <div class="space-y-3 font-mono text-xs" id="stages-list">
+        <!-- Stage 1 -->
+        <div class="stage-row flex items-center justify-between gap-3 p-3 rounded-xl border border-app-border/40 bg-[#131519]/50" data-stage="1">
+          <div class="flex items-center gap-3 min-w-0">
+            <span class="stage-icon w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-zinc-800 text-zinc-400 border border-zinc-700">1</span>
+            <div>
+              <span class="stage-label text-zinc-300 font-medium block">[1/5] Fetching repository metadata</span>
+              <span class="stage-detail text-[11px] text-app-subtle hidden"></span>
+            </div>
+          </div>
+          <span class="stage-timer text-[11px] text-zinc-500">pending</span>
+        </div>
+
+        <!-- Stage 2 -->
+        <div class="stage-row flex items-center justify-between gap-3 p-3 rounded-xl border border-app-border/40 bg-[#131519]/50" data-stage="2">
+          <div class="flex items-center gap-3 min-w-0">
+            <span class="stage-icon w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-zinc-800 text-zinc-400 border border-zinc-700">2</span>
+            <div>
+              <span class="stage-label text-zinc-300 font-medium block">[2/5] Running security checks (OpenSSF Scorecard)</span>
+              <span class="stage-detail text-[11px] text-app-subtle hidden"></span>
+            </div>
+          </div>
+          <span class="stage-timer text-[11px] text-zinc-500">pending</span>
+        </div>
+
+        <!-- Stage 3 -->
+        <div class="stage-row flex items-center justify-between gap-3 p-3 rounded-xl border border-app-border/40 bg-[#131519]/50" data-stage="3">
+          <div class="flex items-center gap-3 min-w-0">
+            <span class="stage-icon w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-zinc-800 text-zinc-400 border border-zinc-700">3</span>
+            <div>
+              <span class="stage-label text-zinc-300 font-medium block">[3/5] Checking advisories &amp; license</span>
+              <span class="stage-detail text-[11px] text-app-subtle hidden"></span>
+            </div>
+          </div>
+          <span class="stage-timer text-[11px] text-zinc-500">pending</span>
+        </div>
+
+        <!-- Stage 4 -->
+        <div class="stage-row flex items-center justify-between gap-3 p-3 rounded-xl border border-app-border/40 bg-[#131519]/50" data-stage="4">
+          <div class="flex items-center gap-3 min-w-0">
+            <span class="stage-icon w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-zinc-800 text-zinc-400 border border-zinc-700">4</span>
+            <div>
+              <span class="stage-label text-zinc-300 font-medium block">[4/5] Computing Safety Score</span>
+              <span class="stage-detail text-[11px] text-app-subtle hidden"></span>
+            </div>
+          </div>
+          <span class="stage-timer text-[11px] text-zinc-500">pending</span>
+        </div>
+
+        <!-- Stage 5 -->
+        <div class="stage-row flex items-center justify-between gap-3 p-3 rounded-xl border border-app-border/40 bg-[#131519]/50" data-stage="5">
+          <div class="flex items-center gap-3 min-w-0">
+            <span class="stage-icon w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-zinc-800 text-zinc-400 border border-zinc-700">5</span>
+            <div>
+              <span class="stage-label text-zinc-300 font-medium block">[5/5] Generating plain-language report</span>
+              <span class="stage-detail text-[11px] text-app-subtle hidden"></span>
+            </div>
+          </div>
+          <span class="stage-timer text-[11px] text-zinc-500">pending</span>
+        </div>
+      </div>
+
+      <!-- Stage Failure Alert & Actionable Retry Button -->
+      <div id="stage-failure-box" class="hidden mt-6 p-4 rounded-xl border border-rose-500/40 bg-rose-950/20 space-y-3">
+        <div class="flex items-start gap-3">
+          <span class="text-rose-400 mt-0.5 shrink-0 font-bold font-mono">✕</span>
+          <div class="space-y-1">
+            <strong class="text-white font-mono text-xs uppercase block" id="failure-stage-name">
+              Pipeline Interrupted
+            </strong>
+            <p class="text-xs text-rose-200 font-sans" id="failure-stage-reason">
+              An upstream timeout occurred while querying security telemetry.
+            </p>
+          </div>
+        </div>
+
+        <div class="pt-2 border-t border-rose-500/20 flex items-center gap-3">
+          <button
+            type="button"
+            id="retry-scan-btn"
+            class="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-mono text-xs font-bold transition-colors cursor-pointer"
+          >
+            Retry Scan
+          </button>
+          <span class="text-[11px] font-mono text-app-subtle">
+            Retry uses the same parameters without consuming additional quota.
+          </span>
+        </div>
+      </div>
+
+      <!-- Completion Dossier Box -->
+      <div id="scan-success-box" class="hidden mt-6 p-5 rounded-xl border border-emerald-500/40 bg-emerald-950/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="space-y-1">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span class="font-mono text-xs font-bold text-emerald-400 uppercase">
+              SCAN AUDIT COMPLETE
+            </span>
+          </div>
+          <h3 class="text-base font-bold text-white font-mono" id="success-summary-title">
+            Safety Score: Calculated
+          </h3>
+          <p class="text-xs text-app-muted font-sans" id="success-summary-desc">
+            Report cataloged as unlisted. Shareable permalink is active.
+          </p>
+        </div>
+
+        <a
+          href="#"
+          id="view-report-btn"
+          class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-mono text-xs font-bold transition-colors shrink-0 text-center cursor-pointer shadow-xs"
+        >
+          View Full Safety Dossier &rarr;
+        </a>
+      </div>
+    </section>
+
+    <!-- Social Proof: Recent Real Scans Strip -->
+    <section class="mt-12 pt-8 border-t border-app-border">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <span class="text-micro font-mono text-blue-400 uppercase block mb-1">
+            VERIFIED TELEMETRY AUDITS
+          </span>
+          <h2 class="text-lg sm:text-xl font-bold text-white">
+            Recent Public Scans
+          </h2>
+        </div>
+        <span class="text-[11px] font-mono text-app-subtle hidden sm:inline">
+          Live feed of audited repositories
+        </span>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" id="recent-scans-grid">
+        {initialRecent.map((tool) => (
+          <a
+            href={`/tools/${tool.slug}`}
+            class="p-3.5 rounded-xl border border-app-border bg-[#131519] hover:border-blue-500/40 hover:bg-[#181a20] transition-all group flex items-center justify-between gap-3"
+          >
+            <div class="min-w-0 flex-1">
+              <span class="font-mono text-xs font-bold text-white group-hover:text-blue-400 transition-colors block truncate">
+                {tool.repo}
+              </span>
+              <span class="text-[11px] font-mono text-app-subtle block">
+                {tool.license_spdx} • {tool.stars?.toLocaleString()} stars
+              </span>
+            </div>
+
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="font-mono font-bold text-sm text-white">
+                {Math.round(tool.safety_score)}
+              </span>
+              <VerdictBadge verdict={tool.verdict} size="sm" />
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+  </div>
+
+  <!-- Pure Vanilla Client Controller (Zero Framework Overhead for Max Lighthouse Score) -->
+  <script is:inline>
+    (function () {
+      const form = document.getElementById('scan-form');
+      const urlInput = document.getElementById('repo-url');
+      const emailInput = document.getElementById('email-input');
+      const submitBtn = document.getElementById('submit-scan-btn');
+      const errorBox = document.getElementById('scan-error');
+      const errorMsg = document.getElementById('scan-error-msg');
+      const cachedBanner = document.getElementById('cached-banner');
+      const cachedDesc = document.getElementById('cached-desc');
+      const cachedViewLink = document.getElementById('cached-view-link');
+      const forceRescanBtn = document.getElementById('force-rescan-btn');
+
+      const instrument = document.getElementById('scan-instrument');
+      const targetName = document.getElementById('instrument-target-name');
+      const elapsedTimer = document.getElementById('live-elapsed-timer');
+      const jobStatusEl = document.getElementById('live-job-status');
+
+      const partialCard = document.getElementById('partial-data-card');
+      const partialStars = document.getElementById('partial-stars');
+      const partialLicense = document.getElementById('partial-license');
+      const partialLanguage = document.getElementById('partial-language');
+      const partialName = document.getElementById('partial-name');
+
+      const failureBox = document.getElementById('stage-failure-box');
+      const failureName = document.getElementById('failure-stage-name');
+      const failureReason = document.getElementById('failure-stage-reason');
+      const retryBtn = document.getElementById('retry-scan-btn');
+
+      const successBox = document.getElementById('scan-success-box');
+      const successTitle = document.getElementById('success-summary-title');
+      const viewReportBtn = document.getElementById('view-report-btn');
+
+      let currentJobId = null;
+      let timerInterval = null;
+      let pollTimeout = null;
+      let startTime = 0;
+
+      function showError(msg) {
+        errorMsg.textContent = msg;
+        errorBox.classList.remove('hidden');
+      }
+
+      function hideError() {
+        errorBox.classList.add('hidden');
+      }
+
+      function resetStages() {
+        document.querySelectorAll('.stage-row').forEach((row, idx) => {
+          const icon = row.querySelector('.stage-icon');
+          const timer = row.querySelector('.stage-timer');
+          const detail = row.querySelector('.stage-detail');
+          const label = row.querySelector('.stage-label');
+
+          icon.className = 'stage-icon w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-zinc-800 text-zinc-400 border border-zinc-700';
+          icon.textContent = String(idx + 1);
+          timer.className = 'stage-timer text-[11px] text-zinc-500';
+          timer.textContent = 'pending';
+          detail.textContent = '';
+          detail.classList.add('hidden');
+          label.className = 'stage-label text-zinc-300 font-medium block';
+        });
+
+        failureBox.classList.add('hidden');
+        successBox.classList.add('hidden');
+        partialCard.classList.add('hidden');
+      }
+
+      function updateStageUI(stageIdx, status, duration, detail) {
+        const row = document.querySelector(`.stage-row[data-stage="${stageIdx + 1}"]`);
+        if (!row) return;
+
+        const icon = row.querySelector('.stage-icon');
+        const timer = row.querySelector('.stage-timer');
+        const detailEl = row.querySelector('.stage-detail');
+        const label = row.querySelector('.stage-label');
+
+        if (status === 'running') {
+          icon.className = 'stage-icon w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-blue-500/20 text-blue-400 border border-blue-500/40 animate-pulse';
+          icon.textContent = '⏳';
+          timer.className = 'stage-timer text-[11px] text-blue-400 font-bold';
+          timer.textContent = 'running...';
+          label.className = 'stage-label text-white font-bold block';
+        } else if (status === 'completed') {
+          icon.className = 'stage-icon w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40';
+          icon.textContent = '✓';
+          timer.className = 'stage-timer text-[11px] text-emerald-400 font-bold';
+          timer.textContent = duration ? `${duration}s` : '✓';
+          if (detail) {
+            detailEl.textContent = detail;
+            detailEl.classList.remove('hidden');
+          }
+          label.className = 'stage-label text-zinc-300 font-medium block';
+        } else if (status === 'failed') {
+          icon.className = 'stage-icon w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-rose-500/20 text-rose-400 border border-rose-500/40';
+          icon.textContent = '✕';
+          timer.className = 'stage-timer text-[11px] text-rose-400 font-bold';
+          timer.textContent = 'failed';
+          label.className = 'stage-label text-rose-300 font-bold block';
+        }
+      }
+
+      async function triggerScan(force = false) {
+        hideError();
+        cachedBanner.classList.add('hidden');
+        const url = urlInput.value.trim();
+        const email = emailInput.value.trim();
+
+        if (!url) {
+          showError('Please enter a GitHub repository URL.');
+          return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.classList.add('opacity-50');
+
+        try {
+          const res = await fetch('/api/scan', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url, email, force }),
+          });
+
+          const data = await res.json();
+
+          if (!res.ok) {
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('opacity-50');
+            showError(data.error || 'Failed to start scan.');
+            return;
+          }
+
+          // Handle Instant Cached Result (scanned < 7 days ago)
+          if (data.cached && data.tool) {
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('opacity-50');
+            cachedDesc.textContent = `${data.message}. Safety Score: ${data.tool.safety_score}/100 (${data.tool.verdict.toUpperCase()}).`;
+            cachedViewLink.href = `/tools/${data.tool.slug}`;
+            cachedBanner.classList.remove('hidden');
+            return;
+          }
+
+          // Started real scan job
+          currentJobId = data.jobId;
+          instrument.classList.remove('hidden');
+          targetName.textContent = url.replace(/^https?:\/\/github\.com\//, '').replace(/\/$/, '');
+          resetStages();
+
+          startTime = Date.now();
+          clearInterval(timerInterval);
+          timerInterval = setInterval(() => {
+            const sec = ((Date.now() - startTime) / 1000).toFixed(1);
+            elapsedTimer.textContent = `${sec}s`;
+          }, 100);
+
+          pollJobStatus(currentJobId);
+        } catch (err) {
+          submitBtn.disabled = false;
+          submitBtn.classList.remove('opacity-50');
+          showError(err.message || 'Network error occurred while connecting to scanner.');
+        }
+      }
+
+      async function pollJobStatus(jobId) {
+        clearTimeout(pollTimeout);
+        try {
+          const res = await fetch(`/api/scan/${jobId}`);
+          if (!res.ok) {
+            const data = await res.json();
+            throw new Error(data.error || 'Job not found');
+          }
+
+          const job = await res.json();
+          jobStatusEl.textContent = job.status.toUpperCase();
+
+          // Update stages
+          if (Array.isArray(job.stages)) {
+            job.stages.forEach((st, idx) => {
+              updateStageUI(idx, st.status, st.durationSeconds, st.message);
+            });
+          }
+
+          // Reveal partial data from Stage 1 as soon as available
+          if (job.partialData && job.partialData.stars != null) {
+            partialStars.textContent = Number(job.partialData.stars).toLocaleString();
+            partialLicense.textContent = job.partialData.license || 'Unknown';
+            partialLanguage.textContent = job.partialData.language || 'Codebase';
+            partialName.textContent = job.partialData.name || job.repo;
+            partialCard.classList.remove('hidden');
+          }
+
+          // Check terminal states
+          if (job.status === 'completed') {
+            clearInterval(timerInterval);
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('opacity-50');
+            jobStatusEl.textContent = 'COMPLETED';
+            jobStatusEl.className = 'text-emerald-400';
+
+            const tool = job.result;
+            if (tool) {
+              successTitle.textContent = `${tool.name}: Safety Score ${tool.safety_score}/100 (${tool.verdict.toUpperCase()})`;
+              viewReportBtn.href = `/tools/${tool.slug}`;
+              successBox.classList.remove('hidden');
+            }
+            return;
+          }
+
+          if (job.status === 'failed') {
+            clearInterval(timerInterval);
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('opacity-50');
+            jobStatusEl.textContent = 'FAILED';
+            jobStatusEl.className = 'text-rose-400';
+
+            failureName.textContent = `Stage ${job.failedStage || 1} Error`;
+            failureReason.textContent = job.error || 'An error occurred during this stage.';
+            failureBox.classList.remove('hidden');
+            return;
+          }
+
+          // Poll again
+          pollTimeout = setTimeout(() => pollJobStatus(jobId), 700);
+        } catch (err) {
+          clearInterval(timerInterval);
+          submitBtn.disabled = false;
+          submitBtn.classList.remove('opacity-50');
+          failureName.textContent = 'Connection Interrupted';
+          failureReason.textContent = err.message;
+          failureBox.classList.remove('hidden');
+        }
+      }
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        triggerScan(false);
+      });
+
+      forceRescanBtn.addEventListener('click', function () {
+        triggerScan(true);
+      });
+
+      retryBtn.addEventListener('click', function () {
+        triggerScan(true);
+      });
+
+      // Auto-trigger if ?url= parameter passed in query string
+      const urlParams = new URLSearchParams(window.location.search);
+      const queryUrl = urlParams.get('url');
+      if (queryUrl) {
+        urlInput.value = queryUrl;
+        triggerScan(false);
+      }
+    })();
+  </script>
+</Layout>

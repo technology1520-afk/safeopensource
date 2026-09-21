@@ -1,4 +1,6 @@
 ---
+import fs from 'node:fs';
+import path from 'node:path';
 import Layout from '../../layouts/Layout.astro';
 import ScoreRing from '../../components/ScoreRing.astro';
 import VerdictBadge from '../../components/VerdictBadge.astro';
@@ -12,23 +14,38 @@ import AdSlot from '../../components/AdSlot.astro';
 import TrustBand from '../../components/TrustBand.astro';
 import ToolDossier from '../../components/ToolDossier.astro';
 import AgentSafetySignals from '../../components/AgentSafetySignals.astro';
-import { getAllTools, getAlternatives } from '../../utils/tools';
+import { getToolBySlug, getAlternatives } from '../../utils/tools';
 import { getCategoryBySlug } from '../../data/categories';
+import { getTool } from '../../lib/admin/tools-service';
 import type { ToolData } from '../../types/tool';
 
-export async function getStaticPaths() {
-  const tools = getAllTools();
-  return tools.map((tool) => ({
-    params: { slug: tool.slug },
-    props: { tool }
-  }));
+export const prerender = false;
+
+const { slug } = Astro.params;
+if (!slug) {
+  return new Response('Not found', { status: 404 });
 }
 
-interface Props {
-  tool: ToolData;
+// 1. Look up in catalog
+let toolRecord = (getTool(slug) || getToolBySlug(slug)) as ToolData | null;
+
+// 2. Look up in data/scans for newly scanned unlisted tools
+if (!toolRecord) {
+  const scanFile = path.join(process.cwd(), 'data', 'scans', `${slug}.json`);
+  if (fs.existsSync(scanFile)) {
+    try {
+      toolRecord = JSON.parse(fs.readFileSync(scanFile, 'utf-8'));
+    } catch {
+      // Continue
+    }
+  }
 }
 
-const { tool } = Astro.props;
+if (!toolRecord) {
+  return new Response('Tool not found', { status: 404 });
+}
+
+const tool = toolRecord;
 const category = getCategoryBySlug(tool.category);
 const alternatives = getAlternatives(tool, 3);
 const isAiAgent = tool.category === 'ai-agents';
@@ -72,6 +89,10 @@ const jsonLd = {
 <Layout
   title={`${tool.name} — Safety Score ${tool.safety_score}/100 & Repo Scan | SafeOpenSource`}
   description={`Independent security and maintenance review for ${tool.name}. Verified Safety Score ${tool.safety_score}/100, OpenSSF Scorecard ${tool.scorecard ?? 'N/A'}, license terms, and risk factors.`}
+  canonicalUrl={`https://safeopensource.org/tools/${tool.slug}`}
+  ogType="article"
+  ogImage={`https://safeopensource.org/badge/${tool.repo}.svg`}
+  noindex={!!tool.unlisted}
   jsonLd={jsonLd}
 >
   <!-- Breadcrumb navigation -->
@@ -286,4 +307,77 @@ const jsonLd = {
       </div>
     )}
   </section>
+
+  <!-- 8. "Scan Your Stack" Maintainer CTA & Badge Section -->
+  <section class="mt-12 rounded-2xl border border-app-border bg-[#0d1117] p-6 sm:p-8">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+      <div class="space-y-2 max-w-xl">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-blue-400"></span>
+          <span class="text-micro font-mono text-blue-400 uppercase tracking-wider font-bold">
+            MAINTAINER TOOLKIT &amp; BADGING
+          </span>
+        </div>
+        <h2 class="text-xl font-bold text-white">
+          Embed Live Safety Score Badge
+        </h2>
+        <p class="text-xs sm:text-sm text-app-muted leading-relaxed font-sans">
+          Maintain this repository or depend on it in production? Embed a live 0–100 Safety Score badge in your README. Badges are cached for 24 hours and updated automatically.
+        </p>
+      </div>
+
+      <div class="shrink-0 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+        <a
+          href="/scan"
+          class="px-4 py-2.5 rounded-xl border border-blue-500/40 bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white font-mono text-xs font-bold text-center transition-colors"
+        >
+          Scan Another Repo &rarr;
+        </a>
+      </div>
+    </div>
+
+    <!-- Live Badge Preview & Copy Box -->
+    <div class="mt-6 pt-6 border-t border-app-border/60 grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+      <div class="md:col-span-5 flex flex-col items-start gap-2">
+        <span class="text-[10px] font-mono text-app-subtle uppercase">Live SVG Badge Preview:</span>
+        <img
+          src={`/badge/${tool.repo}.svg`}
+          alt={`SafeOpenSource score badge for ${tool.name}`}
+          class="h-7 border border-app-border/40 rounded shadow-xs"
+          loading="lazy"
+        />
+      </div>
+
+      <div class="md:col-span-7">
+        <div class="relative rounded-lg bg-black/60 border border-app-border p-3 font-mono text-xs text-zinc-300 flex items-center justify-between gap-2 overflow-x-auto">
+          <code class="text-[11px] whitespace-nowrap text-zinc-400">
+            {`[![SafeOpenSource Score](https://safeopensource.org/badge/${tool.repo}.svg)](https://safeopensource.org/tools/${tool.slug})`}
+          </code>
+          <button
+            type="button"
+            class="px-2.5 py-1 rounded bg-app-surface hover:bg-zinc-700 text-[10px] font-mono text-white shrink-0 border border-app-border copy-badge-btn cursor-pointer"
+            data-snippet={`[![SafeOpenSource Score](https://safeopensource.org/badge/${tool.repo}.svg)](https://safeopensource.org/tools/${tool.slug})`}
+          >
+            Copy Markdown
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    document.querySelectorAll('.copy-badge-btn').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const snippet = btn.getAttribute('data-snippet');
+        if (snippet) {
+          await navigator.clipboard.writeText(snippet);
+          const prev = btn.textContent;
+          btn.textContent = 'Copied!';
+          setTimeout(() => {
+            btn.textContent = prev;
+          }, 2000);
+        }
+      });
+    });
+  </script>
 </Layout>

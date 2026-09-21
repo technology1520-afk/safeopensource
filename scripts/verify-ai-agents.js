@@ -1,5 +1,3 @@
-import http from 'node:http';
-
 async function test() {
   const assert = (cond, msg) => {
     if (!cond) throw new Error('FAIL: ' + msg);

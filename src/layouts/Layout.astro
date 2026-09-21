@@ -8,6 +8,8 @@ interface Props {
   description: string;
   canonicalUrl?: string;
   ogType?: string;
+  ogImage?: string;
+  noindex?: boolean;
   jsonLd?: Record<string, any>;
 }
 
@@ -16,6 +18,8 @@ const {
   description,
   canonicalUrl = Astro.url.href,
   ogType = 'website',
+  ogImage,
+  noindex = false,
   jsonLd
 } = Astro.props;
 
@@ -34,6 +38,7 @@ const siteName = 'SafeOpenSource';
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalUrl} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
 
     <!-- OpenGraph / Facebook -->
     <meta property="og:type" content={ogType} />
@@ -41,12 +46,14 @@ const siteName = 'SafeOpenSource';
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:site_name" content={siteName} />
+    {ogImage && <meta property="og:image" content={ogImage} />}
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content={canonicalUrl} />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
+    {ogImage && <meta name="twitter:image" content={ogImage} />}
 
     <!-- Font preconnect & load -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />

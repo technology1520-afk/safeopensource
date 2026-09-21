@@ -1,13 +1,11 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import LiveScanConsole from '../components/LiveScanConsole.astro';
-import DetectionRadarHero from '../components/DetectionRadarHero.astro';
 import FlagWall from '../components/FlagWall.astro';
 import CategoryRadar from '../components/CategoryRadar.astro';
 import BentoRow from '../components/BentoRow.astro';
 import CategoryCard from '../components/CategoryCard.astro';
 import AdSlot from '../components/AdSlot.astro';
-import SearchDialog from '../components/SearchDialog';
 import TrustBand from '../components/TrustBand.astro';
 import TopRepos from '../components/TopRepos.astro';
 import TrendingRepos from '../components/TrendingRepos.astro';
@@ -39,41 +37,9 @@ const categoriesWithStats = categories.map((cat) => {
 >
   <!-- Hero Section: Security Ops Center Console -->
   <section class="py-6 sm:py-12 max-w-4xl mx-auto text-center">
-    <!-- Instrument View Switcher -->
-    <div class="inline-flex items-center gap-1.5 p-1 rounded-full border border-app-border bg-[#131519] text-xs font-mono mb-8" role="tablist" aria-label="Hero instrument view">
-      <button
-        type="button"
-        id="btn-hero-console"
-        role="tab"
-        aria-selected="true"
-        class="px-3.5 py-1.5 rounded-full bg-blue-600 text-white font-medium shadow-xs transition-colors"
-      >
-        Live Scan Terminal
-      </button>
-      <button
-        type="button"
-        id="btn-hero-radar"
-        role="tab"
-        aria-selected="false"
-        class="px-3.5 py-1.5 rounded-full text-app-muted hover:text-app-text hover:bg-app-surface transition-colors"
-      >
-        Defense Radar Scope
-      </button>
-    </div>
-
-    <!-- 1. Live Scan Console (Primary Deliverable) -->
-    <div id="hero-view-console" class="block mb-8">
-      <LiveScanConsole />
-    </div>
-
-    <!-- Alternative Direction: Detection Radar Hero -->
-    <div id="hero-view-radar" class="hidden mb-8">
-      <DetectionRadarHero />
-    </div>
-
-    <!-- Headline and Core Mission Statement sitting beneath the console -->
-    <div class="max-w-2xl mx-auto mt-8">
-      <div class="inline-flex items-center gap-2 text-micro text-emerald-400 font-mono mb-3">
+    <!-- Headline and Core Mission Statement -->
+    <div class="max-w-3xl mx-auto mb-8">
+      <div class="inline-flex items-center gap-2 text-micro text-emerald-400 font-mono mb-3 px-3 py-1 rounded-full border border-emerald-500/30 bg-emerald-950/20">
         <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
         <span>SECURITY OPS CENTER :: CONTINUOUS REPO TELEMETRY</span>
       </div>
@@ -82,14 +48,52 @@ const categoriesWithStats = categories.map((cat) => {
         We watch these projects so you don't get <span class="text-rose-400">burned</span>.
       </h1>
 
-      <p class="text-sm sm:text-base text-app-muted leading-relaxed mb-6">
+      <p class="text-sm sm:text-base text-app-muted leading-relaxed mb-6 max-w-2xl mx-auto font-sans">
         Not a software directory. A live mission-control station monitoring open-source software with verifiable 0–100 Safety Scores, OpenSSF Scorecards, and incident alerts.
       </p>
 
-      <!-- Primary Search Island Trigger beneath the Headline -->
-      <div class="flex justify-center max-w-lg mx-auto mb-4">
-        <SearchDialog client:load tools={allTools} />
-      </div>
+      <!-- Real-Time On-Demand Scanner Input Box -->
+      <form action="/scan" method="GET" class="w-full max-w-xl mx-auto mb-4">
+        <div class="flex flex-col sm:flex-row items-stretch gap-2 p-1.5 rounded-2xl border border-app-border bg-[#0e1014] shadow-xl">
+          <div class="relative flex-1">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-500">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+            </div>
+            <input
+              type="text"
+              name="url"
+              required
+              placeholder="Paste any GitHub repository (e.g. github.com/owner/repo)"
+              class="w-full pl-10 pr-3 py-2.5 rounded-xl bg-black/40 text-white placeholder-zinc-500 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-blue-500 border border-transparent"
+              autocomplete="off"
+              spellcheck="false"
+            />
+          </div>
+          <button
+            type="submit"
+            class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-mono text-xs font-bold transition-colors shrink-0 flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+          >
+            <span>Scan Any Repo</span>
+            <span>&rarr;</span>
+          </button>
+        </div>
+
+        <div class="flex items-center justify-center gap-2 mt-2 font-mono text-[11px] text-app-subtle">
+          <span>Popular:</span>
+          <a href="/scan?url=jellyfin/jellyfin" class="text-zinc-400 hover:text-white underline">jellyfin</a>
+          <span>&middot;</span>
+          <a href="/scan?url=dani-garcia/vaultwarden" class="text-zinc-400 hover:text-white underline">vaultwarden</a>
+          <span>&middot;</span>
+          <a href="/scan?url=louislam/uptime-kuma" class="text-zinc-400 hover:text-white underline">uptime-kuma</a>
+        </div>
+      </form>
+    </div>
+
+    <!-- Live Telemetry Monitor (Real Data Strip) -->
+    <div class="block mb-8">
+      <LiveScanConsole />
     </div>
   </section>
 
@@ -202,32 +206,3 @@ const categoriesWithStats = categories.map((cat) => {
     </div>
   </section>
 </Layout>
-
-<script is:inline>
-  (function () {
-    const btnConsole = document.getElementById('btn-hero-console');
-    const btnRadar = document.getElementById('btn-hero-radar');
-    const viewConsole = document.getElementById('hero-view-console');
-    const viewRadar = document.getElementById('hero-view-radar');
-
-    if (!btnConsole || !btnRadar || !viewConsole || !viewRadar) return;
-
-    btnConsole.addEventListener('click', () => {
-      btnConsole.className = 'px-3 py-1 rounded-full bg-blue-600 text-white font-medium shadow-xs transition-colors';
-      btnRadar.className = 'px-3 py-1 rounded-full text-app-muted hover:text-app-text hover:bg-app-surface transition-colors';
-      viewConsole.classList.remove('hidden');
-      viewConsole.classList.add('block');
-      viewRadar.classList.remove('block');
-      viewRadar.classList.add('hidden');
-    });
-
-    btnRadar.addEventListener('click', () => {
-      btnRadar.className = 'px-3 py-1 rounded-full bg-blue-600 text-white font-medium shadow-xs transition-colors';
-      btnConsole.className = 'px-3 py-1 rounded-full text-app-muted hover:text-app-text hover:bg-app-surface transition-colors';
-      viewRadar.classList.remove('hidden');
-      viewRadar.classList.add('block');
-      viewConsole.classList.remove('block');
-      viewConsole.classList.add('hidden');
-    });
-  })();
-</script>

@@ -15,6 +15,8 @@ export interface InstallCommands {
   go?: string;
   brew?: string;
   curl?: string;
+  clone?: string;
+  manual?: string;
 }
 
 export interface ToolRequirements {
@@ -109,6 +111,9 @@ export interface ToolData {
   cves?: ToolCve[];
   permission_model?: AgentPermissionModel;
   incident_history?: AgentIncident[];
+  // Scanner & Admin Workflow
+  unlisted?: boolean;
+  ai_report_status?: 'draft' | 'approved';
 }
 
 export interface CategoryData {
