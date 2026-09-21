@@ -77,6 +77,11 @@ function formatDays(days: number): string {
       <span class="px-1.5 py-0.5 rounded bg-app-bg border border-app-border text-[10px] text-app-muted">
         {tool.license_spdx}
       </span>
+
+      <!-- Freshness Scan Timestamp -->
+      <span class="text-[10px] text-app-subtle hidden sm:inline" title="Automated static security sweep date">
+        {tool.scanned_at.split('T')[0]}
+      </span>
     </div>
 
     <div>

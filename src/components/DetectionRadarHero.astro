@@ -1,139 +1,299 @@
 ---
+import { getTelemetryStats } from '../utils/telemetry';
+
 interface Props {
   class?: string;
 }
 
 const { class: className = '' } = Astro.props;
-
-// Flagged and healthy repo ping targets
-const targets = [
-  { name: 'huginn', angle: 45, radius: 130, color: '#EF4444', label: 'huginn (42.0 - DORMANT)', isFlagged: true },
-  { name: 'statping-ng', angle: 120, radius: 110, color: '#F59E0B', label: 'statping-ng (56.0 - BUS FACTOR)', isFlagged: true },
-  { name: 'jellyfin', angle: 210, radius: 155, color: '#10B981', label: 'jellyfin (91.8 - VERIFIED)', isFlagged: false },
-  { name: 'vaultwarden', angle: 290, radius: 165, color: '#10B981', label: 'vaultwarden (95.0 - AUDITED)', isFlagged: false },
-  { name: 'owncloud', angle: 340, radius: 95, color: '#F59E0B', label: 'owncloud (63.0 - LEGACY)', isFlagged: true }
-];
+const telemetry = getTelemetryStats();
+const blips = telemetry.radarBlips.slice(0, 12); // Display top 12 representative blips
+const defaultBlip = blips.find((b) => b.isFlagged) || blips[0];
 ---
 
-<div class={`w-full max-w-3xl mx-auto ${className}`} id="detection-radar-hero">
-  <div class="rounded-xl border border-app-border bg-[#0a0c10] shadow-2xl p-6 sm:p-8 relative overflow-hidden">
-    <!-- Top Telemetry Header -->
-    <div class="flex items-center justify-between pb-4 border-b border-app-border text-xs font-mono">
-      <div class="flex items-center gap-2">
-        <span class="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span>
-        <span class="text-blue-400 font-bold uppercase tracking-wider text-[11px]">
-          DIRECTION B: DETECTION RADAR SWEEP
+<div class={`w-full max-w-4xl mx-auto ${className}`} id="detection-radar-scope">
+  <div class="rounded-xl border border-app-border bg-[#0a0c10] shadow-2xl p-6 sm:p-8 relative">
+    
+    <!-- Top Telemetry Header (Instrument Bar, zero mockup flavor text) -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-app-border text-xs font-mono">
+      <div class="flex items-center gap-2.5">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+        <span class="text-app-text font-bold uppercase tracking-wider text-xs">
+          CONTINUOUS DEFENSE RADAR SCOPE
         </span>
       </div>
-      <span class="text-app-subtle text-[10px] hidden sm:inline-block">
-        FREQ: 1420 MHZ // AZIMUTH: CONTINUOUS
-      </span>
+      <div class="flex items-center gap-3 text-app-subtle text-[11px]">
+        <span>WATCHLIST: <strong class="text-white">{telemetry.totalWatched} REPOS</strong></span>
+        <span>·</span>
+        <span>SWEEP CADENCE: <strong class="text-white">4.0s CYCLE</strong></span>
+        <span>·</span>
+        <span>LAST SWEEP: <strong class="text-emerald-400">{telemetry.latestSweepTimestamp}</strong></span>
+      </div>
     </div>
 
-    <!-- Center SVG Radar Screen -->
-    <div class="relative w-[280px] h-[280px] sm:w-[340px] sm:h-[340px] mx-auto my-6 flex items-center justify-center">
-      <svg
-        viewBox="0 0 360 360"
-        class="w-full h-full select-none"
-        aria-label="Detection Radar Screen"
-      >
-        <defs>
-          <!-- Sweep Gradient Cone -->
-          <linearGradient id="sweep-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#3B82F6" stop-opacity="0.4" />
-            <stop offset="50%" stop-color="#3B82F6" stop-opacity="0.1" />
-            <stop offset="100%" stop-color="#3B82F6" stop-opacity="0" />
-          </linearGradient>
-        </defs>
+    <!-- Scope Grid & Layout: Radar Scope (Left) + Telemetry Readout (Right) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 my-6 items-center">
+      
+      <!-- RADAR SCOPE SCREEN (7 cols) -->
+      <div class="lg:col-span-7 flex flex-col items-center">
+        <div class="relative w-[320px] h-[320px] sm:w-[360px] sm:h-[360px] flex items-center justify-center select-none">
+          
+          <!-- Conic-Gradient Sweep Beam Overlay (True angular decay, brightest at leading edge) -->
+          <div
+            class="radar-conic-sweep absolute w-[320px] h-[320px] rounded-full pointer-events-none z-10"
+            style="background: conic-gradient(from 0deg at 50% 50%, rgba(96, 165, 250, 0.45) 0deg, rgba(96, 165, 250, 0.20) 25deg, rgba(96, 165, 250, 0.04) 55deg, transparent 60deg);"
+            aria-hidden="true"
+          ></div>
 
-        <!-- Concentric Range Circles -->
-        <circle cx="180" cy="180" r="160" fill="none" stroke="#23262E" stroke-width="1.5" />
-        <circle cx="180" cy="180" r="120" fill="none" stroke="#23262E" stroke-width="1" stroke-dasharray="3 3" />
-        <circle cx="180" cy="180" r="80" fill="none" stroke="#23262E" stroke-width="1" stroke-dasharray="2 2" />
-        <circle cx="180" cy="180" r="40" fill="none" stroke="#23262E" stroke-width="1" />
+          <!-- Base SVG Scope -->
+          <svg
+            viewBox="0 0 360 360"
+            class="w-full h-full"
+            aria-label="Radar Scope Display"
+          >
+            <defs>
+              <!-- Bezel Clip to ensure crosshairs never overshoot bezel -->
+              <clipPath id="bezel-clip">
+                <circle cx="180" cy="180" r="160" />
+              </clipPath>
+            </defs>
 
-        <!-- Crosshair Axes -->
-        <line x1="180" y1="10" x2="180" y2="350" stroke="#1c1f26" stroke-width="1" />
-        <line x1="10" y1="180" x2="350" y2="180" stroke="#1c1f26" stroke-width="1" />
+            <!-- Outer Bezel Ring -->
+            <circle cx="180" cy="180" r="160" fill="#08090C" stroke="#23262E" stroke-width="2" />
 
-        <!-- Rotating Sweep Beam -->
-        <g class="radar-sweep-beam origin-[180px_180px]">
-          <line x1="180" y1="180" x2="180" y2="20" stroke="#60A5FA" stroke-width="2" opacity="0.9" />
-          <path
-            d="M180,180 L180,20 A160,160 0 0,0 66,66 Z"
-            fill="url(#sweep-gradient)"
-            opacity="0.7"
-          />
-        </g>
+            <!-- Range Rings (Clipped at Bezel) -->
+            <g clip-path="url(#bezel-clip)">
+              <circle cx="180" cy="180" r="120" fill="none" stroke="#1c1f26" stroke-width="1" stroke-dasharray="3 3" />
+              <circle cx="180" cy="180" r="80" fill="none" stroke="#1c1f26" stroke-width="1" stroke-dasharray="2 2" />
+              <circle cx="180" cy="180" r="40" fill="none" stroke="#1c1f26" stroke-width="1" />
 
-        <!-- Center Hub -->
-        <circle cx="180" cy="180" r="4" fill="#60A5FA" />
+              <!-- Crosshairs strictly trimmed at the 160 radius bezel -->
+              <line x1="180" y1="20" x2="180" y2="340" stroke="#1f232b" stroke-width="1.5" />
+              <line x1="20" y1="180" x2="340" y2="180" stroke="#1f232b" stroke-width="1.5" />
 
-        <!-- Plotted Targets -->
-        {targets.map((t) => {
-          const rad = ((t.angle - 90) * Math.PI) / 180;
-          const tx = 180 + t.radius * Math.cos(rad);
-          const ty = 180 + t.radius * Math.sin(rad);
-
-          return (
-            <g class="target-node" data-target={t.name}>
-              {t.isFlagged && (
-                <circle
-                  cx={tx}
-                  cy={ty}
-                  r="12"
-                  fill="none"
-                  stroke={t.color}
-                  stroke-width="1.5"
-                  class="animate-ping opacity-75 origin-[center]"
-                />
-              )}
-              <circle
-                cx={tx}
-                cy={ty}
-                r="5"
-                fill={t.color}
-                stroke="#0A0B0E"
-                stroke-width="2"
-              />
-              <text
-                x={tx + 8}
-                y={ty + 3}
-                fill={t.color}
-                font-family="monospace"
-                font-size="8"
-                font-weight="bold"
-              >
-                {t.name.toUpperCase()}
-              </text>
+              <!-- 45-degree angle guide dashes -->
+              <line x1="67" y1="67" x2="293" y2="293" stroke="#16181f" stroke-width="1" stroke-dasharray="2 4" />
+              <line x1="67" y1="293" x2="293" y2="67" stroke="#16181f" stroke-width="1" stroke-dasharray="2 4" />
             </g>
-          );
-        })}
-      </svg>
+
+            <!-- Cardinal Bearing Ticks & Labels -->
+            <!-- 000° (N) -->
+            <line x1="180" y1="16" x2="180" y2="24" stroke="#3B82F6" stroke-width="2" />
+            <text x="180" y="12" fill="#6B7280" font-family="monospace" font-size="9" text-anchor="middle" font-weight="bold">000°</text>
+
+            <!-- 090° (E) -->
+            <line x1="336" y1="180" x2="344" y2="180" stroke="#3B82F6" stroke-width="2" />
+            <text x="354" y="183" fill="#6B7280" font-family="monospace" font-size="9" text-anchor="start" font-weight="bold">090°</text>
+
+            <!-- 180° (S) -->
+            <line x1="180" y1="336" x2="180" y2="344" stroke="#3B82F6" stroke-width="2" />
+            <text x="180" y="356" fill="#6B7280" font-family="monospace" font-size="9" text-anchor="middle" font-weight="bold">180°</text>
+
+            <!-- 270° (W) -->
+            <line x1="16" y1="180" x2="24" y2="180" stroke="#3B82F6" stroke-width="2" />
+            <text x="6" y="183" fill="#6B7280" font-family="monospace" font-size="9" text-anchor="end" font-weight="bold">270°</text>
+
+            <!-- Range-Ring Distance Labels -->
+            <text x="184" y="145" fill="#3B4252" font-family="monospace" font-size="7">RNG 0.25</text>
+            <text x="184" y="105" fill="#3B4252" font-family="monospace" font-size="7">RNG 0.50</text>
+            <text x="184" y="65" fill="#3B4252" font-family="monospace" font-size="7">RNG 0.75</text>
+            <text x="184" y="27" fill="#3B4252" font-family="monospace" font-size="7">RNG 1.00</text>
+
+            <!-- Rotating Leading-Edge Line (Synchronized with conic overlay) -->
+            <g class="radar-leading-edge origin-[180px_180px]">
+              <line x1="180" y1="180" x2="180" y2="20" stroke="#60A5FA" stroke-width="1.5" opacity="0.9" />
+            </g>
+
+            <!-- Center Origin Hub -->
+            <circle cx="180" cy="180" r="4" fill="#3B82F6" />
+            <circle cx="180" cy="180" r="1.5" fill="#FFFFFF" />
+
+            <!-- Dynamically Plotted Repos with Phosphor Persistence -->
+            {blips.map((t) => {
+              const rad = ((t.angle - 90) * Math.PI) / 180;
+              const bx = Math.round(180 + t.radius * Math.cos(rad));
+              const by = Math.round(180 + t.radius * Math.sin(rad));
+              // Delay calculation for 4-second clockwise sweep (0 deg at top)
+              const decayDelay = ((t.angle / 360) * 4).toFixed(2);
+
+              return (
+                <g
+                  class="radar-blip-target cursor-pointer transition-transform hover:scale-125"
+                  data-name={t.name}
+                  data-slug={t.slug}
+                  data-repo={t.repo}
+                  data-score={t.score}
+                  data-verdict={t.verdict}
+                  data-category={t.category}
+                  data-bearing={t.bearing}
+                  data-range={t.rangeVal}
+                  data-scanned={t.lastScanned.split('T')[0]}
+                  data-color={t.color}
+                  data-x={bx}
+                  data-y={by}
+                  tabindex="0"
+                  role="button"
+                  aria-label={`${t.name}: Safety Score ${t.score}, ${t.verdict}`}
+                >
+                  <!-- Reticle for active blip -->
+                  <circle
+                    cx={bx}
+                    cy={by}
+                    r="10"
+                    fill="none"
+                    stroke={t.color}
+                    stroke-width="1"
+                    stroke-dasharray="2 2"
+                    class="blip-reticle opacity-0 transition-opacity"
+                  />
+
+                  <!-- Phosphor Decay Circle -->
+                  <circle
+                    cx={bx}
+                    cy={by}
+                    r="4.5"
+                    fill={t.color}
+                    stroke="#0A0B0E"
+                    stroke-width="1.5"
+                    class="blip-dot"
+                    style={`animation: phosphor-decay 4s linear infinite; animation-delay: -${decayDelay}s;`}
+                  />
+
+                  <!-- Flagged Opacity Pulse (Strictly opacity-only, no geometry shifts) -->
+                  {t.isFlagged && (
+                    <circle
+                      cx={bx}
+                      cy={by}
+                      r="8"
+                      fill="none"
+                      stroke={t.color}
+                      stroke-width="1"
+                      class="animate-pulse"
+                    />
+                  )}
+
+                  <!-- Mini Tag Label -->
+                  <text
+                    x={bx + 7}
+                    y={by + 3}
+                    fill={t.color}
+                    font-family="monospace"
+                    font-size="8"
+                    font-weight="bold"
+                    class="pointer-events-none select-none"
+                  >
+                    {t.name.toUpperCase()}
+                  </text>
+                </g>
+              );
+            })}
+          </svg>
+        </div>
+
+        <!-- Scope Legend (Mandatory for real instrumentation) -->
+        <div class="flex items-center justify-center gap-6 mt-3 font-mono text-[11px] text-app-subtle">
+          <div class="flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+            <span>Healthy (&ge;80)</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+            <span>Caution (50–79)</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+            <span>Flagged (&lt;50)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- SIDE TELEMETRY & TARGET INSPECTION PANEL (5 cols) -->
+      <div class="lg:col-span-5 space-y-4 font-mono">
+        <div class="p-5 rounded-xl bg-[#131519] border border-app-border space-y-4">
+          <div class="flex items-center justify-between border-b border-app-border pb-3">
+            <span class="text-micro text-blue-400 font-bold">TARGET TELEMETRY INSPECTOR</span>
+            <span class="text-[10px] text-app-subtle uppercase" id="inspector-coords">{defaultBlip.bearing} // {defaultBlip.rangeVal}</span>
+          </div>
+
+          <!-- Active Target Card -->
+          <div>
+            <div class="flex items-start justify-between gap-3 mb-1">
+              <div>
+                <h4 class="text-base font-bold text-white font-sans" id="inspector-name">{defaultBlip.name}</h4>
+                <span class="text-xs text-app-subtle block" id="inspector-repo">{defaultBlip.repo}</span>
+              </div>
+              <div class="text-right">
+                <span class="text-xl font-extrabold text-white" id="inspector-score">{defaultBlip.score}</span>
+                <span class="text-[10px] text-app-subtle block">/ 100</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 mt-2">
+              <span class="text-[10px] px-2 py-0.5 rounded bg-app-bg border border-app-border text-app-text uppercase" id="inspector-category">{defaultBlip.category}</span>
+              <span class="text-[10px] px-2 py-0.5 rounded uppercase font-bold text-rose-400 bg-rose-950/40 border border-rose-500/30" id="inspector-verdict">{defaultBlip.verdict.toUpperCase()}</span>
+            </div>
+          </div>
+
+          <!-- Target Scan Metrics -->
+          <div class="grid grid-cols-2 gap-2 text-[11px] pt-3 border-t border-app-border text-app-muted">
+            <div class="p-2 rounded bg-[#0A0B0E] border border-app-border/70">
+              <span class="text-[9px] text-app-subtle block">LAST AUDIT PASS</span>
+              <span class="text-app-text font-semibold" id="inspector-date">{defaultBlip.lastScanned.split('T')[0]}</span>
+            </div>
+            <div class="p-2 rounded bg-[#0A0B0E] border border-app-border/70">
+              <span class="text-[9px] text-app-subtle block">SWEEP STATUS</span>
+              <span class="text-emerald-400 font-semibold" id="inspector-sweep">PAINTED &middot; NOMINAL</span>
+            </div>
+          </div>
+
+          <a
+            id="inspector-link"
+            href={`/tools/${defaultBlip.slug}`}
+            class="w-full py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+          >
+            <span>Inspect Full Dossier</span>
+            <span>&rarr;</span>
+          </a>
+        </div>
+
+        <!-- Global Monitor Metrics (Derived strictly from dataset) -->
+        <div class="grid grid-cols-3 gap-2 text-center text-xs">
+          <div class="p-3 rounded-lg bg-[#131519] border border-app-border">
+            <span class="text-[10px] text-app-subtle block mb-1">HEALTHY RATIO</span>
+            <span class="text-emerald-400 font-extrabold text-sm">{telemetry.nominalPercentage}%</span>
+          </div>
+          <div class="p-3 rounded-lg bg-[#131519] border border-app-border">
+            <span class="text-[10px] text-app-subtle block mb-1">FLAGGED</span>
+            <span class="text-rose-400 font-extrabold text-sm">{telemetry.flaggedCount} REPOS</span>
+          </div>
+          <div class="p-3 rounded-lg bg-[#131519] border border-app-border">
+            <span class="text-[10px] text-app-subtle block mb-1">AVG SCORE</span>
+            <span class="text-white font-extrabold text-sm">{telemetry.averageScore}</span>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- Telemetry Readout Strip -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t border-app-border font-mono text-xs text-app-muted">
-      <div class="p-2.5 rounded-lg bg-app-surface border border-app-border">
-        <span class="text-micro text-app-subtle block mb-0.5">Threat Detection</span>
-        <span class="text-rose-400 font-bold">3 REPOS FLAGGED</span>
+    <!-- Bottom Status Strip -->
+    <div class="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-app-border font-mono text-[11px] text-app-subtle">
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+        <span>INSTRUMENT STATUS: CONTINUOUS ACTIVE SWEEP (4.0s REPEAT)</span>
       </div>
-      <div class="p-2.5 rounded-lg bg-app-surface border border-app-border">
-        <span class="text-micro text-app-subtle block mb-0.5">Sweep Velocity</span>
-        <span class="text-app-text font-bold">4.2 REPOS/SEC</span>
-      </div>
-      <div class="p-2.5 rounded-lg bg-app-surface border border-app-border">
-        <span class="text-micro text-app-subtle block mb-0.5">Healthy Ratio</span>
-        <span class="text-emerald-400 font-bold">87.2% NOMINAL</span>
+      <div>
+        <span>COORDINATES DERIVED MATHEMATICALLY FROM OPENSSF SCORECARD V4</span>
       </div>
     </div>
   </div>
 </div>
 
 <style>
-  .radar-sweep-beam {
+  /* 4-second Conic Beam Sweep Animation */
+  .radar-conic-sweep {
     animation: radar-sweep 4s linear infinite;
-    transform-origin: 180px 180px;
+  }
+
+  .radar-leading-edge {
+    animation: radar-sweep 4s linear infinite;
   }
 
   @keyframes radar-sweep {
@@ -145,10 +305,109 @@ const targets = [
     }
   }
 
+  /* Phosphor Decay Animation: Flashes on sweep contact, decays to 40% ember over ~3s */
+  @keyframes phosphor-decay {
+    0% {
+      opacity: 1;
+      filter: drop-shadow(0 0 4px currentColor);
+    }
+    15% {
+      opacity: 0.9;
+      filter: drop-shadow(0 0 2px currentColor);
+    }
+    40% {
+      opacity: 0.65;
+      filter: none;
+    }
+    75% {
+      opacity: 0.40;
+      filter: none;
+    }
+    98% {
+      opacity: 0.38;
+      filter: none;
+    }
+    100% {
+      opacity: 1;
+      filter: drop-shadow(0 0 4px currentColor);
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
-    .radar-sweep-beam {
+    .radar-conic-sweep,
+    .radar-leading-edge,
+    .blip-dot {
       animation: none !important;
+      opacity: 0.85 !important;
+    }
+    .radar-conic-sweep {
       transform: rotate(45deg);
     }
   }
 </style>
+
+<script is:inline>
+  (function () {
+    const scope = document.getElementById('detection-radar-scope');
+    if (!scope) return;
+
+    const inspectorName = document.getElementById('inspector-name');
+    const inspectorRepo = document.getElementById('inspector-repo');
+    const inspectorScore = document.getElementById('inspector-score');
+    const inspectorCategory = document.getElementById('inspector-category');
+    const inspectorVerdict = document.getElementById('inspector-verdict');
+    const inspectorDate = document.getElementById('inspector-date');
+    const inspectorCoords = document.getElementById('inspector-coords');
+    const inspectorLink = document.getElementById('inspector-link');
+
+    const blips = scope.querySelectorAll('.radar-blip-target');
+
+    blips.forEach((blip) => {
+      function activate() {
+        blips.forEach((b) => {
+          const reticle = b.querySelector('.blip-reticle');
+          if (reticle) reticle.classList.add('opacity-0');
+        });
+
+        const activeReticle = blip.querySelector('.blip-reticle');
+        if (activeReticle) activeReticle.classList.remove('opacity-0');
+
+        const name = blip.getAttribute('data-name');
+        const slug = blip.getAttribute('data-slug');
+        const repo = blip.getAttribute('data-repo');
+        const score = blip.getAttribute('data-score');
+        const verdict = blip.getAttribute('data-verdict') || 'healthy';
+        const category = blip.getAttribute('data-category');
+        const bearing = blip.getAttribute('data-bearing');
+        const range = blip.getAttribute('data-range');
+        const scanned = blip.getAttribute('data-scanned');
+        const color = blip.getAttribute('data-color') || '#10B981';
+
+        if (inspectorName) inspectorName.textContent = name;
+        if (inspectorRepo) inspectorRepo.textContent = repo;
+        if (inspectorScore) {
+          inspectorScore.textContent = score;
+          inspectorScore.style.color = color;
+        }
+        if (inspectorCategory) inspectorCategory.textContent = category;
+        if (inspectorVerdict) {
+          inspectorVerdict.textContent = verdict.toUpperCase();
+          if (verdict === 'healthy') {
+            inspectorVerdict.className = 'text-[10px] px-2 py-0.5 rounded uppercase font-bold text-emerald-400 bg-emerald-950/40 border border-emerald-500/30';
+          } else if (verdict === 'caution') {
+            inspectorVerdict.className = 'text-[10px] px-2 py-0.5 rounded uppercase font-bold text-amber-400 bg-amber-950/40 border border-amber-500/30';
+          } else {
+            inspectorVerdict.className = 'text-[10px] px-2 py-0.5 rounded uppercase font-bold text-rose-400 bg-rose-950/40 border border-rose-500/30';
+          }
+        }
+        if (inspectorDate) inspectorDate.textContent = scanned;
+        if (inspectorCoords) inspectorCoords.textContent = `${bearing} // ${range}`;
+        if (inspectorLink) inspectorLink.setAttribute('href', `/tools/${slug}`);
+      }
+
+      blip.addEventListener('mouseenter', activate);
+      blip.addEventListener('focus', activate);
+      blip.addEventListener('click', activate);
+    });
+  })();
+</script>

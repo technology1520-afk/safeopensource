@@ -12,8 +12,16 @@ export default function SearchDialog({ tools }: SearchDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [osShortcut, setOsShortcut] = useState('Ctrl K');
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const isMac = /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform || navigator.userAgent);
+      setOsShortcut(isMac ? '⌘K' : 'Ctrl K');
+    }
+  }, []);
 
   // Configure Fuse for tools
   const toolsFuse = new Fuse(tools, {
@@ -124,23 +132,23 @@ export default function SearchDialog({ tools }: SearchDialogProps) {
 
   return (
     <>
-      {/* Prominent Search Bar Trigger */}
+      {/* Search Bar Trigger */}
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        class="inline-flex items-center justify-between gap-3 w-full max-w-xl px-4 py-3 rounded-xl bg-[#131519] border border-[#23262E] hover:border-[#3B82F6]/50 text-[#9BA1AB] hover:text-[#E6E8EB] text-xs font-mono transition-all cursor-pointer shadow-lg group"
+        class="inline-flex items-center justify-between gap-2.5 w-full px-3.5 py-2 sm:py-2.5 rounded-xl bg-[#131519] border border-[#23262E] hover:border-[#3B82F6]/50 text-[#9BA1AB] hover:text-[#E6E8EB] text-xs font-sans transition-all cursor-pointer shadow-xs group"
         aria-label="Open search and suggestion box"
       >
-        <span class="flex items-center gap-2.5">
-          <svg class="w-4 h-4 text-[#6B7280] group-hover:text-blue-400 shrink-0 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <span class="flex items-center gap-2 min-w-0">
+          <svg class="w-3.5 h-3.5 text-[#6B7280] group-hover:text-blue-400 shrink-0 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="11" cy="11" r="8" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
-          <span class="truncate">Search tools, categories, or intents (e.g. upptime, google photos)...</span>
+          <span class="truncate text-left text-xs text-[#9BA1AB] group-hover:text-app-text transition-colors">Search 39 tools, sectors, or natural goals...</span>
         </span>
-        <div class="flex items-center gap-1.5 shrink-0">
-          <kbd class="hidden sm:inline-block text-[10px] px-2 py-0.5 rounded bg-[#0A0B0E] border border-[#23262E] text-[#6B7280]">⌘K</kbd>
-          <kbd class="hidden sm:inline-block text-[10px] px-1.5 py-0.5 rounded bg-[#0A0B0E] border border-[#23262E] text-[#6B7280]">/</kbd>
+        <div class="flex items-center gap-1.5 shrink-0 font-mono text-[10px]">
+          <kbd class="hidden sm:inline-block px-1.5 py-0.5 rounded bg-[#0A0B0E] border border-[#23262E] text-[#9BA1AB]">{osShortcut}</kbd>
+          <kbd class="hidden sm:inline-block px-1.5 py-0.5 rounded bg-[#0A0B0E] border border-[#23262E] text-[#9BA1AB]">/</kbd>
         </div>
       </button>
 

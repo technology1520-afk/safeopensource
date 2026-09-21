@@ -37,7 +37,7 @@ function getDecidingFactor(t: ToolData): string {
 }
 ---
 
-<section class={`my-14 rounded-2xl border border-app-border bg-[#0a0c10] p-6 sm:p-8 ${className}`} id="top-repos">
+<section class={`my-14 rounded-2xl border border-app-border bg-[#0a0c10] p-6 sm:p-8 scroll-mt-24 ${className}`} id="top-repos">
   <!-- Section Title & Real URL Tabs -->
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-app-border mb-6">
     <div>
@@ -114,21 +114,24 @@ function getDecidingFactor(t: ToolData): string {
             {rankOne.tagline}
           </p>
 
-          <!-- Why is this #1 Deciding Sub-Score -->
-          <div class="p-3.5 rounded-lg bg-[#0A0B0E] border border-app-border mb-6 font-mono text-xs">
-            <span class="text-micro text-emerald-400 block mb-1">DECIDING BENCHMARK</span>
+          <!-- Why is this #1 Deciding Sub-Score (Tinted, no extra border) -->
+          <div class="p-3.5 rounded-lg bg-[#0A0B0E] mb-6 font-mono text-xs space-y-1">
+            <span class="text-micro text-blue-400 block">DECIDING BENCHMARK</span>
             <div class="font-bold text-white flex items-center justify-between">
-              <span>{getDecidingFactor(rankOne)}</span>
-              <span class="text-emerald-400">Score: {rankOne.safety_score}/100</span>
+              <span class="text-app-muted font-normal">{getDecidingFactor(rankOne)}</span>
+              <span class="text-white font-mono text-sm">{rankOne.safety_score}/100</span>
             </div>
           </div>
         </div>
 
         <div class="pt-4 border-t border-app-border flex items-center justify-between font-mono text-xs text-app-subtle">
-          <span>★ {rankOne.stars.toLocaleString()}</span>
-          <a href={`/tools/${rankOne.slug}`} class="text-blue-400 hover:text-blue-300 font-semibold inline-flex items-center gap-1">
+          <span>★ {rankOne.stars.toLocaleString()} · Scanned {rankOne.scanned_at.split('T')[0]}</span>
+          <a href={`/tools/${rankOne.slug}`} class="text-blue-400 hover:text-blue-300 font-semibold inline-flex items-center gap-1.5 transition-colors">
             <span>Read Audit Report</span>
-            <span>&rarr;</span>
+            <svg class="w-3.5 h-3.5 stroke-current" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12" />
+              <polyline points="12 5 19 12 12 19" />
+            </svg>
           </a>
         </div>
       </div>
@@ -156,18 +159,20 @@ function getDecidingFactor(t: ToolData): string {
                   </h4>
                   <span class="text-[10px] font-mono text-app-subtle">{tool.repo}</span>
                 </div>
-                <p class="text-xs text-app-muted truncate mt-0.5 max-w-md">
+                <p class="text-xs text-app-muted truncate mt-0.5 max-w-md font-sans">
                   {tool.tagline}
                 </p>
-                <div class="text-[10px] font-mono text-emerald-400 mt-1">
-                  Why here: {getDecidingFactor(tool)}
+                <div class="text-[10px] font-mono text-app-subtle mt-1 flex items-center gap-2">
+                  <span>Benchmark: {getDecidingFactor(tool)}</span>
+                  <span>·</span>
+                  <span>Scanned {tool.scanned_at.split('T')[0]}</span>
                 </div>
               </div>
             </div>
 
             <div class="flex items-center gap-3 shrink-0 self-end sm:self-center font-mono">
               <div class="text-right">
-                <div class="font-bold text-sm text-white">{tool.safety_score}</div>
+                <div class="font-bold text-base text-white">{tool.safety_score}</div>
                 <div class="text-[9px] text-app-subtle">/100</div>
               </div>
               <VerdictBadge verdict={tool.verdict} size="sm" />

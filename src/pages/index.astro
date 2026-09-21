@@ -39,21 +39,25 @@ const categoriesWithStats = categories.map((cat) => {
 >
   <!-- Hero Section: Security Ops Center Console -->
   <section class="py-6 sm:py-12 max-w-4xl mx-auto text-center">
-    <!-- Direction Switcher Pill -->
-    <div class="inline-flex items-center gap-1.5 p-1 rounded-full border border-app-border bg-[#131519] text-xs font-mono mb-8">
+    <!-- Instrument View Switcher -->
+    <div class="inline-flex items-center gap-1.5 p-1 rounded-full border border-app-border bg-[#131519] text-xs font-mono mb-8" role="tablist" aria-label="Hero instrument view">
       <button
         type="button"
         id="btn-hero-console"
-        class="px-3 py-1 rounded-full bg-blue-600 text-white font-medium shadow-xs transition-colors"
+        role="tab"
+        aria-selected="true"
+        class="px-3.5 py-1.5 rounded-full bg-blue-600 text-white font-medium shadow-xs transition-colors"
       >
-        Live Scan Console (Primary)
+        Live Scan Terminal
       </button>
       <button
         type="button"
         id="btn-hero-radar"
-        class="px-3 py-1 rounded-full text-app-muted hover:text-app-text hover:bg-app-surface transition-colors"
+        role="tab"
+        aria-selected="false"
+        class="px-3.5 py-1.5 rounded-full text-app-muted hover:text-app-text hover:bg-app-surface transition-colors"
       >
-        Detection Radar (Alternative)
+        Defense Radar Scope
       </button>
     </div>
 
@@ -174,7 +178,7 @@ const categoriesWithStats = categories.map((cat) => {
   </section>
 
   <!-- Categories Grid Directory -->
-  <section id="categories" class="my-14 scroll-mt-20">
+  <section id="categories" class="my-14 scroll-mt-24">
     <div class="flex items-center justify-between gap-4 mb-6">
       <div>
         <span class="text-micro text-app-subtle block mb-1">MONITORED TAXONOMIES</span>

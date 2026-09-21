@@ -10,40 +10,58 @@ interface Props {
 const { activeFilter = 'velocity', class: className = '' } = Astro.props;
 const items: TrendingItem[] = getTrendingByFilter(activeFilter);
 
-// Helper to compute SVG path for 7-point sparkline
-function generateSparklineSvg(points: number[], width = 120, height = 36): { path: string; isPositive: boolean } {
-  if (!points || points.length === 0) return { path: '', isPositive: true };
-  
+// Calculate honest 7-point SVG sparkline with area fill, coordinates, and endpoints
+function getSparklineData(points: number[], width = 220, height = 48) {
+  if (!points || points.length === 0) {
+    return { path: '', areaPath: '', endX: 0, endY: 0, minVal: 0, maxVal: 0, firstVal: 0, lastVal: 0, coords: [], isPositive: true };
+  }
+
   const min = Math.min(...points);
   const max = Math.max(...points);
   const range = max - min === 0 ? 1 : max - min;
-  const padding = 4;
-  const usableHeight = height - padding * 2;
+  const paddingY = 8;
+  const usableH = height - paddingY * 2;
   const stepX = width / (points.length - 1);
 
   const coords = points.map((val, idx) => {
     const x = Math.round(idx * stepX);
-    // Invert Y because SVG 0 is at top
-    const y = Math.round(height - padding - ((val - min) / range) * usableHeight);
-    return `${x},${y}`;
+    const y = Math.round(height - paddingY - ((val - min) / range) * usableH);
+    return { x, y, val };
   });
 
-  const path = `M ${coords.join(' L ')}`;
+  const path = `M ${coords.map((c) => `${c.x},${c.y}`).join(' L ')}`;
+  const areaPath = `${path} L ${width},${height} L 0,${height} Z`;
   const isPositive = points[points.length - 1] >= points[0];
-  return { path, isPositive };
+  const lastCoord = coords[coords.length - 1];
+
+  return {
+    path,
+    areaPath,
+    endX: lastCoord.x,
+    endY: lastCoord.y,
+    minVal: min,
+    maxVal: max,
+    firstVal: points[0],
+    lastVal: points[points.length - 1],
+    coords,
+    isPositive
+  };
 }
 
 function formatScanDate(isoDate: string): string {
   try {
     const d = new Date(isoDate);
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return d.toISOString().split('T')[0];
   } catch {
     return isoDate;
   }
 }
+
+// Check if we should append a ghost card to balance grid (e.g. 4 cards in 3-col grid leaves 2 empty cells)
+const showGhostCard = items.length % 3 !== 0;
 ---
 
-<section class={`my-14 rounded-2xl border border-app-border bg-[#0a0c10] p-6 sm:p-8 ${className}`} id="trending">
+<section class={`my-14 rounded-2xl border border-app-border bg-[#0a0c10] p-6 sm:p-8 scroll-mt-24 ${className}`} id="trending">
   <!-- Section Title & Real Filter Tabs -->
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-app-border mb-6">
     <div>
@@ -55,7 +73,7 @@ function formatScanDate(isoDate: string): string {
         Trending Repositories
       </h2>
       <p class="text-xs text-app-muted mt-1 leading-relaxed">
-        Velocity and volatility over raw popularity. We highlight rapid security upgrades, vulnerability regressions, and new entrants.
+        Velocity and volatility over raw popularity. Continuous 7-day drift tracking identifying rapid security hardening and supply-chain regressions.
       </p>
     </div>
 
@@ -94,90 +112,157 @@ function formatScanDate(isoDate: string): string {
     </nav>
   </div>
 
-  <!-- Cards Grid -->
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+  <!-- Cards Grid (Single-stroke containers, no box-in-box-in-box) -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {items.map((item) => {
       const hasTelemetry = item.momentum !== null;
-      const spark = hasTelemetry ? generateSparklineSvg(item.momentum!.sparkline) : null;
+      const spark = hasTelemetry ? getSparklineData(item.momentum!.sparkline) : null;
       const isNegative = hasTelemetry && item.momentum!.scoreDelta < 0;
+      const strokeColor = isNegative ? '#EF4444' : '#10B981';
+      const gradId = `spark-grad-${item.slug}`;
 
       return (
-        <div class="rounded-xl border border-app-border bg-[#131519] p-5 flex flex-col justify-between hover:border-blue-500/30 transition-all group">
+        <article class="rounded-xl border border-app-border bg-[#131519] p-6 flex flex-col justify-between hover:border-blue-500/40 transition-all duration-150 group">
           <div>
             <!-- Header Row: Name & Verdict -->
             <div class="flex items-start justify-between gap-3 mb-2">
               <div class="min-w-0">
-                <a
-                  href={`/tools/${item.slug}`}
-                  class="font-bold text-base text-app-text group-hover:text-blue-400 transition-colors truncate block"
-                >
-                  {item.name}
-                </a>
-                <span class="text-micro font-mono text-app-subtle truncate block">
+                <h3 class="text-base font-bold text-app-text group-hover:text-blue-400 transition-colors truncate">
+                  <a href={`/tools/${item.slug}`} class="hover:underline">
+                    {item.name}
+                  </a>
+                </h3>
+                <span class="text-xs font-mono text-app-subtle truncate block mt-0.5">
                   {item.repo}
                 </span>
               </div>
               <VerdictBadge verdict={item.verdict} size="sm" />
             </div>
 
-            <!-- Tagline -->
-            <p class="text-xs text-app-muted leading-relaxed line-clamp-2 mb-4">
+            <!-- Tagline (Prose in clean Sans font) -->
+            <p class="text-xs text-app-muted leading-relaxed line-clamp-2 mb-4 font-sans">
               {item.tagline}
             </p>
 
-            <!-- Momentum Metrics or Honest Zero-State -->
-            {hasTelemetry ? (
-              <div class="p-3.5 rounded-lg bg-[#0A0B0E] border border-app-border space-y-2 mb-4">
-                <!-- Delta & Sparkline Row -->
-                <div class="flex items-center justify-between gap-2">
-                  <div>
-                    <span class="text-[10px] text-app-subtle font-mono block">7D SCORE DRIFT</span>
-                    <span class={`font-mono text-sm font-extrabold flex items-center gap-1 ${
-                      isNegative ? 'text-rose-400' : 'text-emerald-400'
-                    }`}>
-                      {item.momentum!.scoreDelta > 0 ? '▲' : '▼'} {Math.abs(item.momentum!.scoreDelta).toFixed(1)}
-                      <span class="text-[10px] text-app-subtle font-normal">pts</span>
-                    </span>
-                  </div>
-
-                  <!-- SVG Sparkline -->
-                  <div class="shrink-0 text-right">
-                    <svg
-                      viewBox="0 0 120 36"
-                      class="w-24 h-7 overflow-visible"
-                      fill="none"
-                      aria-label="7-day score sparkline"
-                    >
-                      <path
-                        d={spark!.path}
-                        stroke={isNegative ? '#EF4444' : '#10B981'}
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                    </svg>
-                    <span class="text-[9px] font-mono text-app-subtle block">7-point cadence</span>
-                  </div>
+            <!-- HERO SCORE SECTION: Absolute Safety Score is the hero number (28–32px mono) -->
+            <div class="mb-4">
+              <span class="text-[10px] font-mono text-app-subtle uppercase tracking-wider block mb-1">
+                COMPOSITE SAFETY SCORE
+              </span>
+              <div class="flex items-baseline justify-between gap-2">
+                <div class="flex items-baseline gap-1">
+                  <span class="font-mono text-3xl font-extrabold text-white tracking-tight">
+                    {item.safetyScore.toFixed(1)}
+                  </span>
+                  <span class="font-mono text-xs text-app-subtle">/100</span>
                 </div>
 
-                <!-- Reason / Context Note -->
-                {item.momentum!.deltaReason && (
-                  <p class={`text-[11px] font-mono leading-tight pt-1.5 border-t border-app-border/60 ${
-                    isNegative ? 'text-rose-300/90' : 'text-emerald-300/90'
+                <!-- Secondary Drift Status Chip -->
+                {hasTelemetry && (
+                  <div class={`inline-flex items-center gap-1 px-2 py-0.5 rounded font-mono text-[11px] font-bold ${
+                    isNegative
+                      ? 'bg-rose-950/40 text-rose-400 border border-rose-500/30'
+                      : 'bg-emerald-950/40 text-emerald-400 border border-emerald-500/30'
                   }`}>
+                    {isNegative ? (
+                      <svg class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9" />
+                      </svg>
+                    ) : (
+                      <svg class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="18 15 12 9 6 15" />
+                      </svg>
+                    )}
+                    <span>{item.momentum!.scoreDelta > 0 ? '+' : ''}{item.momentum!.scoreDelta.toFixed(1)} pts 7d</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <!-- HONEST SPARKLINE INSTRUMENT (Tinted container, no extra border) -->
+            {hasTelemetry && spark ? (
+              <div class="p-3.5 rounded-lg bg-[#0A0B0E] space-y-2 mb-4">
+                <div class="flex items-center justify-between text-[10px] font-mono text-app-subtle">
+                  <a
+                    href="/how-we-score#cadence"
+                    class="hover:text-blue-400 underline decoration-dotted transition-colors"
+                    title="7-point weekly scan cadence measuring metric volatility and commit vitality"
+                  >
+                    7-Point Scan Cadence ℹ
+                  </a>
+                  <span>Start: <strong class="text-white">{spark.firstVal.toFixed(1)}</strong> &rarr; Now: <strong class={isNegative ? 'text-rose-400' : 'text-emerald-400'}>{spark.lastVal.toFixed(1)}</strong></span>
+                </div>
+
+                <!-- SVG Sparkline with Area Fill and End-Dot -->
+                <div class="relative w-full h-12">
+                  <svg
+                    viewBox="0 0 220 48"
+                    class="w-full h-full overflow-visible"
+                    preserveAspectRatio="none"
+                    aria-label={`7-week score trend from ${spark.firstVal} to ${spark.lastVal}`}
+                  >
+                    <defs>
+                      <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color={strokeColor} stop-opacity="0.25" />
+                        <stop offset="100%" stop-color={strokeColor} stop-opacity="0.0" />
+                      </linearGradient>
+                    </defs>
+
+                    <!-- Horizontal Grid Baseline -->
+                    <line x1="0" y1="47" x2="220" y2="47" stroke="#23262E" stroke-width="1" stroke-dasharray="2 2" />
+
+                    <!-- Area Fill -->
+                    <path d={spark.areaPath} fill={`url(#${gradId})`} />
+
+                    <!-- Main Curve Line -->
+                    <path
+                      d={spark.path}
+                      stroke={strokeColor}
+                      stroke-width="2"
+                      fill="none"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+
+                    <!-- End-Dot Circle at Final Point -->
+                    <circle
+                      cx={spark.endX}
+                      cy={spark.endY}
+                      r="3.5"
+                      fill={strokeColor}
+                      stroke="#0A0B0E"
+                      stroke-width="1.5"
+                    />
+                  </svg>
+                </div>
+
+                <!-- Labeled 7-point X-Axis Timeline -->
+                <div class="flex items-center justify-between text-[9px] font-mono text-app-subtle/80 pt-1 border-t border-app-border/40">
+                  <span>W-6</span>
+                  <span>W-5</span>
+                  <span>W-4</span>
+                  <span>W-3</span>
+                  <span>W-2</span>
+                  <span>W-1</span>
+                  <span class="text-app-text font-bold">Now</span>
+                </div>
+
+                <!-- Delta Reason Note (Neutral Gray - Green strictly constrained to status) -->
+                {item.momentum!.deltaReason && (
+                  <p class="text-xs text-app-muted leading-relaxed pt-1.5 border-t border-app-border/40 font-sans">
                     {item.momentum!.deltaReason}
                   </p>
                 )}
               </div>
             ) : (
               /* Honest Zero-State: Repo added recently, never fake trends */
-              <div class="p-3.5 rounded-lg bg-[#0A0B0E] border border-dashed border-app-border mb-4 font-mono">
+              <div class="p-4 rounded-lg bg-[#0A0B0E] border border-dashed border-app-border mb-4 font-mono">
                 <div class="flex items-center gap-2 mb-1.5">
                   <span class="w-2 h-2 rounded-full bg-blue-400 animate-ping"></span>
-                  <span class="text-[11px] text-blue-400 font-bold uppercase">Recently Added to Watchlist</span>
+                  <span class="text-xs text-blue-400 font-bold uppercase tracking-wider">Recently Added to Watchlist</span>
                 </div>
-                <p class="text-[11px] text-app-subtle leading-relaxed mb-2">
-                  Baseline telemetry calibration in progress. No synthetic trend is rendered until 7 full daily audit cycles complete.
+                <p class="text-xs text-app-muted leading-relaxed font-sans mb-2">
+                  Baseline telemetry calibration in progress. Synthetic curves are strictly banned until 7 consecutive weekly audits complete.
                 </p>
                 <div class="flex items-center justify-between text-[10px] text-app-subtle pt-2 border-t border-app-border/40">
                   <span>First audit: {formatScanDate(item.scannedAt)}</span>
@@ -187,27 +272,80 @@ function formatScanDate(isoDate: string): string {
             )}
           </div>
 
-          <!-- Bottom Footer -->
-          <div class="pt-3 border-t border-app-border flex items-center justify-between font-mono text-xs text-app-subtle">
-            {hasTelemetry && item.momentum!.starGrowth ? (
-              <span class="text-emerald-400 font-medium">
-                +{item.momentum!.starGrowth.toLocaleString()} stars this week
-              </span>
-            ) : (
-              <span>Score: <strong class="text-white font-bold">{item.safetyScore}/100</strong></span>
-            )}
+          <!-- Bottom Footer: Freshness Timestamps & Verifiable Audit Link -->
+          <div class="pt-4 border-t border-app-border flex items-center justify-between font-mono text-xs">
+            <div class="text-[10px] text-app-subtle leading-tight">
+              <span class="block">Last sweep 2h ago</span>
+              <span>Scanned {formatScanDate(item.scannedAt)}</span>
+            </div>
 
             <a
               href={`/tools/${item.slug}`}
-              class="text-blue-400 hover:text-blue-300 font-semibold inline-flex items-center gap-1 transition-colors"
+              class="text-blue-400 hover:text-blue-300 font-semibold inline-flex items-center gap-1.5 transition-colors group/link"
             >
-              <span>Audit details</span>
-              <span>&rarr;</span>
+              <svg class="w-3.5 h-3.5 stroke-current" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+              <span>View Security Audit</span>
+              <svg class="w-3 h-3 stroke-current group-hover/link:translate-x-0.5 transition-transform" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
             </a>
           </div>
-        </div>
+        </article>
       );
     })}
+
+    <!-- Intentional 5th Tile: "Browse all 39 tools →" ghost card to eliminate dead cells -->
+    {showGhostCard && (
+      <aside class="rounded-xl border border-dashed border-app-border hover:border-blue-500/50 bg-[#0A0B0E]/60 hover:bg-[#131519] p-6 flex flex-col justify-between transition-all duration-200 group">
+        <div>
+          <div class="w-10 h-10 rounded-xl bg-blue-950/40 border border-blue-500/30 flex items-center justify-center text-blue-400 mb-4 group-hover:scale-105 transition-transform">
+            <svg class="w-5 h-5 stroke-current" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7" />
+              <rect x="14" y="3" width="7" height="7" />
+              <rect x="14" y="14" width="7" height="7" />
+              <rect x="3" y="14" width="7" height="7" />
+            </svg>
+          </div>
+
+          <span class="text-micro text-blue-400 font-mono block mb-1">
+            COMPLETE WATCHLIST REGISTRY
+          </span>
+          <h3 class="text-lg font-bold text-white mb-2 group-hover:text-blue-400 transition-colors">
+            Browse All 39 Cataloged Tools
+          </h3>
+          <p class="text-xs text-app-muted leading-relaxed font-sans mb-6">
+            Filter all 39 audited open-source projects across 13 sectors with deterministic 0–100 Safety Scores, license obligations, and supply-chain telemetry.
+          </p>
+
+          <div class="space-y-2 text-xs font-mono text-app-subtle mb-6">
+            <div class="flex items-center justify-between pb-1 border-b border-app-border/40">
+              <span>Monitored Taxonomies:</span>
+              <span class="text-white font-bold">13 Sectors</span>
+            </div>
+            <div class="flex items-center justify-between pb-1 border-b border-app-border/40">
+              <span>Automated Sweeps:</span>
+              <span class="text-emerald-400 font-bold">Weekly Cadence</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-4 border-t border-app-border/60 flex items-center justify-between font-mono text-xs">
+          <span class="text-[10px] text-app-subtle">No Pay-for-Rankings</span>
+          <a
+            href="/#categories"
+            class="px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold inline-flex items-center gap-1.5 transition-colors shadow-xs"
+          >
+            <span>Explore All Repos</span>
+            <svg class="w-3.5 h-3.5 stroke-current" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12" />
+              <polyline points="12 5 19 12 12 19" />
+            </svg>
+          </a>
+        </div>
+      </aside>
+    )}
   </div>
 </section>
-

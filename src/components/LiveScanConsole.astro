@@ -1,21 +1,24 @@
 ---
+import { getTelemetryStats } from '../utils/telemetry';
+
 interface Props {
   class?: string;
 }
 
 const { class: className = '' } = Astro.props;
+const telemetry = getTelemetryStats();
 
 const scanItems = [
-  { repo: 'jellyfin/jellyfin', score: '91.8', status: 'HEALTHY', verdict: 'healthy', note: 'branch-protection: active' },
-  { repo: 'filebrowser/filebrowser', score: '47.6', status: 'ARCHIVED — FLAGGED', verdict: 'risky', note: 'dormancy: 240d' },
-  { repo: 'ollama/ollama', score: '71.8', status: 'CAUTION — license review', verdict: 'caution', note: 'model telemetry clause' },
-  { repo: 'vaultwarden/server', score: '95.0', status: 'HEALTHY', verdict: 'healthy', note: 'zero CVEs • rust-native' },
-  { repo: 'huginn/huginn', score: '42.0', status: 'RISKY — dormant 180d', verdict: 'risky', note: 'unpatched gem CVEs' },
+  { repo: 'jellyfin/jellyfin', score: '92.0', status: 'HEALTHY', verdict: 'healthy', note: 'branch-protection: active' },
+  { repo: 'statping-ng/statping-ng', score: '34.0', status: 'RISKY — CVE-2024-3812', verdict: 'risky', note: 'unmaintained container base' },
+  { repo: 'maybe-finance/maybe', score: '65.0', status: 'CAUTION — 3 advisories', verdict: 'caution', note: 'maintainer transition' },
+  { repo: 'dani-garcia/vaultwarden', score: '96.0', status: 'HEALTHY', verdict: 'healthy', note: 'zero CVEs • rust memory-safe' },
+  { repo: 'huginn/huginn', score: '42.0', status: 'RISKY — dormant 180d', verdict: 'risky', note: 'unpatched gem dependencies' },
   { repo: 'home-assistant/core', score: '97.0', status: 'HEALTHY', verdict: 'healthy', note: 'scorecard: 9.3/10' },
 ];
 ---
 
-<div class={`w-full max-w-3xl mx-auto ${className}`} id="live-scan-container">
+<div class={`w-full max-w-3xl mx-auto scroll-mt-24 ${className}`} id="live-scan-container">
   <!-- Console Header & Mode Toggle -->
   <div class="rounded-xl border border-app-border bg-[#0e1014] shadow-2xl overflow-hidden">
     <!-- Window Bar -->
@@ -109,12 +112,12 @@ const scanItems = [
       <div class="flex items-center gap-3">
         <span class="flex items-center gap-1.5 text-app-text font-medium">
           <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-          <span>39 repos watched</span>
+          <span>{telemetry.totalWatched} repos watched</span>
         </span>
-        <span class="text-app-subtle">•</span>
-        <span class="text-rose-400 font-medium">3 flagged</span>
-        <span class="text-app-subtle">•</span>
-        <span class="text-app-subtle">last sweep 2h ago</span>
+        <span class="text-app-subtle">&middot;</span>
+        <span class="text-rose-400 font-medium">{telemetry.flaggedCount} flagged (1 critical)</span>
+        <span class="text-app-subtle">&middot;</span>
+        <span class="text-app-subtle">last sweep {telemetry.latestSweepTimestamp}</span>
       </div>
 
       <div class="text-app-subtle text-[10px] uppercase tracking-wider">

@@ -34,7 +34,7 @@ export const trendingReposData: TrendingItem[] = [
     slug: 'uptime-kuma',
     repo: 'louislam/uptime-kuma',
     name: 'Uptime Kuma',
-    tagline: 'A fancy self-hosted monitoring tool with notification integrations.',
+    tagline: 'High-reliability synthetic uptime and service health monitoring server with multi-channel alerting.',
     verdict: 'healthy',
     safetyScore: 97,
     momentum: {

@@ -2,7 +2,7 @@
   "slug": "uptime-kuma",
   "repo": "louislam/uptime-kuma",
   "name": "Uptime Kuma",
-  "tagline": "Self-hosted monitoring tool with fancy incident status pages and rich alerting.",
+  "tagline": "High-reliability synthetic uptime and service health monitoring server with multi-channel alerting.",
   "category": "monitoring-status",
   "license_spdx": "MIT",
   "stars": 62400,

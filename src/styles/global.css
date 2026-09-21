@@ -60,7 +60,20 @@
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+  border-top: none !important;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  outline: none !important;
+}
+
 body {
+  border-top: none !important;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  outline: none !important;
   background-color: var(--color-bg);
   color: var(--color-text-primary);
   font-family: var(--font-sans);
