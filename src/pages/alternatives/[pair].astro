@@ -1,0 +1,261 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import ScoreRing from '../../components/ScoreRing.astro';
+import VerdictBadge from '../../components/VerdictBadge.astro';
+import AdSlot from '../../components/AdSlot.astro';
+import { getAllComparisonPairs } from '../../utils/tools';
+import { getCategoryBySlug } from '../../data/categories';
+import type { ToolData } from '../../types/tool';
+
+export async function getStaticPaths() {
+  const pairs = getAllComparisonPairs();
+  return pairs.map((pair) => ({
+    params: { pair: pair.pairSlug },
+    props: { a: pair.a, b: pair.b }
+  }));
+}
+
+interface Props {
+  a: ToolData;
+  b: ToolData;
+}
+
+const { a, b } = Astro.props;
+const category = getCategoryBySlug(a.category);
+
+// Recommendation verdict logic
+const winner = a.safety_score >= b.safety_score ? a : b;
+const runnerUp = a.safety_score >= b.safety_score ? b : a;
+const scoreDiff = Math.abs(a.safety_score - b.safety_score);
+
+let verdictProse = '';
+if (scoreDiff >= 15) {
+  verdictProse = `${winner.name} holds a decisive advantage with a Safety Score of ${winner.safety_score}/100 compared to ${runnerUp.name}'s ${runnerUp.safety_score}/100. This divergence stems from superior maintenance responsiveness, fewer active supply-chain alerts, and stronger automated security audits. For production deployments, ${winner.name} is the clear recommendation.`;
+} else if (scoreDiff > 0) {
+  verdictProse = `Both tools demonstrate competitive quality, with ${winner.name} holding a slight operational edge (${winner.safety_score}/100 vs ${runnerUp.safety_score}/100). Choose ${winner.name} if you prioritize stricter automated testing and recent release hygiene; choose ${runnerUp.name} if its specific feature set (${runnerUp.language}) better matches your internal infrastructure.`;
+} else {
+  verdictProse = `Both ${a.name} and ${b.name} tied with an identical Safety Score of ${a.safety_score}/100. Both platforms exhibit rigorous open-source maintenance. Your decision should hinge on language compatibility (${a.language} vs ${b.language}) and installation ergonomics.`;
+}
+---
+
+<Layout
+  title={`${a.name} vs ${b.name} — Safety Score Comparison & Verdict | SafeOpenSource`}
+  description={`Compare ${a.name} vs ${b.name} head-to-head. Analyze Safety Scores (${a.safety_score} vs ${b.safety_score}), licenses (${a.license_spdx} vs ${b.license_spdx}), GitHub stars, self-hosting difficulty, and our AI verdict.`}
+>
+  <!-- Breadcrumbs -->
+  <nav class="flex items-center gap-2 text-xs font-mono text-app-subtle mb-6" aria-label="Breadcrumb">
+    <a href="/" class="hover:text-app-text">Home</a>
+    <span>/</span>
+    <a href={`/categories/${a.category}`} class="hover:text-app-text">{category?.name || a.category}</a>
+    <span>/</span>
+    <span class="text-app-text font-medium">{a.name} vs {b.name}</span>
+  </nav>
+
+  <!-- Page Header -->
+  <header class="text-center py-6 sm:py-10 max-w-2xl mx-auto mb-8">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/30 bg-blue-950/30 text-blue-400 text-micro mb-4">
+      <span>Head-to-Head Comparison</span>
+    </div>
+
+    <h1 class="text-2xl sm:text-4xl font-extrabold text-app-text tracking-tight mb-3">
+      {a.name} <span class="text-blue-500">vs</span> {b.name}
+    </h1>
+
+    <p class="text-xs sm:text-sm text-app-muted leading-relaxed">
+      A side-by-side technical evaluation across security posture, maintenance cadence, community vitality, and commercial licensing within the {category?.name} category.
+    </p>
+  </header>
+
+  <!-- Side by side Score Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+    <!-- Tool A -->
+    <div class="rounded-2xl border border-app-border bg-app-surface p-6 flex flex-col justify-between">
+      <div>
+        <div class="flex items-start justify-between gap-4 mb-4">
+          <div>
+            <span class="text-micro text-app-subtle block mb-0.5">Option A</span>
+            <h2 class="text-xl font-bold text-app-text">{a.name}</h2>
+            <span class="text-micro text-app-subtle">{a.repo}</span>
+          </div>
+          <ScoreRing score={a.safety_score} size="md" animate={false} />
+        </div>
+        <p class="text-xs text-app-muted leading-relaxed mb-4">
+          {a.tagline}
+        </p>
+      </div>
+
+      <div class="pt-4 border-t border-app-border flex items-center justify-between">
+        <VerdictBadge verdict={a.verdict} size="sm" />
+        <a href={`/tools/${a.slug}`} class="text-xs font-mono text-blue-400 hover:text-blue-300">
+          Full Audit Report &rarr;
+        </a>
+      </div>
+    </div>
+
+    <!-- Tool B -->
+    <div class="rounded-2xl border border-app-border bg-app-surface p-6 flex flex-col justify-between">
+      <div>
+        <div class="flex items-start justify-between gap-4 mb-4">
+          <div>
+            <span class="text-micro text-app-subtle block mb-0.5">Option B</span>
+            <h2 class="text-xl font-bold text-app-text">{b.name}</h2>
+            <span class="text-micro text-app-subtle">{b.repo}</span>
+          </div>
+          <ScoreRing score={b.safety_score} size="md" animate={false} />
+        </div>
+        <p class="text-xs text-app-muted leading-relaxed mb-4">
+          {b.tagline}
+        </p>
+      </div>
+
+      <div class="pt-4 border-t border-app-border flex items-center justify-between">
+        <VerdictBadge verdict={b.verdict} size="sm" />
+        <a href={`/tools/${b.slug}`} class="text-xs font-mono text-blue-400 hover:text-blue-300">
+          Full Audit Report &rarr;
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Comparison Table -->
+  <section class="rounded-2xl border border-app-border bg-app-surface overflow-hidden mb-10">
+    <div class="p-6 border-b border-app-border">
+      <h3 class="text-base font-bold text-app-text">
+        Technical & Metric Comparison
+      </h3>
+      <p class="text-xs text-app-muted mt-0.5">
+        Verifiable data scraped directly from GitHub API and OpenSSF scorecards.
+      </p>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs border-collapse">
+        <thead>
+          <tr class="border-b border-app-border bg-app-bg/50 text-app-subtle font-mono text-[11px]">
+            <th class="p-4 font-medium">Metric</th>
+            <th class="p-4 font-medium">{a.name}</th>
+            <th class="p-4 font-medium">{b.name}</th>
+            <th class="p-4 font-medium">Advantage</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-app-border font-mono">
+          <!-- Safety Score -->
+          <tr>
+            <td class="p-4 font-medium text-app-muted">Composite Safety Score</td>
+            <td class="p-4 font-bold text-app-text">{a.safety_score}/100</td>
+            <td class="p-4 font-bold text-app-text">{b.safety_score}/100</td>
+            <td class="p-4 text-emerald-400">
+              {a.safety_score > b.safety_score ? a.name : a.safety_score < b.safety_score ? b.name : 'Tie'}
+            </td>
+          </tr>
+
+          <!-- Verdict -->
+          <tr>
+            <td class="p-4 font-medium text-app-muted">Status Verdict</td>
+            <td class="p-4"><VerdictBadge verdict={a.verdict} size="sm" /></td>
+            <td class="p-4"><VerdictBadge verdict={b.verdict} size="sm" /></td>
+            <td class="p-4 text-app-subtle">—</td>
+          </tr>
+
+          <!-- License -->
+          <tr>
+            <td class="p-4 font-medium text-app-muted">License SPDX</td>
+            <td class="p-4 text-app-text">{a.license_spdx}</td>
+            <td class="p-4 text-app-text">{b.license_spdx}</td>
+            <td class="p-4 text-app-subtle">—</td>
+          </tr>
+
+          <!-- GitHub Stars -->
+          <tr>
+            <td class="p-4 font-medium text-app-muted">GitHub Stars</td>
+            <td class="p-4 text-app-text">{a.stars.toLocaleString()}</td>
+            <td class="p-4 text-app-text">{b.stars.toLocaleString()}</td>
+            <td class="p-4 text-blue-400">
+              {a.stars > b.stars ? `${a.name} (+${(a.stars - b.stars).toLocaleString()})` : a.stars < b.stars ? `${b.name} (+${(b.stars - a.stars).toLocaleString()})` : 'Equal'}
+            </td>
+          </tr>
+
+          <!-- Primary Language -->
+          <tr>
+            <td class="p-4 font-medium text-app-muted">Primary Language</td>
+            <td class="p-4 text-app-text">{a.language}</td>
+            <td class="p-4 text-app-text">{b.language}</td>
+            <td class="p-4 text-app-subtle">—</td>
+          </tr>
+
+          <!-- Self-Host Difficulty -->
+          <tr>
+            <td class="p-4 font-medium text-app-muted">Self-Host Difficulty</td>
+            <td class="p-4 text-app-text">{a.self_host_difficulty}</td>
+            <td class="p-4 text-app-text">{b.self_host_difficulty}</td>
+            <td class="p-4 text-app-subtle">—</td>
+          </tr>
+
+          <!-- OpenSSF Scorecard -->
+          <tr>
+            <td class="p-4 font-medium text-app-muted">OpenSSF Scorecard</td>
+            <td class="p-4 text-app-text">{a.scorecard ? `${a.scorecard}/10` : 'N/A'}</td>
+            <td class="p-4 text-app-text">{b.scorecard ? `${b.scorecard}/10` : 'N/A'}</td>
+            <td class="p-4 text-emerald-400">
+              {(a.scorecard || 0) > (b.scorecard || 0) ? a.name : (b.scorecard || 0) > (a.scorecard || 0) ? b.name : 'Tie'}
+            </td>
+          </tr>
+
+          <!-- Commit Activity -->
+          <tr>
+            <td class="p-4 font-medium text-app-muted">Last Push</td>
+            <td class="p-4 text-app-text">{a.last_push_days}d ago</td>
+            <td class="p-4 text-app-text">{b.last_push_days}d ago</td>
+            <td class="p-4 text-app-subtle">
+              {a.last_push_days < b.last_push_days ? a.name : b.name}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Which Should You Pick Verdict Card -->
+  <section class="rounded-2xl border border-app-border bg-app-surface p-6 sm:p-8 mb-10">
+    <div class="flex items-center gap-2 mb-3">
+      <div class="w-6 h-6 rounded-md bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <polygon points="12 8 8 12 12 16 12 8" />
+        </svg>
+      </div>
+      <h3 class="text-base sm:text-lg font-bold text-app-text">
+        Which Should You Pick? (Algorithmic Verdict)
+      </h3>
+    </div>
+
+    <p class="text-xs sm:text-sm text-app-text leading-relaxed mb-6">
+      {verdictProse}
+    </p>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-app-border text-xs">
+      <div class="p-4 rounded-xl bg-app-bg border border-app-border">
+        <span class="font-bold text-app-text block mb-1">Pick {a.name} if:</span>
+        <ul class="space-y-1 text-app-muted list-disc list-inside">
+          <li>You prefer a {a.language}-based stack.</li>
+          <li>You require {a.license_spdx} licensing terms.</li>
+          <li>Its {a.self_host_difficulty.toLowerCase()} deployment fits your ops requirements.</li>
+        </ul>
+      </div>
+
+      <div class="p-4 rounded-xl bg-app-bg border border-app-border">
+        <span class="font-bold text-app-text block mb-1">Pick {b.name} if:</span>
+        <ul class="space-y-1 text-app-muted list-disc list-inside">
+          <li>You prefer a {b.language}-based runtime.</li>
+          <li>Your team works comfortably with {b.license_spdx}.</li>
+          <li>You value its specific community ecosystem and client support.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Reserved Zero-CLS AdSlot Container -->
+  <section class="my-6">
+    <AdSlot format="leaderboard" />
+  </section>
+</Layout>

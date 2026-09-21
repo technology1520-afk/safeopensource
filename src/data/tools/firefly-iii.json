@@ -1,0 +1,33 @@
+{
+  "slug": "firefly-iii",
+  "repo": "firefly-iii/firefly-iii",
+  "name": "Firefly III",
+  "tagline": "Free and open-source personal finance manager with double-entry bookkeeping.",
+  "category": "finance-budgeting",
+  "license_spdx": "AGPL-3.0-only",
+  "stars": 16400,
+  "contributors": 140,
+  "last_push_days": 1,
+  "latest_release": "v6.2.8",
+  "safety_score": 91,
+  "verdict": "healthy",
+  "risk_reasons": [
+    "Double-entry accounting principles introduce a learning curve for basic personal budgeting.",
+    "Bank importer requires separate container setup and API token provisioning."
+  ],
+  "scorecard": 8.4,
+  "components": {
+    "security_health": 92,
+    "maintenance": 94,
+    "community": 88,
+    "releases": 90
+  },
+  "language": "PHP / Laravel",
+  "self_host_difficulty": "Medium",
+  "install_commands": {
+    "docker": "docker run -d -v firefly_upload:/var/www/html/storage/upload -p 8080:8080 -e APP_KEY=SomeRandomString32BytesLong fireflyiii/core:latest"
+  },
+  "website_url": "https://www.firefly-iii.org",
+  "ai_report": "Firefly III is a mature, robust personal finance manager developed on the PHP Laravel framework, designed around strict double-entry bookkeeping rules. It provides meticulous tracking of financial inflows and outflows, budgets, recurrent bills, investment portfolios, and net worth across multiple currencies.\n\nMaintained actively by a dedicated creator for over a decade, Firefly III demonstrates exemplary repository hygiene. Security audits and CVE disclosures are treated with utmost seriousness. The application features strict CSRF token validation, parameterized SQL queries via Eloquent ORM, two-factor authentication, and granular personal access tokens for API integrations.\n\nThe project records an 8.4 OpenSSF Scorecard. Data importer companions exist for importing CSVs and connecting to European banking APIs (Spectre/Salt Edge). Upgrades are streamlined via Docker, and database schema migrations run reliably on PostgreSQL and MySQL. For users desiring deep financial auditing and double-entry rigor, Firefly III is a standout Healthy application scoring 91/100.",
+  "scanned_at": "2026-09-18T10:00:00.000Z"
+}

@@ -1,0 +1,33 @@
+{
+  "slug": "photoprism",
+  "repo": "photoprism/photoprism",
+  "name": "PhotoPrism",
+  "tagline": "AI-powered photos app for the decentralized web powered by Go and TensorFlow.",
+  "category": "photo-management",
+  "license_spdx": "AGPL-3.0-only",
+  "stars": 35100,
+  "contributors": 95,
+  "last_push_days": 4,
+  "latest_release": "241108",
+  "safety_score": 72,
+  "verdict": "caution",
+  "risk_reasons": [
+    "Commercial feature gating creates tension between community and patron editions.",
+    "High initial indexing CPU and memory demands can overwhelm lower-tier VPS nodes."
+  ],
+  "scorecard": 6.9,
+  "components": {
+    "security_health": 74,
+    "maintenance": 73,
+    "community": 70,
+    "releases": 71
+  },
+  "language": "Go",
+  "self_host_difficulty": "Medium",
+  "install_commands": {
+    "docker": "docker compose up -d"
+  },
+  "website_url": "https://www.photoprism.app",
+  "ai_report": "PhotoPrism is an AI-powered photo management engine written in Go, utilizing Google TensorFlow to classify pictures, recognize facial expressions, and parse location coordinates. It excels at indexing existing structured directory archives without moving or modifying original files, making it popular among professional photographers with large NAS archives.\n\nThe backend Go daemon is stable, and database interactions through MariaDB are well-optimized. However, the project has experienced community headwinds due to increasingly aggressive monetization and feature paywalls (such as restricting multi-user account management and certain map styles to paid Sponsor editions). Development velocity on the open community branch has consequently decelerated relative to competitors like Immich.\n\nWith an OpenSSF Scorecard rating of 6.9, PhotoPrism satisfies core build checks, but lags in comprehensive supply-chain attestations. For single-user deployments focused purely on organizing static hard drives without mobile synchronization, PhotoPrism remains capable, but is rated Caution with a 72/100 Safety Score due to governance and licensing divergence.",
+  "scanned_at": "2026-09-18T10:00:00.000Z"
+}

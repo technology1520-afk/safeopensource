@@ -1,0 +1,32 @@
+{
+  "slug": "pi-hole",
+  "repo": "pi-hole/pi-hole",
+  "name": "Pi-hole",
+  "tagline": "Network-wide ad blocking via your own Linux hardware without client software.",
+  "category": "network-vpn",
+  "license_spdx": "EUPL-1.2",
+  "stars": 48900,
+  "contributors": 240,
+  "last_push_days": 1,
+  "latest_release": "v5.18.3",
+  "safety_score": 94,
+  "verdict": "healthy",
+  "risk_reasons": [
+    "DNS port (53) must NEVER be exposed directly to the public internet (open DNS resolver risk)."
+  ],
+  "scorecard": 8.7,
+  "components": {
+    "security_health": 96,
+    "maintenance": 95,
+    "community": 94,
+    "releases": 92
+  },
+  "language": "C / Shell",
+  "self_host_difficulty": "Easy",
+  "install_commands": {
+    "docker": "docker run -d --name pihole -p 53:53/tcp -p 53:53/udp -p 80:80 -e TZ=\"America/Chicago\" -v /etc/pihole:/etc/pihole -v /etc/dnsmasq.d:/etc/dnsmasq.d --restart=unless-stopped pihole/pihole:latest"
+  },
+  "website_url": "https://pi-hole.net",
+  "ai_report": "Pi-hole is the world's most popular DNS sinkhole, intercepting advertisement, telemetry, and tracking queries at the local network level before packets leave your router. Because blocking occurs via standard DNS response forging (returning 0.0.0.0 for blacklisted domains), Pi-hole shields every device on the network—including smart TVs, IoT appliances, and mobile phones—without requiring client software.\n\nThe core DNS engine (FTL) is written in C and based on dnsmasq, optimized to resolve queries in sub-millisecond durations while maintaining query logs in an embedded database. The Pi-hole team has maintained continuous development for nearly a decade, responding swiftly to CVE disclosures and auditing web interface parameters against command injection.\n\nPi-hole maintains an 8.7 OpenSSF Scorecard rating. Critical warning for operators: Port 53 must remain strictly internal to your local LAN or VPN mesh; exposing an open DNS resolver to the public internet enables distributed denial of service (DDoS) reflection attacks. Deployed internally, Pi-hole is extraordinarily safe and earns a Healthy rating at 94/100.",
+  "scanned_at": "2026-09-18T10:00:00.000Z"
+}

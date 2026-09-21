@@ -1,0 +1,33 @@
+{
+  "slug": "zigbee2mqtt",
+  "repo": "Koenkk/zigbee2mqtt",
+  "name": "Zigbee2MQTT",
+  "tagline": "Bridge Zigbee devices to MQTT networks without proprietary hubs or cloud services.",
+  "category": "home-automation",
+  "license_spdx": "GPL-3.0-only",
+  "stars": 12800,
+  "contributors": 420,
+  "last_push_days": 1,
+  "latest_release": "1.41.0",
+  "safety_score": 92,
+  "verdict": "healthy",
+  "risk_reasons": [
+    "Requires USB serial adapter passthrough to the container host.",
+    "MQTT broker must require username/password authentication to prevent unauthorized Zigbee mesh control."
+  ],
+  "scorecard": 8.4,
+  "components": {
+    "security_health": 93,
+    "maintenance": 95,
+    "community": 91,
+    "releases": 90
+  },
+  "language": "TypeScript",
+  "self_host_difficulty": "Medium",
+  "install_commands": {
+    "docker": "docker run -d --name zigbee2mqtt -v /opt/zigbee2mqtt/data:/app/data --device=/dev/ttyACM0 -p 8080:8080 -e TZ=Europe/Amsterdam koenkk/zigbee2mqtt"
+  },
+  "website_url": "https://www.zigbee2mqtt.io",
+  "ai_report": "Zigbee2MQTT liberates thousands of smart home devices (sensors, switches, thermostats) from proprietary vendor hubs by bridging Zigbee wireless packets directly to standardized MQTT message topics. Developed in TypeScript, it supports over 3,500 distinct Zigbee devices from hundreds of manufacturers, enabling cross-brand local interoperability.\n\nFrom a network security perspective, Zigbee2MQTT dramatically shrinks home attack surfaces. Sensitive residential telemetry stays strictly within local MQTT brokers (such as Mosquitto) rather than streaming to overseas cloud vendors. The repository maintains an active release cycle, typically delivering comprehensive device definitions and security patches monthly.\n\nWith an OpenSSF Scorecard rating of 8.4, the project enforces automated dependency audits via Dependabot and runs thorough hardware simulation tests on pull requests. Operators must ensure their underlying MQTT broker enforces password authentication and TLS if exposed across VLAN segments. Zigbee2MQTT is rated Healthy at 92/100.",
+  "scanned_at": "2026-09-18T10:00:00.000Z"
+}

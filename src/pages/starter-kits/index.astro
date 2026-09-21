@@ -1,0 +1,106 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import ToolCard from '../../components/ToolCard.astro';
+import AdSlot from '../../components/AdSlot.astro';
+import { starterKits } from '../../data/starter-kits';
+import { getToolBySlug } from '../../utils/tools';
+
+const kitsWithTools = starterKits.map((kit) => {
+  const tools = kit.tools
+    .map((slug) => getToolBySlug(slug))
+    .filter(Boolean);
+
+  const avgScore = tools.length > 0
+    ? Math.round(tools.reduce((acc, t) => acc + (t?.safety_score || 0), 0) / tools.length)
+    : 0;
+
+  return {
+    ...kit,
+    resolvedTools: tools,
+    avgScore
+  };
+});
+---
+
+<Layout
+  title="Curated Starter Kits for Self-Hosters — SafeOpenSource"
+  description="Pre-audited, battle-tested open-source stacks. Spin up your first home server, private photo cloud, or team documentation portal with confidence."
+>
+  <!-- Breadcrumbs -->
+  <nav class="flex items-center gap-2 text-xs font-mono text-app-subtle mb-6" aria-label="Breadcrumb">
+    <a href="/" class="hover:text-app-text">Home</a>
+    <span>/</span>
+    <span class="text-app-text font-medium">Starter Kits</span>
+  </nav>
+
+  <!-- Header -->
+  <header class="text-center py-6 sm:py-12 max-w-3xl mx-auto mb-10">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/30 bg-blue-950/30 text-blue-400 text-micro mb-4">
+      <span>Pre-Audited Stacks</span>
+    </div>
+
+    <h1 class="text-3xl sm:text-5xl font-extrabold text-app-text tracking-tight mb-4">
+      Curated Open-Source Starter Kits
+    </h1>
+
+    <p class="text-sm sm:text-base text-app-muted leading-relaxed">
+      Deploying self-hosted infrastructure doesn't have to mean guesswork. We bundle compatible, highest-safety tools into opinionated starter architectures that work seamlessly together.
+    </p>
+  </header>
+
+  <!-- Reserved Zero-CLS AdSlot -->
+  <section class="my-6">
+    <AdSlot format="leaderboard" />
+  </section>
+
+  <!-- Kits List -->
+  <div class="space-y-12 my-8">
+    {kitsWithTools.map((kit) => (
+      <section class="rounded-2xl border border-app-border bg-app-surface p-6 sm:p-8">
+        <div class="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-6 border-b border-app-border">
+          <div class="max-w-2xl">
+            <div class="flex items-center gap-3 mb-2 flex-wrap">
+              <h2 class="text-xl sm:text-2xl font-bold text-app-text">
+                {kit.title}
+              </h2>
+              <span class="text-micro px-2.5 py-0.5 rounded-full border border-blue-500/30 bg-blue-950/30 text-blue-400">
+                {kit.difficulty}
+              </span>
+              <span class="text-micro text-app-subtle font-mono">
+                ⏱ {kit.estimated_time}
+              </span>
+            </div>
+
+            <p class="text-sm text-app-text font-medium mb-1">
+              {kit.tagline}
+            </p>
+
+            <p class="text-xs text-app-muted leading-relaxed">
+              {kit.description}
+            </p>
+          </div>
+
+          <!-- Stack Safety Index -->
+          <div class="shrink-0 flex items-center gap-3 p-4 rounded-xl bg-app-bg border border-app-border">
+            <div>
+              <span class="text-micro text-app-subtle block">Stack Safety Index</span>
+              <span class="font-mono font-bold text-xl text-emerald-400">
+                {kit.avgScore}<span class="text-app-subtle text-xs font-normal">/100</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Included Tools Grid -->
+        <div class="mt-6">
+          <span class="text-micro text-app-subtle block mb-4">Included Stack Components</span>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {kit.resolvedTools.map((tool) => (
+              tool && <ToolCard tool={tool} />
+            ))}
+          </div>
+        </div>
+      </section>
+    ))}
+  </div>
+</Layout>

@@ -1,0 +1,32 @@
+{
+  "slug": "headscale",
+  "repo": "juanfont/headscale",
+  "name": "Headscale",
+  "tagline": "Open-source, self-hosted implementation of the Tailscale coordination server.",
+  "category": "network-vpn",
+  "license_spdx": "BSD-3-Clause",
+  "stars": 22400,
+  "contributors": 160,
+  "last_push_days": 2,
+  "latest_release": "v0.23.0",
+  "safety_score": 93,
+  "verdict": "healthy",
+  "risk_reasons": [
+    "Coordination keys must be kept private; server controls entire mesh routing overlay."
+  ],
+  "scorecard": 8.5,
+  "components": {
+    "security_health": 95,
+    "maintenance": 94,
+    "community": 90,
+    "releases": 91
+  },
+  "language": "Go",
+  "self_host_difficulty": "Medium",
+  "install_commands": {
+    "docker": "docker run -d --name headscale -p 8080:8080 -v /etc/headscale:/etc/headscale headscale/headscale:latest"
+  },
+  "website_url": "https://headscale.net",
+  "ai_report": "Headscale is an open-source, self-hosted implementation of the Tailscale coordination control plane, allowing individuals and organizations to build private WireGuard mesh networks without relying on Tailscale's proprietary cloud infrastructure. Nodes connect peer-to-peer using WireGuard cryptographic keys, ensuring that data payloads travel directly between devices with end-to-end encryption.\n\nThe Headscale daemon handles peer key exchange, network access control lists (ACLs), DNS routing (MagicDNS), and routing subnet routes. Written in Go, it features strict static analysis, unit test suites, and minimal external dependencies. Security audits have commended the minimal attack surface of the control plane, as peer traffic never flows through the Headscale coordinator itself.\n\nWith an 8.5 OpenSSF Scorecard score, Headscale adheres to disciplined software release cadences. Official Docker images are signed and published with immutable digest hashes. For sysadmins who value WireGuard mesh simplicity but mandate complete sovereignty over network routing metadata, Headscale is an exemplary, Healthy solution scoring 93/100.",
+  "scanned_at": "2026-09-18T10:00:00.000Z"
+}

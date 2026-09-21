@@ -1,0 +1,32 @@
+{
+  "slug": "gitea",
+  "repo": "go-gitea/gitea",
+  "name": "Gitea",
+  "tagline": "Painless self-hosted Git service written in Go with built-in CI/CD actions.",
+  "category": "developer-tools",
+  "license_spdx": "MIT",
+  "stars": 45100,
+  "contributors": 1100,
+  "last_push_days": 1,
+  "latest_release": "v1.22.6",
+  "safety_score": 90,
+  "verdict": "healthy",
+  "risk_reasons": [
+    "Gitea Actions runners execute arbitrary code; runners should be sandboxed in isolated VMs."
+  ],
+  "scorecard": 8.4,
+  "components": {
+    "security_health": 91,
+    "maintenance": 92,
+    "community": 90,
+    "releases": 88
+  },
+  "language": "Go",
+  "self_host_difficulty": "Easy",
+  "install_commands": {
+    "docker": "docker run -d --name=gitea -p 3000:3000 -p 222:22 -v /var/lib/gitea:/data gitea/gitea:latest"
+  },
+  "website_url": "https://about.gitea.com",
+  "ai_report": "Gitea provides a lightweight, full-featured Git hosting platform that runs effortlessly on low-power ARM devices or scales to thousands of enterprise users. Written in Go, Gitea packages issues, pull requests, code review, package registries (npm, PyPI, Docker), and GitHub-compatible Actions CI/CD workflows into a single binary.\n\nThe Gitea project enforces strict security practices. Vulnerability reports are handled through private disclosures, and regular point releases address upstream Go security advisories. The system includes built-in SSH server implementation, two-factor authentication (TOTP and WebAuthn), and OAuth2/OIDC integration.\n\nWith an 8.4 OpenSSF Scorecard rating, Gitea maintains automated testing for SQLite, MySQL, and PostgreSQL backends. Administrators enabling Gitea Actions should ensure runner daemons (Act Runner) operate inside sandboxed Docker or VM networks to prevent malicious pull requests from accessing host infrastructure. Gitea is rated Healthy at 90/100.",
+  "scanned_at": "2026-09-18T10:00:00.000Z"
+}

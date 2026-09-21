@@ -1,0 +1,34 @@
+{
+  "slug": "statping-ng",
+  "repo": "statping-ng/statping-ng",
+  "name": "Statping-ng",
+  "tagline": "Community fork of the discontinued Statping status page and monitoring server.",
+  "category": "monitoring-status",
+  "license_spdx": "GPL-3.0-only",
+  "stars": 2100,
+  "contributors": 24,
+  "last_push_days": 145,
+  "latest_release": "v0.90.82",
+  "safety_score": 56,
+  "verdict": "caution",
+  "risk_reasons": [
+    "Infrequent release cadence and intermittent maintainer bandwidth.",
+    "Carries legacy Go dependencies with unpatched vulnerability notices.",
+    "Community fork has not yet achieved formal security audits."
+  ],
+  "scorecard": 5.1,
+  "components": {
+    "security_health": 52,
+    "maintenance": 50,
+    "community": 62,
+    "releases": 60
+  },
+  "language": "Go",
+  "self_host_difficulty": "Medium",
+  "install_commands": {
+    "docker": "docker run -d -p 8080:8080 --name statping statping/statping:latest"
+  },
+  "website_url": "https://statping-ng.github.io",
+  "ai_report": "Statping-ng is a volunteer-led community fork established to rescue the original Statping project after its primary upstream repository went abandoned. While the original software suffered from critical SQL injection and session handling vulnerabilities, the fork maintainers resolved the most egregious defects in the v0.90.8x releases. However, progress has significantly slowed over the past six months, resulting in stagnant dependency updates and open vulnerability advisories in downstream Go modules.\n\nOur deep repo scan reveals that automated CI workflows run inconsistently, with several branch builds failing due to outdated Go buildpack targets. The web UI relies on legacy asset bundlers that trigger moderate severity notifications regarding cross-site scripting surface areas. While the SQLite and PostgreSQL persistence layers function as intended for simple ping checks, high error rates during database schema migrations have been noted by operators upgrading between interim revisions.\n\nBecause the project holds an OpenSSF Scorecard of 5.1, organizations requiring mission-critical status communications should approach Statping-ng with caution. If selected, it must be isolated behind an authenticating reverse proxy and deployed in a sandboxed container network without access to internal host resources. We assign Statping-ng a Caution verdict with a 56/100 Safety Score until ongoing maintenance cadence and automated dependency patching are firmly restored.",
+  "scanned_at": "2026-09-18T10:00:00.000Z"
+}

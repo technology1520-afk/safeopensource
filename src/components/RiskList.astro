@@ -1,0 +1,65 @@
+---
+import type { Verdict } from '../types/tool';
+
+interface Props {
+  risks: string[];
+  verdict: Verdict;
+  class?: string;
+}
+
+const { risks, verdict, class: className = '' } = Astro.props;
+
+const isClean = risks.length === 0;
+---
+
+<div class={`rounded-xl border border-app-border bg-app-surface p-5 sm:p-6 ${className}`}>
+  <div class="flex items-center justify-between gap-4 mb-4">
+    <div class="flex items-center gap-2">
+      <h3 class="text-sm font-semibold tracking-tight text-app-text">
+        Risk Assessment & Operational Flags
+      </h3>
+      <span class="text-micro px-2 py-0.5 rounded bg-app-bg border border-app-border text-app-subtle">
+        {risks.length} {risks.length === 1 ? 'flag' : 'flags'}
+      </span>
+    </div>
+  </div>
+
+  {isClean ? (
+    <div class="flex items-center gap-3 p-3.5 rounded-lg border border-emerald-500/20 bg-emerald-950/20 text-emerald-300 text-xs">
+      <svg class="w-4 h-4 shrink-0 stroke-current" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+        <polyline points="22 4 12 14.01 9 11.01" />
+      </svg>
+      <span>No active operational or supply-chain security flags detected during latest automated audit.</span>
+    </div>
+  ) : (
+    <ul class="space-y-3" role="list">
+      {risks.map((risk) => (
+        <li class="flex items-start gap-3 p-3 rounded-lg border border-app-border bg-app-bg text-xs">
+          <svg
+            class={`w-4 h-4 shrink-0 mt-0.5 ${
+              verdict === 'risky'
+                ? 'text-rose-400'
+                : 'text-amber-400'
+            }`}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+          <div class="text-app-text leading-relaxed">
+            {risk}
+          </div>
+        </li>
+      ))}
+    </ul>
+  )}
+</div>
+

@@ -1,0 +1,33 @@
+{
+  "slug": "matomo",
+  "repo": "matomo-org/matomo",
+  "name": "Matomo",
+  "tagline": "Comprehensive Google Analytics alternative with enterprise compliance features.",
+  "category": "analytics-metrics",
+  "license_spdx": "GPL-3.0-or-later",
+  "stars": 20200,
+  "contributors": 320,
+  "last_push_days": 2,
+  "latest_release": "5.2.1",
+  "safety_score": 76,
+  "verdict": "caution",
+  "risk_reasons": [
+    "Large legacy PHP codebase with dozens of plugins increases attack surface.",
+    "Database tables can grow to hundreds of gigabytes without automated archiving cron jobs."
+  ],
+  "scorecard": 7.2,
+  "components": {
+    "security_health": 78,
+    "maintenance": 79,
+    "community": 77,
+    "releases": 72
+  },
+  "language": "PHP",
+  "self_host_difficulty": "Medium",
+  "install_commands": {
+    "docker": "docker run -d -p 8080:80 matomo"
+  },
+  "website_url": "https://matomo.org",
+  "ai_report": "Matomo (formerly Piwik) is the granddaddy of self-hosted web analytics, providing a 1:1 replacement for almost every feature found in Google Analytics 360, including heatmaps, session recordings, goal funnels, A/B testing, and ecommerce tracking. Because Matomo can be hosted on sovereign European infrastructure, it is widely utilized by governmental bodies requiring strict GDPR compliance.\n\nHowever, Matomo’s vast feature set comes at the cost of architectural complexity. The repository contains millions of lines of legacy PHP code and a wide array of plugin integrations. Over its multi-decade history, Matomo has addressed multiple critical CVEs involving SQL injection, SSRF, and serialized object injection. While the core team maintains an active bug bounty and responds promptly to vulnerabilities, maintaining a secure Matomo instance requires persistent patch diligence.\n\nThe project maintains an OpenSSF Scorecard of 7.2. Operators hosting Matomo must configure scheduled archiving cron jobs to prevent MySQL table locking under heavy traffic. Due to its large attack surface and legacy baggage, Matomo earns a Caution score of 76/100, suitable for enterprises requiring full behavioral tracking but requiring deliberate maintenance.",
+  "scanned_at": "2026-09-18T10:00:00.000Z"
+}

@@ -1,0 +1,32 @@
+{
+  "slug": "coder",
+  "repo": "coder/coder",
+  "name": "Coder",
+  "tagline": "Self-hosted remote development environments on your infrastructure with Terraform.",
+  "category": "developer-tools",
+  "license_spdx": "AGPL-3.0-only",
+  "stars": 9200,
+  "contributors": 140,
+  "last_push_days": 1,
+  "latest_release": "v2.19.0",
+  "safety_score": 89,
+  "verdict": "healthy",
+  "risk_reasons": [
+    "Provisions arbitrary computing instances; requires strict Terraform module validation."
+  ],
+  "scorecard": 8.3,
+  "components": {
+    "security_health": 90,
+    "maintenance": 91,
+    "community": 87,
+    "releases": 88
+  },
+  "language": "Go",
+  "self_host_difficulty": "Advanced",
+  "install_commands": {
+    "docker": "docker run -d --name coder -p 7080:7080 -v /var/run/docker.sock:/var/run/docker.sock ghcr.io/coder/coder:latest"
+  },
+  "website_url": "https://coder.com",
+  "ai_report": "Coder enables engineering organizations to shift development workloads from individual employee laptops into centralized, reproducible cloud or on-premise compute nodes. Leveraging standard HashiCorp Terraform templates, Coder spins up Docker containers, Kubernetes pods, or bare-metal VMs pre-configured with IDEs, compilers, and internal network access.\n\nCoder’s security architecture is zero-trust: client connections to developer workspaces are routed through WireGuard-encrypted mesh tunnels (DERP relays), meaning internal ports need not be exposed to the public internet. Access controls support SAML, OIDC, and multi-factor authentication. The Go-based control plane is performant and undergoes regular internal security audits.\n\nThe project achieves an 8.3 OpenSSF Scorecard, reflecting continuous integration testing and automated release pipelines. Because Coder workspace templates interact directly with virtualization hypervisors and Docker daemons, operators must implement role-based template permissions to ensure developers cannot provision unauthorized privileged containers. Coder is rated Healthy at 89/100.",
+  "scanned_at": "2026-09-18T10:00:00.000Z"
+}

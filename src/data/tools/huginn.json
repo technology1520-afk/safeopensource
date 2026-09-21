@@ -1,0 +1,34 @@
+{
+  "slug": "huginn",
+  "repo": "huginn/huginn",
+  "name": "Huginn",
+  "tagline": "Build agents that monitor and act on your behalf on the web (open-source IFTTT).",
+  "category": "automation-workflow",
+  "license_spdx": "MIT",
+  "stars": 41200,
+  "contributors": 215,
+  "last_push_days": 180,
+  "latest_release": "v2023.05.01",
+  "safety_score": 42,
+  "verdict": "risky",
+  "risk_reasons": [
+    "Infrequent commit cadence with months of repository inactivity.",
+    "Dozens of high-severity dependency CVEs in legacy Ruby on Rails gem dependencies.",
+    "Unmaintained web scrapers prone to silent breakage and SSRF vulnerabilities."
+  ],
+  "scorecard": 4.4,
+  "components": {
+    "security_health": 38,
+    "maintenance": 35,
+    "community": 55,
+    "releases": 44
+  },
+  "language": "Ruby",
+  "self_host_difficulty": "Advanced",
+  "install_commands": {
+    "docker": "docker run -d -p 3000:3000 huginn/huginn"
+  },
+  "website_url": "https://github.com/huginn/huginn",
+  "ai_report": "Huginn was one of the earliest open-source alternatives to IFTTT and Yahoo Pipes, enabling users to program software agents that scan web pages, parse RSS feeds, and execute actions when events match trigger thresholds. Built on Ruby on Rails, Huginn achieved wide acclaim for its flexibility and raw scraping capabilities.\n\nHowever, repository analysis reveals that Huginn has entered a state of software decay. Primary repository maintenance has slowed dramatically, with months passing between commit activities. More critically, the project depends on legacy Ruby gem dependencies with multiple unaddressed CVE advisories covering remote command execution surface areas, XML external entity (XXE) parsing bugs, and denial of service.\n\nWith an OpenSSF Scorecard of only 4.4, Huginn fails modern supply-chain security standards. CI workflows fail consistently on modern Ruby runtimes, and Docker builds require outdated base operating systems. We categorize Huginn as Risky with a 42/100 Safety Score. Operators still running Huginn are urged to migrate to active platforms like n8n or Activepieces to eliminate security vulnerabilities.",
+  "scanned_at": "2026-09-18T10:00:00.000Z"
+}

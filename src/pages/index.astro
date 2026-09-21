@@ -1,0 +1,209 @@
+---
+import Layout from '../layouts/Layout.astro';
+import LiveScanConsole from '../components/LiveScanConsole.astro';
+import DetectionRadarHero from '../components/DetectionRadarHero.astro';
+import FlagWall from '../components/FlagWall.astro';
+import CategoryRadar from '../components/CategoryRadar.astro';
+import BentoRow from '../components/BentoRow.astro';
+import CategoryCard from '../components/CategoryCard.astro';
+import AdSlot from '../components/AdSlot.astro';
+import SearchDialog from '../components/SearchDialog';
+import { categories } from '../data/categories';
+import { getAllTools, getSafestTools, getToolsByCategory } from '../utils/tools';
+
+const allTools = getAllTools();
+const safestTools = getSafestTools(3);
+
+// Category stats
+const categoriesWithStats = categories.map((cat) => {
+  const tools = getToolsByCategory(cat.slug);
+  const avgScore = tools.length > 0
+    ? tools.reduce((acc, t) => acc + t.safety_score, 0) / tools.length
+    : 0;
+  return {
+    ...cat,
+    toolCount: tools.length,
+    avgScore
+  };
+});
+---
+
+<Layout
+  title="SafeOpenSource — Live Open-Source Security Operations Console"
+  description="Continuous security scans for open-source tools with objective 0–100 Safety Scores. We watch repositories so you don't get burned."
+>
+  <!-- Hero Section: Security Ops Center Console -->
+  <section class="py-6 sm:py-12 max-w-4xl mx-auto text-center">
+    <!-- Direction Switcher Pill -->
+    <div class="inline-flex items-center gap-1.5 p-1 rounded-full border border-app-border bg-[#131519] text-xs font-mono mb-8">
+      <button
+        type="button"
+        id="btn-hero-console"
+        class="px-3 py-1 rounded-full bg-blue-600 text-white font-medium shadow-xs transition-colors"
+      >
+        Live Scan Console (Primary)
+      </button>
+      <button
+        type="button"
+        id="btn-hero-radar"
+        class="px-3 py-1 rounded-full text-app-muted hover:text-app-text hover:bg-app-surface transition-colors"
+      >
+        Detection Radar (Alternative)
+      </button>
+    </div>
+
+    <!-- 1. Live Scan Console (Primary Deliverable) -->
+    <div id="hero-view-console" class="block mb-8">
+      <LiveScanConsole />
+    </div>
+
+    <!-- Alternative Direction: Detection Radar Hero -->
+    <div id="hero-view-radar" class="hidden mb-8">
+      <DetectionRadarHero />
+    </div>
+
+    <!-- Headline and Core Mission Statement sitting beneath the console -->
+    <div class="max-w-2xl mx-auto mt-8">
+      <div class="inline-flex items-center gap-2 text-micro text-emerald-400 font-mono mb-3">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span>SECURITY OPS CENTER :: CONTINUOUS REPO TELEMETRY</span>
+      </div>
+
+      <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-app-text leading-tight mb-4">
+        We watch these projects so you don't get <span class="text-rose-400">burned</span>.
+      </h1>
+
+      <p class="text-sm sm:text-base text-app-muted leading-relaxed mb-6">
+        Not a software directory. A live mission-control station monitoring open-source software with verifiable 0–100 Safety Scores, OpenSSF Scorecards, and incident alerts.
+      </p>
+
+      <!-- Primary Search Island Trigger beneath the Headline -->
+      <div class="flex justify-center max-w-lg mx-auto mb-4">
+        <SearchDialog client:load tools={allTools} />
+      </div>
+    </div>
+  </section>
+
+  <!-- Reserved Zero-CLS AdSlot Container -->
+  <section class="my-6">
+    <AdSlot format="leaderboard" />
+  </section>
+
+  <!-- 2. The Flag Wall (Incident Feed Section) -->
+  <FlagWall />
+
+  <!-- 3. Category Radar (13 Sectors SVG Grid) -->
+  <CategoryRadar />
+
+  <!-- 4. Safest This Month Bento Grid -->
+  <section class="my-14">
+    <div class="flex items-center justify-between gap-4 mb-6">
+      <div>
+        <span class="text-micro text-emerald-400 block mb-1">VERIFIED HEALTHY</span>
+        <h2 class="text-xl sm:text-2xl font-bold tracking-tight text-app-text">
+          Safest Tools This Month
+        </h2>
+      </div>
+      <a href="/categories/monitoring-status" class="text-xs font-mono text-app-subtle hover:text-blue-400 transition-colors hidden sm:inline-block">
+        Explore Healthy Stacks &rarr;
+      </a>
+    </div>
+
+    <BentoRow tools={safestTools} />
+  </section>
+
+  <!-- How Scoring Works Strip -->
+  <section class="my-14 rounded-2xl border border-app-border bg-app-surface p-6 sm:p-8">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div class="max-w-xl">
+        <span class="text-micro text-blue-400 block mb-1">OBJECTIVE TELEMETRY</span>
+        <h2 class="text-lg sm:text-xl font-bold text-app-text mb-2">
+          Deterministic 0–100 Scoring Weights
+        </h2>
+        <p class="text-xs text-app-muted leading-relaxed">
+          Scores are derived mathematically from four weighted dimensions: Security Health (35%), Maintenance Cadence (30%), Community Velocity (20%), and Release Hygiene (15%). No vendor can pay for higher scores.
+        </p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3">
+        <div class="px-3 py-2 rounded-lg bg-app-bg border border-app-border text-center">
+          <div class="font-mono font-bold text-xs text-emerald-400">35%</div>
+          <div class="text-[10px] text-app-subtle">Security</div>
+        </div>
+        <div class="px-3 py-2 rounded-lg bg-app-bg border border-app-border text-center">
+          <div class="font-mono font-bold text-xs text-blue-400">30%</div>
+          <div class="text-[10px] text-app-subtle">Maintenance</div>
+        </div>
+        <div class="px-3 py-2 rounded-lg bg-app-bg border border-app-border text-center">
+          <div class="font-mono font-bold text-xs text-purple-400">20%</div>
+          <div class="text-[10px] text-app-subtle">Community</div>
+        </div>
+        <div class="px-3 py-2 rounded-lg bg-app-bg border border-app-border text-center">
+          <div class="font-mono font-bold text-xs text-amber-400">15%</div>
+          <div class="text-[10px] text-app-subtle">Releases</div>
+        </div>
+
+        <a
+          href="/how-we-score"
+          class="px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors font-mono"
+        >
+          View Methodology &rarr;
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Categories Grid Directory -->
+  <section id="categories" class="my-14 scroll-mt-20">
+    <div class="flex items-center justify-between gap-4 mb-6">
+      <div>
+        <span class="text-micro text-app-subtle block mb-1">MONITORED TAXONOMIES</span>
+        <h2 class="text-xl sm:text-2xl font-bold tracking-tight text-app-text">
+          Browse by Category
+        </h2>
+      </div>
+      <span class="text-xs font-mono text-app-subtle">
+        13 Sectors Active
+      </span>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {categoriesWithStats.map((cat) => (
+        <CategoryCard
+          category={cat}
+          toolCount={cat.toolCount}
+          avgScore={cat.avgScore}
+        />
+      ))}
+    </div>
+  </section>
+</Layout>
+
+<script is:inline>
+  (function () {
+    const btnConsole = document.getElementById('btn-hero-console');
+    const btnRadar = document.getElementById('btn-hero-radar');
+    const viewConsole = document.getElementById('hero-view-console');
+    const viewRadar = document.getElementById('hero-view-radar');
+
+    if (!btnConsole || !btnRadar || !viewConsole || !viewRadar) return;
+
+    btnConsole.addEventListener('click', () => {
+      btnConsole.className = 'px-3 py-1 rounded-full bg-blue-600 text-white font-medium shadow-xs transition-colors';
+      btnRadar.className = 'px-3 py-1 rounded-full text-app-muted hover:text-app-text hover:bg-app-surface transition-colors';
+      viewConsole.classList.remove('hidden');
+      viewConsole.classList.add('block');
+      viewRadar.classList.remove('block');
+      viewRadar.classList.add('hidden');
+    });
+
+    btnRadar.addEventListener('click', () => {
+      btnRadar.className = 'px-3 py-1 rounded-full bg-blue-600 text-white font-medium shadow-xs transition-colors';
+      btnConsole.className = 'px-3 py-1 rounded-full text-app-muted hover:text-app-text hover:bg-app-surface transition-colors';
+      viewRadar.classList.remove('hidden');
+      viewRadar.classList.add('block');
+      viewConsole.classList.remove('block');
+      viewConsole.classList.add('hidden');
+    });
+  })();
+</script>

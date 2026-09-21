@@ -1,0 +1,33 @@
+{
+  "slug": "owncloud",
+  "repo": "owncloud/core",
+  "name": "ownCloud Classic",
+  "tagline": "Legacy open-source file sync platform, largely superseded by ownCloud Infinite Scale.",
+  "category": "cloud-storage",
+  "license_spdx": "AGPL-3.0-only",
+  "stars": 8100,
+  "contributors": 220,
+  "last_push_days": 28,
+  "latest_release": "10.14.0",
+  "safety_score": 63,
+  "verdict": "caution",
+  "risk_reasons": [
+    "Legacy PHP core is in maintenance-only mode with active development diverted to ownCloud Infinite Scale (OCIS).",
+    "Historical CVE advisories in legacy modules require immediate patching to 10.14+."
+  ],
+  "scorecard": 6.1,
+  "components": {
+    "security_health": 62,
+    "maintenance": 60,
+    "community": 68,
+    "releases": 64
+  },
+  "language": "PHP",
+  "self_host_difficulty": "Medium",
+  "install_commands": {
+    "docker": "docker run -d -p 8080:80 owncloud:latest"
+  },
+  "website_url": "https://owncloud.com",
+  "ai_report": "ownCloud Classic represents the original codebase from which Nextcloud forked in 2016. While ownCloud played a pioneering role in democratizing personal cloud storage, the original PHP core (version 10.x) has transitioned into a legacy maintenance mode. Primary development resources at ownCloud GmbH are now directed toward ownCloud Infinite Scale (OCIS), a ground-up Go/microservices rewrite.\n\nThe legacy PHP codebase carries substantial technical debt and has experienced critical security disclosures over past years, including CVE-2023-49103 (unauthenticated information disclosure in third-party graphapi extensions). While the core vendor actively issues security patches for supported 10.x revisions, new feature velocity is virtually flat, and community involvement has dwindled relative to Nextcloud.\n\nWith an OpenSSF Scorecard of 6.1, ownCloud 10.x passes baseline CI checks, but organizations starting fresh implementations are strongly advised to adopt either Nextcloud Hub or ownCloud Infinite Scale. Operators maintaining legacy ownCloud installations must audit installed apps, disable unused endpoints, and confirm immediate patching to 10.14.0 or newer. It is classified under Caution with a 63/100 Safety Score.",
+  "scanned_at": "2026-09-18T10:00:00.000Z"
+}

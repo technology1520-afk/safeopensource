@@ -1,0 +1,33 @@
+{
+  "slug": "vaultwarden",
+  "repo": "dani-garcia/vaultwarden",
+  "name": "Vaultwarden",
+  "tagline": "Lightweight Bitwarden-compatible password vault server written in Rust.",
+  "category": "password-auth",
+  "license_spdx": "AGPL-3.0-only",
+  "stars": 43200,
+  "contributors": 185,
+  "last_push_days": 2,
+  "latest_release": "1.32.7",
+  "safety_score": 95,
+  "verdict": "healthy",
+  "risk_reasons": [
+    "Must be deployed strictly over HTTPS/TLS; web vault crypto primitives reject insecure HTTP origins.",
+    "Requires admin token hashing and disabling signups to prevent unauthorized public registration."
+  ],
+  "scorecard": 8.9,
+  "components": {
+    "security_health": 98,
+    "maintenance": 95,
+    "community": 92,
+    "releases": 94
+  },
+  "language": "Rust",
+  "self_host_difficulty": "Easy",
+  "install_commands": {
+    "docker": "docker run -d --name vaultwarden -v /vw-data/:/data/ --restart unless-stopped -p 8080:80 vaultwarden/server:latest"
+  },
+  "website_url": "https://github.com/dani-garcia/vaultwarden",
+  "ai_report": "Vaultwarden is a premier example of high-efficiency Rust engineering, implementing the complete Bitwarden API specification while consuming less than 50MB of RAM. Because credential managers sit at the pinnacle of personal and organizational threat models, Vaultwarden benefits directly from Rust's compile-time memory safety guarantees, completely eradicating entire classes of buffer overflow and memory corruption vulnerabilities.\n\nThe security model adheres strictly to zero-knowledge client-side encryption. The Vaultwarden server acts solely as an encrypted blob store and sync coordinator; master passwords and decryption keys never cross the wire or touch server memory in plaintext. The project maintainers maintain an aggressive vulnerability response protocol, releasing hotfixes for upstream API changes within days. The OpenSSF Scorecard rating is 8.9, bolstered by automated static analysis with Clippy, signed container manifests, and strict secret scanning in GitHub Actions.\n\nCrucial deployment configurations: Administrators must enforce TLS termination at the reverse proxy (Bitwarden client extensions will refuse WebCrypto operations over plaintext HTTP) and set SIGNUPS_ALLOWED=false alongside a hashed ADMIN_TOKEN once administrative accounts are provisioned. With tens of thousands of active nodes operating without systemic cryptographic breaches, Vaultwarden is awarded a top-tier Healthy rating and a 95/100 Safety Score.",
+  "scanned_at": "2026-09-18T10:00:00.000Z"
+}

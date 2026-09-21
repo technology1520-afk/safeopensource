@@ -1,0 +1,32 @@
+{
+  "slug": "umami",
+  "repo": "umami-software/umami",
+  "name": "Umami",
+  "tagline": "Modern, privacy-focused alternative to Google Analytics with simple setup.",
+  "category": "analytics-metrics",
+  "license_spdx": "MIT",
+  "stars": 24300,
+  "contributors": 140,
+  "last_push_days": 2,
+  "latest_release": "v2.14.0",
+  "safety_score": 92,
+  "verdict": "healthy",
+  "risk_reasons": [
+    "Default admin credentials (admin / umami) must be changed immediately after initial deployment."
+  ],
+  "scorecard": 8.5,
+  "components": {
+    "security_health": 93,
+    "maintenance": 94,
+    "community": 91,
+    "releases": 90
+  },
+  "language": "TypeScript / Next.js",
+  "self_host_difficulty": "Easy",
+  "install_commands": {
+    "docker": "docker run -d --name umami -p 3000:3000 -e DATABASE_URL=postgresql://user:pass@db:5432/umami ghcr.io/umami-software/umami:postgresql-latest"
+  },
+  "website_url": "https://umami.is",
+  "ai_report": "Umami is a friendly, cookie-free web analytics platform designed to collect website metrics while respecting user privacy and complying with international data protection regulations. Built on TypeScript and Next.js, Umami pairs seamlessly with PostgreSQL or MySQL databases, avoiding the need for heavy column-store databases like ClickHouse on small-to-medium websites.\n\nThe tracker script is under 2KB, collects zero personal identifiable information (PII), and hashes visitor sessions with daily rotating salts. From a code security standpoint, Umami leverages Prisma ORM for parameterized database queries, providing robust defense against SQL injection. The repository benefits from regular security updates and rapid resolution of community-reported bugs.\n\nWith an 8.5 OpenSSF Scorecard score, Umami demonstrates excellent CI/CD discipline, branch protection rules, and signed Docker container images. Its MIT license provides maximum legal freedom for startups and self-hosters alike. Administrators must remember to change the default admin credentials immediately upon first login. Umami is rated Healthy with a 92/100 Safety Score.",
+  "scanned_at": "2026-09-18T10:00:00.000Z"
+}

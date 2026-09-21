@@ -1,0 +1,172 @@
+---
+interface Props {
+  class?: string;
+}
+
+const { class: className = '' } = Astro.props;
+
+const scanItems = [
+  { repo: 'jellyfin/jellyfin', score: '91.8', status: 'HEALTHY', verdict: 'healthy', note: 'branch-protection: active' },
+  { repo: 'filebrowser/filebrowser', score: '47.6', status: 'ARCHIVED — FLAGGED', verdict: 'risky', note: 'dormancy: 240d' },
+  { repo: 'ollama/ollama', score: '71.8', status: 'CAUTION — license review', verdict: 'caution', note: 'model telemetry clause' },
+  { repo: 'vaultwarden/server', score: '95.0', status: 'HEALTHY', verdict: 'healthy', note: 'zero CVEs • rust-native' },
+  { repo: 'huginn/huginn', score: '42.0', status: 'RISKY — dormant 180d', verdict: 'risky', note: 'unpatched gem CVEs' },
+  { repo: 'home-assistant/core', score: '97.0', status: 'HEALTHY', verdict: 'healthy', note: 'scorecard: 9.3/10' },
+];
+---
+
+<div class={`w-full max-w-3xl mx-auto ${className}`} id="live-scan-container">
+  <!-- Console Header & Mode Toggle -->
+  <div class="rounded-xl border border-app-border bg-[#0e1014] shadow-2xl overflow-hidden">
+    <!-- Window Bar -->
+    <div class="flex items-center justify-between px-4 py-2.5 bg-[#131519] border-b border-app-border">
+      <div class="flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-rose-500/80 inline-block"></span>
+        <span class="w-2.5 h-2.5 rounded-full bg-amber-500/80 inline-block"></span>
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500/80 inline-block"></span>
+        <span class="ml-2 font-mono text-[11px] text-app-subtle tracking-wider uppercase">
+          LIVE SWEEP DAEMON :: PID 49204 // REGION: GLOBAL
+        </span>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-app-bg border border-app-border text-[10px] font-mono text-emerald-400">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+          <span id="scan-status-text">SCANNING</span>
+        </span>
+        <button
+          type="button"
+          id="toggle-state-btn"
+          class="px-2 py-0.5 rounded text-[10px] font-mono text-app-subtle hover:text-app-text border border-app-border bg-app-surface transition-colors"
+          title="Toggle between Live Sweep animation and Settled State"
+        >
+          View Settled
+        </button>
+      </div>
+    </div>
+
+    <!-- Terminal Body -->
+    <div class="p-4 sm:p-5 font-mono text-xs text-app-text min-h-[190px] space-y-2 bg-[#0A0B0E]/95">
+      <!-- Boot header -->
+      <div class="text-[11px] text-app-subtle mb-3 flex items-center justify-between border-b border-app-border/40 pb-2">
+        <span>$ soc-scanner --continuous --scorecard=strict --depth=full</span>
+        <span class="text-[10px]">T-00:02:14</span>
+      </div>
+
+      <!-- Scanned stream lines -->
+      <div id="scan-lines" class="space-y-1.5">
+        {scanItems.map((item, idx) => {
+          const colorClass =
+            item.verdict === 'healthy'
+              ? 'text-emerald-400'
+              : item.verdict === 'caution'
+                ? 'text-amber-400'
+                : 'text-rose-400';
+
+          const badgeBg =
+            item.verdict === 'healthy'
+              ? 'bg-emerald-950/40 border-emerald-500/30'
+              : item.verdict === 'caution'
+                ? 'bg-amber-950/40 border-amber-500/30'
+                : 'bg-rose-950/40 border-rose-500/30';
+
+          return (
+            <div
+              class={`scan-row flex flex-wrap items-center justify-between gap-2 py-1 px-2 rounded hover:bg-app-surface/50 transition-opacity duration-150 ${
+                idx > 2 ? 'hidden settled-only' : ''
+              }`}
+              data-idx={idx}
+            >
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="text-app-subtle">▸</span>
+                <span class="font-medium text-app-text truncate">{item.repo}</span>
+              </div>
+
+              <div class="flex items-center gap-3 shrink-0">
+                <span class="font-bold text-app-text">{item.score}</span>
+                <span class={`text-[10px] px-2 py-0.5 rounded border font-semibold ${badgeBg} ${colorClass}`}>
+                  {item.status}
+                </span>
+                <span class="text-app-subtle text-[10px] hidden md:inline-block font-mono">
+                  [{item.note}]
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <!-- Live Cursor line -->
+      <div id="scan-cursor-line" class="flex items-center gap-2 pt-2 text-app-subtle text-xs">
+        <span class="text-emerald-400">▸</span>
+        <span id="scan-typing" class="text-app-muted font-mono">analyzing supply-chain dependency trees...</span>
+        <span class="w-2 h-4 bg-emerald-400 inline-block animate-pulse" aria-hidden="true"></span>
+      </div>
+    </div>
+
+    <!-- Console Footer Stats Strip -->
+    <div class="px-4 py-2.5 bg-[#111317] border-t border-app-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 font-mono text-[11px] text-app-muted">
+      <div class="flex items-center gap-3">
+        <span class="flex items-center gap-1.5 text-app-text font-medium">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          <span>39 repos watched</span>
+        </span>
+        <span class="text-app-subtle">•</span>
+        <span class="text-rose-400 font-medium">3 flagged</span>
+        <span class="text-app-subtle">•</span>
+        <span class="text-app-subtle">last sweep 2h ago</span>
+      </div>
+
+      <div class="text-app-subtle text-[10px] uppercase tracking-wider">
+        INTEGRITY VERIFIED // ZERO VENDOR BIAS
+      </div>
+    </div>
+  </div>
+</div>
+
+<script is:inline>
+  (function () {
+    const container = document.getElementById('live-scan-container');
+    const toggleBtn = document.getElementById('toggle-state-btn');
+    const statusText = document.getElementById('scan-status-text');
+    const cursorLine = document.getElementById('scan-cursor-line');
+    const typingSpan = document.getElementById('scan-typing');
+    const settledRows = document.querySelectorAll('.settled-only');
+
+    if (!container || !toggleBtn) return;
+
+    let isSettled = false;
+    const typingMessages = [
+      'analyzing supply-chain dependency trees...',
+      'verifying OpenSSF scorecard branch rules...',
+      'scanning SBOM licenses against SPDX database...',
+      'checking CVE vulnerability disclosure history...',
+      'computing final 0-100 composite safety score...'
+    ];
+    let msgIdx = 0;
+
+    // Cycle status text in animation state
+    setInterval(() => {
+      if (isSettled || !typingSpan) return;
+      msgIdx = (msgIdx + 1) % typingMessages.length;
+      typingSpan.textContent = typingMessages[msgIdx];
+    }, 2400);
+
+    toggleBtn.addEventListener('click', () => {
+      isSettled = !isSettled;
+      if (isSettled) {
+        toggleBtn.textContent = 'View Mid-Scan';
+        statusText.textContent = 'SETTLED';
+        statusText.parentElement.classList.replace('text-emerald-400', 'text-app-subtle');
+        cursorLine.classList.add('hidden');
+        settledRows.forEach((r) => r.classList.remove('hidden'));
+      } else {
+        toggleBtn.textContent = 'View Settled';
+        statusText.textContent = 'SCANNING';
+        statusText.parentElement.classList.replace('text-app-subtle', 'text-emerald-400');
+        cursorLine.classList.remove('hidden');
+        settledRows.forEach((r) => r.classList.add('hidden'));
+      }
+    });
+  })();
+</script>

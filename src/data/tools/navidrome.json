@@ -1,0 +1,32 @@
+{
+  "slug": "navidrome",
+  "repo": "navidrome/navidrome",
+  "name": "Navidrome",
+  "tagline": "Modern music server and streamer compatible with Subsonic/Airsonic clients.",
+  "category": "media-streaming",
+  "license_spdx": "GPL-3.0-only",
+  "stars": 14200,
+  "contributors": 95,
+  "last_push_days": 3,
+  "latest_release": "v0.54.2",
+  "safety_score": 91,
+  "verdict": "healthy",
+  "risk_reasons": [
+    "Music files are mounted read-only by default, but write permissions should be strictly disabled to prevent accidental library changes."
+  ],
+  "scorecard": 8.2,
+  "components": {
+    "security_health": 92,
+    "maintenance": 92,
+    "community": 89,
+    "releases": 90
+  },
+  "language": "Go / React",
+  "self_host_difficulty": "Easy",
+  "install_commands": {
+    "docker": "docker run -d --name navidrome -v /path/to/music:/music:ro -v /path/to/data:/data -p 4533:4533 -e ND_LOGLEVEL=info deluan/navidrome:latest"
+  },
+  "website_url": "https://www.navidrome.org",
+  "ai_report": "Navidrome is a lightweight, high-performance personal audio streaming engine developed in Go with an embedded React web application. It acts as a Subsonic API server, unlocking compatibility with dozens of mature native mobile clients across iOS and Android (such as Symfonium, Ample, and Substreamer). Designed to run effortlessly on low-power devices like the Raspberry Pi, Navidrome can index catalogs of hundreds of thousands of FLAC, MP3, and AAC tracks with minimal memory footprint.\n\nThe codebase adheres to idiomatic Go security practices, featuring automated static code analysis, memory safety, and minimal attack surface. Media files are ingested in read-only mode, guaranteeing that corrupted metadata or malicious ID3 tags cannot alter source media archives on disk. SQLite with WAL mode is used for high-speed indexing, allowing near-instantaneous search across massive musical discographies.\n\nWith an OpenSSF Scorecard of 8.2, Navidrome features automated GitHub Actions workflows for multi-architecture binary builds (amd64, arm64, armv7) and signed release digests. The maintainer team actively participates in bug resolution and provides clear deployment guides for SSL termination and sub-path reverse proxying. Navidrome is rated Healthy at 91/100.",
+  "scanned_at": "2026-09-18T10:00:00.000Z"
+}

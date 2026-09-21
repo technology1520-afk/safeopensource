@@ -1,0 +1,32 @@
+{
+  "slug": "plausible",
+  "repo": "plausible/analytics",
+  "name": "Plausible Analytics",
+  "tagline": "Simple, privacy-friendly, open-source web analytics tool with no cookies.",
+  "category": "analytics-metrics",
+  "license_spdx": "AGPL-3.0-only",
+  "stars": 19800,
+  "contributors": 110,
+  "last_push_days": 1,
+  "latest_release": "v2.1.4",
+  "safety_score": 91,
+  "verdict": "healthy",
+  "risk_reasons": [
+    "ClickHouse dependency requires memory tuning to prevent OOM termination on small VPS instances."
+  ],
+  "scorecard": 8.3,
+  "components": {
+    "security_health": 92,
+    "maintenance": 93,
+    "community": 88,
+    "releases": 90
+  },
+  "language": "Elixir",
+  "self_host_difficulty": "Medium",
+  "install_commands": {
+    "docker": "docker compose -f docker-compose.yml up -d"
+  },
+  "website_url": "https://plausible.io",
+  "ai_report": "Plausible Analytics offers a clean, lightweight alternative to Google Analytics, prioritizing visitor privacy and zero-cookie compliance. The entire tracking script is under 1KB (45 times lighter than Google Analytics gtag.js), dramatically reducing page load overhead and Core Web Vitals penalties. Plausible generates aggregated statistics without storing persistent visitor identifiers, rendering it fully compliant with GDPR, CCPA, and PECR out of the box.\n\nThe backend is built in Elixir and Phoenix, taking advantage of BEAM’s legendary concurrency and fault tolerance to ingest thousands of events per second with negligible latency. High-volume analytics records are persisted into ClickHouse, a blazing-fast column-oriented database. The codebase maintains high standards of code hygiene, with automated Elixir static analysis and continuous container regression tests.\n\nPlausible holds an 8.3 OpenSSF Scorecard rating. As an AGPL-3.0 project, Plausible guarantees that source modifications remain transparent. Self-hosting requires configuring ClickHouse, PostgreSQL, and SMTP, making it slightly more involved to bootstrap than single-binary servers, but once running, maintenance is straightforward. Plausible is awarded a Healthy rating of 91/100.",
+  "scanned_at": "2026-09-18T10:00:00.000Z"
+}

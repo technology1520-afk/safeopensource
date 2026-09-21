@@ -1,0 +1,88 @@
+---
+import { categories } from '../data/categories';
+
+const currentYear = new Date().getFullYear();
+---
+
+<footer class="w-full border-t border-app-border bg-[#07080a] mt-auto">
+  <div class="max-w-[1200px] mx-auto px-4 sm:px-6 py-12">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
+      <!-- Brand column -->
+      <div class="md:col-span-2 space-y-3">
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6 rounded-md bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+            <svg class="w-3.5 h-3.5 stroke-current" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+          </div>
+          <span class="font-bold text-sm text-app-text tracking-tight">SafeOpenSource</span>
+        </div>
+        <p class="text-xs text-app-muted max-w-md leading-relaxed">
+          SafeOpenSource evaluates open-source applications and developer libraries with transparent 0–100 Safety Scores based on OpenSSF Scorecards, maintainer responsiveness, supply-chain health, and verifiable cryptographic practices.
+        </p>
+        <div class="text-[11px] font-mono text-app-subtle">
+          Built for privacy advocates, home labbers, and engineering teams.
+        </div>
+      </div>
+
+      <!-- Categories Links -->
+      <div>
+        <h4 class="text-micro text-app-subtle mb-3">Popular Categories</h4>
+        <ul class="space-y-1.5 text-xs text-app-muted">
+          {categories.slice(0, 6).map((cat) => (
+            <li>
+              <a href={`/categories/${cat.slug}`} class="hover:text-app-text transition-colors">
+                {cat.name}
+              </a>
+            </li>
+          ))}
+          <li>
+            <a href="/#categories" class="text-blue-400 hover:text-blue-300 font-mono text-[11px] inline-flex items-center gap-1">
+              View all 13 categories &rarr;
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Legal & Info -->
+      <div>
+        <h4 class="text-micro text-app-subtle mb-3">Resources & Legal</h4>
+        <ul class="space-y-1.5 text-xs text-app-muted">
+          <li>
+            <a href="/how-we-score" class="hover:text-app-text transition-colors">Methodology & Weights</a>
+          </li>
+          <li>
+            <a href="/starter-kits" class="hover:text-app-text transition-colors">Starter Kits</a>
+          </li>
+          <li>
+            <a href="/about" class="hover:text-app-text transition-colors">About the Project</a>
+          </li>
+          <li>
+            <a href="/privacy" class="hover:text-app-text transition-colors">Privacy Policy</a>
+          </li>
+          <li>
+            <a href="/terms" class="hover:text-app-text transition-colors">Terms of Service</a>
+          </li>
+          <li>
+            <a href="/contact" class="hover:text-app-text transition-colors">Contact & Submit Tool</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Bottom copyright -->
+    <div class="pt-8 border-t border-app-border flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-app-subtle">
+      <div>
+        © {currentYear} SafeOpenSource.org. All rights reserved.
+      </div>
+      <div class="flex items-center gap-4">
+        <span>Static Astro 5 Build</span>
+        <span>•</span>
+        <a href="/sitemap-index.xml" class="hover:text-app-text">Sitemap</a>
+        <span>•</span>
+        <a href="/robots.txt" class="hover:text-app-text">Robots.txt</a>
+      </div>
+    </div>
+  </div>
+</footer>
+

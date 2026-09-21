@@ -1,0 +1,56 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const lastUpdated = 'September 18, 2026';
+---
+
+<Layout
+  title="Terms of Service — SafeOpenSource"
+  description="Terms and conditions for utilizing SafeOpenSource directory, audit data, and evaluation scores."
+>
+  <nav class="flex items-center gap-2 text-xs font-mono text-app-subtle mb-6" aria-label="Breadcrumb">
+    <a href="/" class="hover:text-app-text">Home</a>
+    <span>/</span>
+    <span class="text-app-text font-medium">Terms of Service</span>
+  </nav>
+
+  <article class="max-w-3xl mx-auto py-6 sm:py-10">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/30 bg-blue-950/30 text-blue-400 text-micro mb-4">
+      <span>Legal Agreement</span>
+    </div>
+
+    <h1 class="text-3xl sm:text-4xl font-extrabold text-app-text tracking-tight mb-2">
+      Terms of Service
+    </h1>
+    <div class="text-micro text-app-subtle font-mono mb-8">
+      Last Updated: {lastUpdated}
+    </div>
+
+    <div class="space-y-6 text-xs sm:text-sm text-app-muted leading-relaxed">
+      <p>
+        By accessing or using SafeOpenSource (<strong class="text-app-text">safeopensource.org</strong>), you agree to comply with and be bound by these Terms of Service. If you do not agree to these terms, please do not use the website.
+      </p>
+
+      <h2 class="text-base sm:text-lg font-bold text-app-text mt-6 mb-2">1. Informational & Research Purpose Only</h2>
+      <p>
+        SafeOpenSource publishes algorithmic evaluations, OpenSSF Scorecard summaries, commit telemetry, and AI-generated assessments solely for educational, research, and informational purposes. The content provided does not constitute legal counsel, cybersecurity certification, or commercial warranty.
+      </p>
+
+      <h2 class="text-base sm:text-lg font-bold text-app-text mt-6 mb-2">2. Limitation of Liability</h2>
+      <p>
+        In no event shall SafeOpenSource, its authors, or contributors be held liable for any damages, security incidents, data breaches, hardware failures, or losses resulting from the installation, deployment, or configuration of any third-party software cataloged on this website. Users assume full responsibility for auditing third-party code prior to running it on production systems.
+      </p>
+
+      <h2 class="text-base sm:text-lg font-bold text-app-text mt-6 mb-2">3. Open-Source Licenses & Trademarks</h2>
+      <p>
+        All product names, trademarks, and registered trademarks referenced on SafeOpenSource (e.g., Docker, Linux, Nextcloud, Home Assistant) are property of their respective owners. Evaluation of open-source licenses (MIT, GPL, Apache, AGPL) is provided as an analytical aid and does not constitute formal legal opinion.
+      </p>
+
+      <h2 class="text-base sm:text-lg font-bold text-app-text mt-6 mb-2">4. Automated Crawling & Scraping</h2>
+      <p>
+        Reasonable crawling that respects our <code class="font-mono text-app-text">robots.txt</code> directives is welcomed. Excessive automated requests that degrade website performance or attempt denial-of-service attacks will result in immediate IP rate-limiting.
+      </p>
+    </div>
+  </article>
+</Layout>
+

@@ -1,0 +1,32 @@
+{
+  "slug": "esphome",
+  "repo": "esphome/esphome",
+  "name": "ESPHome",
+  "tagline": "System to control your ESP8266/ESP32 by simple and yet powerful configuration files.",
+  "category": "home-automation",
+  "license_spdx": "GPL-3.0-only",
+  "stars": 9400,
+  "contributors": 560,
+  "last_push_days": 1,
+  "latest_release": "2024.12.2",
+  "safety_score": 94,
+  "verdict": "healthy",
+  "risk_reasons": [
+    "Over-the-air (OTA) updates should be protected with an OTA password to prevent rogue firmware injection on local WiFi."
+  ],
+  "scorecard": 8.8,
+  "components": {
+    "security_health": 95,
+    "maintenance": 96,
+    "community": 94,
+    "releases": 92
+  },
+  "language": "C++ / Python",
+  "self_host_difficulty": "Easy",
+  "install_commands": {
+    "docker": "docker run -d --name esphome --net=host -v /path/to/config:/config esphome/esphome"
+  },
+  "website_url": "https://esphome.io",
+  "ai_report": "ESPHome empowers enthusiasts and hardware engineers to create custom micro-controller firmware for ESP8266, ESP32, and RP2040 microchips without writing a single line of C++. Users write simple YAML declarations defining sensors, displays, relays, and LEDs; ESPHome automatically compiles optimized, native C++ binaries and flashes them over USB or local Wi-Fi OTA.\n\nNow also stewarded under the Open Home Foundation, ESPHome maintains strict security hygiene. The native API protocol uses encrypted noise-based handshakes (API encryption keys) to ensure communications between Home Assistant and micro-controllers are immune to local network packet sniffing. Over-the-air update mechanisms can be locked down with pre-shared cryptographic secrets.\n\nThe repository scores 8.8 on the OpenSSF scale, supported by extensive automated compilation test suites for thousands of board configurations. Firmware builds are reproducible, and upstream components are regularly patched against ESP-IDF security advisories. ESPHome is an indispensable tool for safe home automation, rated Healthy at 94/100.",
+  "scanned_at": "2026-09-18T10:00:00.000Z"
+}

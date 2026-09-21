@@ -1,0 +1,32 @@
+{
+  "slug": "n8n",
+  "repo": "n8n-io/n8n",
+  "name": "n8n",
+  "tagline": "Fair-code workflow automation tool with extensive integrations and node system.",
+  "category": "automation-workflow",
+  "license_spdx": "Sustainable-Use-License",
+  "stars": 52100,
+  "contributors": 410,
+  "last_push_days": 1,
+  "latest_release": "1.72.1",
+  "safety_score": 89,
+  "verdict": "healthy",
+  "risk_reasons": [
+    "Nodes can execute arbitrary JavaScript / Python code; requires strict credential isolation."
+  ],
+  "scorecard": 8.3,
+  "components": {
+    "security_health": 90,
+    "maintenance": 93,
+    "community": 91,
+    "releases": 86
+  },
+  "language": "TypeScript",
+  "self_host_difficulty": "Medium",
+  "install_commands": {
+    "docker": "docker run -it --rm --name n8n -p 5678:5678 -v ~/.n8n:/home/node/.n8n docker.n8n.io/n8nio/n8n"
+  },
+  "website_url": "https://n8n.io",
+  "ai_report": "n8n is an enterprise-grade workflow automation platform connecting hundreds of APIs, webhooks, databases, and AI models through a visual canvas. Regarded as the leading open ecosystem competitor to Zapier, n8n allows organizations to retain sensitive business logic, API secrets, and customer data payloads on private servers rather than transiting commercial SaaS clouds.\n\nFrom a security architecture standpoint, n8n encrypts all stored API credentials using AES-256-GCM with a user-supplied encryption key. Code execution nodes (Code node, JavaScript, Python) are sandboxed to mitigate unauthorized system command execution. The engineering team operates a disciplined vulnerability triage process and publishes regular CVE notifications.\n\nWith an 8.3 OpenSSF Scorecard rating, the codebase undergoes automated linting, unit testing, and Docker vulnerability scanning. Note on licensing: n8n is distributed under the Sustainable Use License and Fair-code terms, permitting free self-hosting for internal business automation, but restricting commercial resale as an automation service. n8n is rated Healthy at 89/100.",
+  "scanned_at": "2026-09-18T10:00:00.000Z"
+}

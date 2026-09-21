@@ -1,0 +1,33 @@
+{
+  "slug": "librephotos",
+  "repo": "LibrePhotos/librephotos",
+  "name": "LibrePhotos",
+  "tagline": "Self-hosted open-source photo management solution (community fork of Ownphotos).",
+  "category": "photo-management",
+  "license_spdx": "MIT",
+  "stars": 5900,
+  "contributors": 55,
+  "last_push_days": 22,
+  "latest_release": "2024.11",
+  "safety_score": 60,
+  "verdict": "caution",
+  "risk_reasons": [
+    "Complex multi-container architecture (Django, React, Redis, Postgres, Machine Learning worker).",
+    "Smaller maintainer bandwidth results in intermittent bug resolution delays."
+  ],
+  "scorecard": 5.8,
+  "components": {
+    "security_health": 60,
+    "maintenance": 58,
+    "community": 63,
+    "releases": 62
+  },
+  "language": "Python / Django",
+  "self_host_difficulty": "Advanced",
+  "install_commands": {
+    "docker": "docker compose up -d"
+  },
+  "website_url": "https://librephotos.com",
+  "ai_report": "LibrePhotos emerged as a community-driven continuation of the abandoned Ownphotos project, aiming to deliver an open, non-commercial self-hosted photo organizer with semantic search, face recognition, and album grouping. Built with Django and React, LibrePhotos interacts with PyTorch and Dlib to extract face vectors and classify scene contents.\n\nThe project's greatest hurdle is operational complexity. Running LibrePhotos requires synchronizing five distinct container services (frontend, backend, database, Redis cache, and ML compute worker). On smaller systems, out-of-memory errors during thumbnail generation and heavy model inference can cause silent pipeline failures. Furthermore, the core maintainer team is small, leading to slower resolution of issue tickets and packaging errors.\n\nThe project records an OpenSSF Scorecard score of 5.8. While LibrePhotos is genuinely free, open-source, and devoid of commercial tier restrictions, the operational overhead and intermittent release delays warrant a Caution rating with a 60/100 Safety Score. Users deploying it should allocate adequate swap and monitor container health closely.",
+  "scanned_at": "2026-09-18T10:00:00.000Z"
+}

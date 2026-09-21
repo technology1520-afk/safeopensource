@@ -1,0 +1,61 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const lastUpdated = 'September 18, 2026';
+---
+
+<Layout
+  title="Privacy Policy — SafeOpenSource"
+  description="SafeOpenSource privacy policy detailing our zero-tracking philosophy, minimal logging, and cookie-free analytics."
+>
+  <nav class="flex items-center gap-2 text-xs font-mono text-app-subtle mb-6" aria-label="Breadcrumb">
+    <a href="/" class="hover:text-app-text">Home</a>
+    <span>/</span>
+    <span class="text-app-text font-medium">Privacy Policy</span>
+  </nav>
+
+  <article class="max-w-3xl mx-auto py-6 sm:py-10">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/30 bg-blue-950/30 text-blue-400 text-micro mb-4">
+      <span>Privacy First</span>
+    </div>
+
+    <h1 class="text-3xl sm:text-4xl font-extrabold text-app-text tracking-tight mb-2">
+      Privacy Policy
+    </h1>
+    <div class="text-micro text-app-subtle font-mono mb-8">
+      Last Updated: {lastUpdated}
+    </div>
+
+    <div class="space-y-6 text-xs sm:text-sm text-app-muted leading-relaxed">
+      <p>
+        At SafeOpenSource (<strong class="text-app-text">safeopensource.org</strong>), your privacy is a core architectural requirement, not an afterthought. We believe software review directories should not track their visitors across the web.
+      </p>
+
+      <h2 class="text-base sm:text-lg font-bold text-app-text mt-6 mb-2">1. No Tracking Cookies</h2>
+      <p>
+        We do not set tracking cookies, cross-site beacons, or persistent local storage identifiers to profile individual visitors. You can browse all 35+ tool evaluations, categories, and comparisons completely anonymously.
+      </p>
+
+      <h2 class="text-base sm:text-lg font-bold text-app-text mt-6 mb-2">2. Cookieless Privacy-Preserving Telemetry</h2>
+      <p>
+        We measure site aggregate performance using privacy-friendly, cookie-free analytics (such as Plausible or Umami). These metrics collect only high-level statistical indicators (such as browser type, operating system, screen width, and referrer URL) without storing your IP address or generating unique user fingerprints. All data is processed in accordance with GDPR, CCPA, and PECR standards.
+      </p>
+
+      <h2 class="text-base sm:text-lg font-bold text-app-text mt-6 mb-2">3. Server Logs</h2>
+      <p>
+        Our hosting infrastructure maintains standard transient web server access logs (recording requested resource paths and HTTP status codes) solely for infrastructure security, rate limiting, and DDoS prevention. Server logs are automatically purged on a rolling 7-day cycle.
+      </p>
+
+      <h2 class="text-base sm:text-lg font-bold text-app-text mt-6 mb-2">4. Advertising & External Links</h2>
+      <p>
+        We may display non-personalized, privacy-respecting sponsor slots. We do not share personal browsing behavior with advertising exchanges. When clicking outbound links to external GitHub repositories or vendor websites, their respective privacy policies apply.
+      </p>
+
+      <h2 class="text-base sm:text-lg font-bold text-app-text mt-6 mb-2">5. Contact Information</h2>
+      <p>
+        If you contact us via email or our contact form, your email address is used solely to respond to your specific inquiry and will never be added to marketing distribution lists without your explicit opt-in.
+      </p>
+    </div>
+  </article>
+</Layout>
+

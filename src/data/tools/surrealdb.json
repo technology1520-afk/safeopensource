@@ -1,0 +1,33 @@
+{
+  "slug": "surrealdb",
+  "repo": "surrealdb/surrealdb",
+  "name": "SurrealDB",
+  "tagline": "End-to-end cloud-native database for modern apps with SQL, GraphQL, and Graph capabilities.",
+  "category": "databases-search",
+  "license_spdx": "BSL-1.1",
+  "stars": 27800,
+  "contributors": 110,
+  "last_push_days": 1,
+  "latest_release": "v2.1.2",
+  "safety_score": 86,
+  "verdict": "healthy",
+  "risk_reasons": [
+    "Licensed under Business Source License (BSL-1.1) transitioning to Apache-2.0 after 4 years.",
+    "Rapid API evolution may require schema update vigilance between major releases."
+  ],
+  "scorecard": 8.1,
+  "components": {
+    "security_health": 89,
+    "maintenance": 92,
+    "community": 85,
+    "releases": 87
+  },
+  "language": "Rust",
+  "self_host_difficulty": "Medium",
+  "install_commands": {
+    "docker": "docker run --rm -p 8000:8000 surrealdb/surrealdb:latest start"
+  },
+  "website_url": "https://surrealdb.com",
+  "ai_report": "SurrealDB is an ambitious multi-model database engine written in Rust that merges document, graph, relational, and vector data paradigms into a unified query language (SurrealQL). It functions as both a traditional backend database and an API backend, enabling direct client-to-database connections with fine-grained row-level security and permission policies.\n\nWritten completely in Rust, SurrealDB guarantees high concurrency safety and zero memory corruption hazards. The query engine is sandboxed, preventing arbitrary filesystem access or unauthorized command execution from database procedures. Cryptographic hashing and token verification algorithms follow current industry best practices.\n\nThe repository achieves an 8.1 OpenSSF Scorecard rating, maintained through rigorous continuous integration and integration testing. Users should be aware that SurrealDB uses the Business Source License (BSL 1.1), which converts to Apache 2.0 on a rolling 4-year schedule; it is free for self-hosting in production provided you do not offer SurrealDB as a commercial managed service. SurrealDB is rated Healthy at 86/100.",
+  "scanned_at": "2026-09-18T10:00:00.000Z"
+}

@@ -1,0 +1,34 @@
+{
+  "slug": "glances",
+  "repo": "nicolargo/glances",
+  "name": "Glances",
+  "tagline": "Curses and web-based system monitoring tool written in Python with REST API.",
+  "category": "monitoring-status",
+  "license_spdx": "LGPL-3.0-only",
+  "stars": 26800,
+  "contributors": 210,
+  "last_push_days": 4,
+  "latest_release": "v4.3.0",
+  "safety_score": 86,
+  "verdict": "healthy",
+  "risk_reasons": [
+    "Exposing the built-in web server to public WAN without an authentication proxy allows unauthenticated hardware telemetry enumeration.",
+    "High number of optional Python dependencies requires vigilant pip auditing."
+  ],
+  "scorecard": 7.8,
+  "components": {
+    "security_health": 85,
+    "maintenance": 88,
+    "community": 86,
+    "releases": 84
+  },
+  "language": "Python",
+  "self_host_difficulty": "Easy",
+  "install_commands": {
+    "docker": "docker run -d --restart=\"always\" -p 61208-61209:61208-61209 -e GLANCES_OPT=\"-w\" -v /var/run/docker.sock:/var/run/docker.sock:ro --pid host nicolargo/glances:latest",
+    "pip": "pip install glances"
+  },
+  "website_url": "https://nicolargo.github.io/glances/",
+  "ai_report": "Glances is an established cross-platform system telemetry and hardware observability utility that operates both as an interactive terminal interface and as a standalone REST/Web dashboard. Developed continuously since 2011, the project possesses deep maturity across Linux, macOS, and BSD environments. The underlying architecture leverages the Python psutil library for hardware metric scraping, ensuring minimal CPU overhead even during high-frequency sampling intervals.\n\nCode hygiene analysis shows consistent maintainer attention to modern Python standards and regular packaging updates across PyPI, Debian, and Docker Hub. Security-wise, Glances runs with read-only privileges over system metrics unless explicitly configured with action triggers. However, operators must exercise caution when enabling the web UI (-w flag); running Glances directly bound to 0.0.0.0 without binding password protection (glances -s --password) or fronting it with a reverse proxy exposes CPU, memory, mount paths, and active process lists to any network observer.\n\nThe project maintains an OpenSSF Scorecard rating of 7.8 with automated static analysis scanning via CodeQL and reliable release tagging. Dependency trees are modular, allowing users to install only the core package or activate plugins for InfluxDB, Prometheus, and Grafana exports. Because it relies on LGPL-3.0, operators can deploy Glances freely for internal infrastructure observability without licensing friction. Glances is rated Healthy at 86/100.",
+  "scanned_at": "2026-09-18T10:00:00.000Z"
+}

@@ -1,0 +1,32 @@
+{
+  "slug": "activepieces",
+  "repo": "activepieces/activepieces",
+  "name": "Activepieces",
+  "tagline": "Open-source business automation platform built for AI and modern API integrations.",
+  "category": "automation-workflow",
+  "license_spdx": "MIT",
+  "stars": 12400,
+  "contributors": 180,
+  "last_push_days": 1,
+  "latest_release": "0.36.0",
+  "safety_score": 88,
+  "verdict": "healthy",
+  "risk_reasons": [
+    "Dynamic piece installation downloads npm packages at runtime; outbound container traffic should be filtered."
+  ],
+  "scorecard": 8.1,
+  "components": {
+    "security_health": 89,
+    "maintenance": 92,
+    "community": 86,
+    "releases": 87
+  },
+  "language": "TypeScript",
+  "self_host_difficulty": "Easy",
+  "install_commands": {
+    "docker": "docker run -d -p 8080:80 -v ~/.activepieces:/root/.activepieces activepieces/activepieces:latest"
+  },
+  "website_url": "https://www.activepieces.com",
+  "ai_report": "Activepieces is a modern, MIT-licensed open-source workflow automation platform engineered specifically for developers and business teams. Developed entirely in TypeScript, Activepieces features a modular \"piece\" architecture where integrations are isolated packages adhering to a strictly defined JSON schema.\n\nBecause the core repository is licensed under permissive MIT, organizations enjoy full legal freedom to self-host, embed, and customize the software without fair-code commercial restrictions. Pieces run in sandboxed JavaScript worker threads, preventing infinite loops or memory starvation from stalling the main control daemon.\n\nThe repository holds an 8.1 OpenSSF Scorecard score, driven by continuous integration workflows and automated package testing. The development velocity is rapid, with multiple new piece integrations and core stability improvements shipping weekly. Activepieces is a reliable, enterprise-friendly workflow orchestrator and achieves a Healthy rating of 88/100.",
+  "scanned_at": "2026-09-18T10:00:00.000Z"
+}

@@ -1,0 +1,133 @@
+---
+import type { InstallCommands } from '../types/tool';
+
+interface Props {
+  commands: InstallCommands;
+  class?: string;
+}
+
+const { commands, class: className = '' } = Astro.props;
+
+// Filter out empty commands
+const activeTabs = Object.entries(commands).filter(([_, cmd]) => Boolean(cmd)) as [string, string][];
+
+const boxId = `install-box-${Math.random().toString(36).substring(2, 9)}`;
+---
+
+<div class={`rounded-xl border border-app-border bg-app-surface overflow-hidden ${className}`}>
+  <div class="flex items-center justify-between px-4 py-2.5 border-b border-app-border bg-app-bg/50">
+    <div class="flex items-center gap-1.5" id={`${boxId}-tabs`} role="tablist">
+      {activeTabs.map(([type, _], idx) => (
+        <button
+          type="button"
+          role="tab"
+          aria-selected={idx === 0 ? 'true' : 'false'}
+          aria-controls={`${boxId}-panel-${type}`}
+          data-tab={type}
+          class={`px-3 py-1 text-xs font-mono rounded-md transition-colors ${
+            idx === 0
+              ? 'bg-app-surface text-app-text border border-app-border shadow-xs'
+              : 'text-app-muted hover:text-app-text hover:bg-app-surface/50'
+          }`}
+        >
+          {type.toUpperCase()}
+        </button>
+      ))}
+    </div>
+
+    <button
+      type="button"
+      id={`${boxId}-copy-btn`}
+      class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-mono rounded-md bg-app-surface hover:bg-app-surface-hover border border-app-border text-app-muted hover:text-app-text transition-colors"
+      aria-label="Copy installation command"
+    >
+      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+      </svg>
+      <span class="copy-label">Copy</span>
+    </button>
+  </div>
+
+  <div class="p-4 bg-[#07080a]">
+    {activeTabs.map(([type, cmd], idx) => (
+      <div
+        id={`${boxId}-panel-${type}`}
+        role="tabpanel"
+        data-command={cmd}
+        class={`font-mono text-xs text-app-text overflow-x-auto whitespace-pre-wrap break-all ${
+          idx === 0 ? 'block' : 'hidden'
+        }`}
+      >
+        <code>{cmd}</code>
+      </div>
+    ))}
+  </div>
+</div>
+
+<script is:inline define:vars={{ boxId }}>
+  (function () {
+    const tabsContainer = document.getElementById(`${boxId}-tabs`);
+    const copyBtn = document.getElementById(`${boxId}-copy-btn`);
+    if (!tabsContainer || !copyBtn) return;
+
+    const tabs = tabsContainer.querySelectorAll('button[role="tab"]');
+    const panels = document.querySelectorAll(`[id^="${boxId}-panel-"]`);
+
+    function getActiveCommand() {
+      for (const panel of panels) {
+        if (!panel.classList.contains('hidden')) {
+          return panel.getAttribute('data-command') || '';
+        }
+      }
+      return '';
+    }
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        const targetType = tab.getAttribute('data-tab');
+
+        // Update active tab styles
+        tabs.forEach((t) => {
+          t.setAttribute('aria-selected', 'false');
+          t.className = 'px-3 py-1 text-xs font-mono rounded-md transition-colors text-app-muted hover:text-app-text hover:bg-app-surface/50';
+        });
+        tab.setAttribute('aria-selected', 'true');
+        tab.className = 'px-3 py-1 text-xs font-mono rounded-md transition-colors bg-app-surface text-app-text border border-app-border shadow-xs';
+
+        // Toggle panels
+        panels.forEach((p) => {
+          if (p.id === `${boxId}-panel-${targetType}`) {
+            p.classList.remove('hidden');
+            p.classList.add('block');
+          } else {
+            p.classList.remove('block');
+            p.classList.add('hidden');
+          }
+        });
+      });
+    });
+
+    copyBtn.addEventListener('click', async () => {
+      const command = getActiveCommand();
+      if (!command) return;
+
+      try {
+        await navigator.clipboard.writeText(command);
+        const label = copyBtn.querySelector('.copy-label');
+        if (label) {
+          const original = label.textContent;
+          label.textContent = 'Copied!';
+          copyBtn.classList.add('text-emerald-400');
+          setTimeout(() => {
+            label.textContent = original;
+            copyBtn.classList.remove('text-emerald-400');
+          }, 1500);
+        }
+      } catch (err) {
+        console.error('Failed to copy command', err);
+      }
+    });
+  })();
+</script>
+

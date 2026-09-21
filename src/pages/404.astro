@@ -1,0 +1,38 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout
+  title="Page Not Found (404) — SafeOpenSource"
+  description="The requested tool or page could not be located in the SafeOpenSource directory."
+>
+  <div class="text-center py-16 sm:py-24 max-w-xl mx-auto">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-rose-500/30 bg-rose-950/30 text-rose-400 text-micro mb-4 font-mono">
+      <span>HTTP Error 404</span>
+    </div>
+
+    <h1 class="text-4xl sm:text-5xl font-extrabold text-app-text tracking-tight mb-4">
+      Tool Not Found
+    </h1>
+
+    <p class="text-sm text-app-muted leading-relaxed mb-8">
+      The open-source tool, category, or audit record you were looking for doesn't exist or has been relocated.
+    </p>
+
+    <div class="flex items-center justify-center gap-4">
+      <a
+        href="/"
+        class="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors"
+      >
+        Back to Home Directory
+      </a>
+      <a
+        href="/#categories"
+        class="px-5 py-2.5 rounded-lg border border-app-border bg-app-surface hover:bg-app-surface-hover text-app-text text-xs font-semibold transition-colors"
+      >
+        Browse Categories
+      </a>
+    </div>
+  </div>
+</Layout>
+

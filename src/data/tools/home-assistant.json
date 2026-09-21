@@ -1,0 +1,33 @@
+{
+  "slug": "home-assistant",
+  "repo": "home-assistant/core",
+  "name": "Home Assistant",
+  "tagline": "Open-source home automation that puts local control and privacy first.",
+  "category": "home-automation",
+  "license_spdx": "Apache-2.0",
+  "stars": 76500,
+  "contributors": 3800,
+  "last_push_days": 1,
+  "latest_release": "2024.12.5",
+  "safety_score": 97,
+  "verdict": "healthy",
+  "risk_reasons": [
+    "Exposing Home Assistant directly to the internet without Cloudflare Tunnel, VPN, or Nabu Casa requires rigorous 2FA.",
+    "Third-party custom integrations via HACS are not formally reviewed by the Home Assistant core security team."
+  ],
+  "scorecard": 9.3,
+  "components": {
+    "security_health": 98,
+    "maintenance": 99,
+    "community": 97,
+    "releases": 95
+  },
+  "language": "Python",
+  "self_host_difficulty": "Medium",
+  "install_commands": {
+    "docker": "docker run -d --name homeassistant --privileged --restart=unless-stopped -e TZ=America/New_York -v /PATH_TO_YOUR_CONFIG:/config --network=host ghcr.io/home-assistant/home-assistant:stable"
+  },
+  "website_url": "https://www.home-assistant.io",
+  "ai_report": "Home Assistant stands as a titan of open-source engineering, boasting one of the top five most active repositories in GitHub history. Dedicated to local-first smart home governance, Home Assistant communicates directly with smart home devices over Zigbee, Z-Wave, Matter, and local LAN protocols, cutting off proprietary vendor clouds.\n\nThe project's security posture is world-class. Overseen by the Open Home Foundation and Nabu Casa, Home Assistant operates an active security response team, strict CVE disclosure pipelines, and continuous automated fuzzing via Google OSS-Fuzz. CodeQL static analysis, pinned reproducible dependencies, and signed release builds contribute to an extraordinary OpenSSF Scorecard score of 9.3.\n\nAdministrators should remember that Home Assistant Core is extraordinarily secure, but installing unvetted custom components via HACS (Home Assistant Community Store) can introduce third-party risk. When operating with native integrations, multi-factor authentication, and local-only network isolation, Home Assistant is the gold standard of smart home sovereignty. It is awarded a Healthy score of 97/100.",
+  "scanned_at": "2026-09-18T10:00:00.000Z"
+}

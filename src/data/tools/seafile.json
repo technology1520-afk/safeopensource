@@ -1,0 +1,33 @@
+{
+  "slug": "seafile",
+  "repo": "haiwen/seafile",
+  "name": "Seafile",
+  "tagline": "High-performance cloud storage system with client-side encryption and block-level deduplication.",
+  "category": "cloud-storage",
+  "license_spdx": "GPL-2.0-only",
+  "stars": 12300,
+  "contributors": 110,
+  "last_push_days": 6,
+  "latest_release": "11.0.12",
+  "safety_score": 74,
+  "verdict": "caution",
+  "risk_reasons": [
+    "Split between community open-source edition and closed-source enterprise edition.",
+    "Custom block storage format stores files in proprietary chunks, complicating manual recovery."
+  ],
+  "scorecard": 6.8,
+  "components": {
+    "security_health": 76,
+    "maintenance": 74,
+    "community": 72,
+    "releases": 73
+  },
+  "language": "C / Python",
+  "self_host_difficulty": "Medium",
+  "install_commands": {
+    "docker": "docker compose up -d"
+  },
+  "website_url": "https://www.seafile.com",
+  "ai_report": "Seafile is designed specifically for lightning-fast file synchronization, utilizing a Git-like content-addressable block storage model written in C. By dividing files into deduplicated raw chunks before transmission, Seafile synchronizes large directory trees and delta updates noticeably faster than traditional file-system sync daemons. Client-side encrypted libraries allow users to secure folders with private passwords before uploading.\n\nFrom an engineering perspective, the C-based daemon delivers raw speed and reliability. However, the project's development model is divided between an open-source Community Edition and a commercial Enterprise Edition, which can occasionally cause delay in community repository bug triage. Furthermore, because files are stored as abstract chunk blocks rather than plain filesystem hierarchies, manual disaster recovery without an active Seafile server requires specialized command-line tools.\n\nThe project holds an OpenSSF Scorecard rating of 6.8. Automated dependency tracking is present but less comprehensive than community-first projects. For users who prioritize pure syncing speed and native client-side encryption over full groupware features, Seafile remains capable, but earns a Caution score of 74/100 due to its dual-license divergence and block-storage recovery trade-offs.",
+  "scanned_at": "2026-09-18T10:00:00.000Z"
+}

@@ -1,0 +1,26 @@
+---
+interface Props {
+  format?: 'leaderboard' | 'rectangle';
+  class?: string;
+}
+
+const { format = 'leaderboard', class: className = '' } = Astro.props;
+
+const formatClasses = format === 'leaderboard'
+  ? 'min-h-[90px] h-[90px] max-w-[728px] mx-auto'
+  : 'min-h-[250px] h-[250px] max-w-[300px] mx-auto';
+---
+
+<div
+  class={`relative flex flex-col items-center justify-center rounded-xl border border-dashed border-app-border/70 bg-app-surface/40 p-4 select-none ${formatClasses} ${className}`}
+  aria-label="Advertisement placeholder"
+  role="region"
+>
+  <span class="text-micro text-app-subtle tracking-widest text-[10px] mb-1">
+    SPONSORED PLACEMENT
+  </span>
+  <span class="text-xs text-app-subtle/80">
+    Reserved Ad Slot (Zero-CLS container)
+  </span>
+</div>
+

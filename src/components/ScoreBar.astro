@@ -1,0 +1,61 @@
+---
+interface Props {
+  label: string;
+  weight: number;
+  score: number;
+  description?: string;
+  class?: string;
+}
+
+const { label, weight, score, description, class: className = '' } = Astro.props;
+
+const barColor =
+  score >= 80
+    ? 'bg-emerald-500'
+    : score >= 50
+      ? 'bg-amber-500'
+      : 'bg-rose-500';
+
+const textColor =
+  score >= 80
+    ? 'text-emerald-400'
+    : score >= 50
+      ? 'text-amber-400'
+      : 'text-rose-400';
+---
+
+<div class={`space-y-1.5 ${className}`}>
+  <div class="flex items-baseline justify-between text-xs">
+    <div class="flex items-center gap-2">
+      <span class="font-medium text-app-text">{label}</span>
+      <span class="text-micro text-app-subtle">
+        (Weight {weight}%)
+      </span>
+    </div>
+    <div class="font-mono font-bold">
+      <span class={textColor}>{score}</span>
+      <span class="text-app-subtle text-[11px]">/100</span>
+    </div>
+  </div>
+
+  <div
+    class="h-2 w-full overflow-hidden rounded-full bg-app-surface border border-app-border"
+    role="progressbar"
+    aria-valuenow={score}
+    aria-valuemin="0"
+    aria-valuemax="100"
+    aria-label={`${label} score: ${score} out of 100`}
+  >
+    <div
+      class={`h-full ${barColor} rounded-full transition-all duration-500 ease-out`}
+      style={`width: ${Math.min(Math.max(score, 0), 100)}%`}
+    />
+  </div>
+
+  {description && (
+    <p class="text-[11px] text-app-muted leading-relaxed">
+      {description}
+    </p>
+  )}
+</div>
+

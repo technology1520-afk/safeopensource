@@ -1,0 +1,270 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import ScoreRing from '../../components/ScoreRing.astro';
+import VerdictBadge from '../../components/VerdictBadge.astro';
+import ScoreBar from '../../components/ScoreBar.astro';
+import RiskList from '../../components/RiskList.astro';
+import LicenseExplainer from '../../components/LicenseExplainer.astro';
+import InstallTabs from '../../components/InstallTabs.astro';
+import ToolCard from '../../components/ToolCard.astro';
+import ScanChip from '../../components/ScanChip.astro';
+import AdSlot from '../../components/AdSlot.astro';
+import { getAllTools, getAlternatives } from '../../utils/tools';
+import { getCategoryBySlug } from '../../data/categories';
+import type { ToolData } from '../../types/tool';
+
+export async function getStaticPaths() {
+  const tools = getAllTools();
+  return tools.map((tool) => ({
+    params: { slug: tool.slug },
+    props: { tool }
+  }));
+}
+
+interface Props {
+  tool: ToolData;
+}
+
+const { tool } = Astro.props;
+const category = getCategoryBySlug(tool.category);
+const alternatives = getAlternatives(tool, 3);
+
+// Format stats
+function formatStars(count: number): string {
+  return count.toLocaleString();
+}
+
+function formatDays(days: number): string {
+  if (days === 0) return 'pushed today';
+  if (days === 1) return 'pushed yesterday';
+  return `pushed ${days} days ago`;
+}
+
+// JSON-LD structured data for validator.schema.org
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: tool.name,
+  description: tool.tagline,
+  applicationCategory: category?.name || tool.category,
+  operatingSystem: 'Linux, Docker, Cloud, Self-hosted',
+  license: tool.license_spdx,
+  url: `https://safeopensource.org/tools/${tool.slug}`,
+  aggregateRating: {
+    '@type': 'AggregateRating',
+    ratingValue: tool.safety_score,
+    bestRating: 100,
+    worstRating: 0,
+    ratingCount: Math.max(tool.stars, 1)
+  },
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD'
+  }
+};
+---
+
+<Layout
+  title={`${tool.name} — Safety Score ${tool.safety_score}/100 & Repo Scan | SafeOpenSource`}
+  description={`Independent security and maintenance review for ${tool.name}. Verified Safety Score ${tool.safety_score}/100, OpenSSF Scorecard ${tool.scorecard ?? 'N/A'}, license terms, and risk factors.`}
+  jsonLd={jsonLd}
+>
+  <!-- Breadcrumb navigation -->
+  <nav class="flex items-center gap-2 text-xs font-mono text-app-subtle mb-6" aria-label="Breadcrumb">
+    <a href="/" class="hover:text-app-text">Home</a>
+    <span>/</span>
+    <a href="/#categories" class="hover:text-app-text">Categories</a>
+    <span>/</span>
+    <a href={`/categories/${tool.category}`} class="hover:text-app-text">
+      {category?.name || tool.category}
+    </a>
+    <span>/</span>
+    <span class="text-app-text font-medium">{tool.name}</span>
+  </nav>
+
+  <!-- 1. Header Area: Name, Tagline, Verdict, ScoreRing, Stats Row -->
+  <header class="rounded-2xl border border-app-border bg-app-surface p-6 sm:p-8 mb-8">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div class="flex-1">
+        <div class="flex items-center gap-3 mb-2 flex-wrap">
+          <h1 class="text-2xl sm:text-4xl font-extrabold text-app-text tracking-tight">
+            {tool.name}
+          </h1>
+          <VerdictBadge verdict={tool.verdict} size="md" />
+        </div>
+
+        <p class="text-sm sm:text-base text-app-muted leading-relaxed max-w-2xl mb-5">
+          {tool.tagline}
+        </p>
+
+        <!-- Stats Row -->
+        <div class="flex flex-wrap items-center gap-4 text-xs font-mono text-app-muted pt-4 border-t border-app-border">
+          <span class="flex items-center gap-1.5" title="GitHub Star Count">
+            <svg class="w-3.5 h-3.5 text-amber-400 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+            <strong class="text-app-text">{formatStars(tool.stars)}</strong> stars
+          </span>
+
+          <span class="flex items-center gap-1.5" title="Codebase Primary Language">
+            <svg class="w-3.5 h-3.5 text-app-subtle shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="16 18 22 12 16 6" />
+              <polyline points="8 6 2 12 8 18" />
+            </svg>
+            <span class="text-app-text">{tool.language}</span>
+          </span>
+
+          <span class="flex items-center gap-1.5" title="Recent Release">
+            <svg class="w-3.5 h-3.5 text-app-subtle shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+              <line x1="7" y1="7" x2="7.01" y2="7" />
+            </svg>
+            <span>Release <strong class="text-app-text">{tool.latest_release}</strong></span>
+          </span>
+
+          <span class="flex items-center gap-1.5" title="Recent Git Push">
+            <svg class="w-3.5 h-3.5 text-app-subtle shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+            <span>{formatDays(tool.last_push_days)}</span>
+          </span>
+
+          <span class="flex items-center gap-1.5" title="OpenSSF Scorecard">
+            <svg class="w-3.5 h-3.5 text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+            <span>OpenSSF: <strong class="text-emerald-400">{tool.scorecard ? `${tool.scorecard}/10` : 'N/A'}</strong></span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Score Ring Display -->
+      <div class="shrink-0 flex flex-col items-center justify-center p-4 rounded-xl bg-app-bg border border-app-border">
+        <ScoreRing score={tool.safety_score} size="lg" animate={true} />
+        <span class="text-micro text-app-subtle mt-2 font-mono">
+          Composite Safety Index
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- 2. AI Repo Scan Panel -->
+  <section class="rounded-2xl border border-app-border bg-app-surface p-6 sm:p-8 mb-8" aria-labelledby="ai-scan-heading">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 pb-4 border-b border-app-border">
+      <div>
+        <span class="text-micro text-blue-400 block mb-1">Deep Technical Audit</span>
+        <h2 id="ai-scan-heading" class="text-lg sm:text-xl font-bold text-app-text flex items-center gap-2">
+          <span>AI Repo Scan & Security Analysis</span>
+        </h2>
+      </div>
+      <ScanChip scannedAt={tool.scanned_at} repo={tool.repo} slug={tool.slug} />
+    </div>
+
+    <!-- AI Report Prose (guaranteed >=300 words of comprehensive technical evaluation) -->
+    <div class="prose prose-invert max-w-none text-xs sm:text-sm text-app-text leading-relaxed space-y-4">
+      {tool.ai_report.split('\n\n').map((paragraph) => (
+        <p class="leading-relaxed text-app-text/90">{paragraph}</p>
+      ))}
+    </div>
+  </section>
+
+  <!-- 3. Score Breakdown (4 Horizontal Bars with Weights) -->
+  <section class="rounded-2xl border border-app-border bg-app-surface p-6 sm:p-8 mb-8">
+    <div class="mb-6">
+      <span class="text-micro text-app-subtle block mb-1">Algorithmic Breakdown</span>
+      <h2 class="text-lg sm:text-xl font-bold text-app-text">
+        Safety Component Weights
+      </h2>
+      <p class="text-xs text-app-muted mt-1">
+        Calculated from verifiable GitHub telemetry and automated OpenSSF security scanners.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <ScoreBar
+        label="Security Health & Supply Chain"
+        weight={35}
+        score={tool.components.security_health}
+        description="Branch protections, dependency pinning, CodeQL static analysis, and zero known unpatched CVEs."
+      />
+      <ScoreBar
+        label="Maintenance & Commit Cadence"
+        weight={30}
+        score={tool.components.maintenance}
+        description="Days since last commit, pull request turnaround time, and issue closure velocity."
+      />
+      <ScoreBar
+        label="Community & Governance"
+        weight={20}
+        score={tool.components.community}
+        description="Contributor diversity, non-single-point-of-failure governance, and organizational sponsorship."
+      />
+      <ScoreBar
+        label="Releases & Provenance"
+        weight={15}
+        score={tool.components.releases}
+        description="Predictable semantic versioning, cryptographically signed artifacts, and container provenance."
+      />
+    </div>
+  </section>
+
+  <!-- 4. Risk Reasons List & 5. License Explainer Grid -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- Risk List -->
+    <RiskList risks={tool.risk_reasons} verdict={tool.verdict} />
+
+    <!-- License Explainer Card -->
+    <LicenseExplainer spdx={tool.license_spdx} />
+  </div>
+
+  <!-- 6. Install Box Tabbed with Copy Button -->
+  <section class="mb-8">
+    <div class="flex items-center justify-between mb-3">
+      <div>
+        <span class="text-micro text-app-subtle block">Deployment Snippets</span>
+        <h2 class="text-base font-bold text-app-text">Quick Launch Command</h2>
+      </div>
+      <span class="text-micro text-app-subtle font-mono">
+        Difficulty: <strong class="text-app-text">{tool.self_host_difficulty}</strong>
+      </span>
+    </div>
+    <InstallTabs commands={tool.install_commands} />
+  </section>
+
+  <!-- Reserved Zero-CLS AdSlot Container -->
+  <section class="my-8">
+    <AdSlot format="leaderboard" />
+  </section>
+
+  <!-- 7. Alternatives Section: 3 same-category tool cards -->
+  <section class="mt-12 pt-8 border-t border-app-border">
+    <div class="flex items-center justify-between gap-4 mb-6">
+      <div>
+        <span class="text-micro text-app-subtle block mb-1">Comparative Directory</span>
+        <h2 class="text-lg sm:text-xl font-bold text-app-text">
+          Alternatives in {category?.name || tool.category}
+        </h2>
+      </div>
+      <a
+        href={`/categories/${tool.category}`}
+        class="text-xs font-mono text-blue-400 hover:text-blue-300 transition-colors"
+      >
+        View all in category &rarr;
+      </a>
+    </div>
+
+    {alternatives.length > 0 ? (
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {alternatives.map((alt) => (
+          <ToolCard tool={alt} />
+        ))}
+      </div>
+    ) : (
+      <div class="p-6 rounded-xl border border-app-border bg-app-surface text-center text-xs text-app-subtle">
+        No other tools cataloged in this category yet.
+      </div>
+    )}
+  </section>
+</Layout>

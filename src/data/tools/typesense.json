@@ -1,0 +1,32 @@
+{
+  "slug": "typesense",
+  "repo": "typesense/typesense",
+  "name": "Typesense",
+  "tagline": "Fast, typo-tolerant search engine optimized for developer happiness and speed.",
+  "category": "databases-search",
+  "license_spdx": "GPL-3.0-only",
+  "stars": 20100,
+  "contributors": 65,
+  "last_push_days": 3,
+  "latest_release": "v27.1",
+  "safety_score": 92,
+  "verdict": "healthy",
+  "risk_reasons": [
+    "Requires adequate RAM allocation as indices are retained in in-memory structures."
+  ],
+  "scorecard": 8.3,
+  "components": {
+    "security_health": 93,
+    "maintenance": 93,
+    "community": 89,
+    "releases": 91
+  },
+  "language": "C++",
+  "self_host_difficulty": "Easy",
+  "install_commands": {
+    "docker": "docker run -d --name typesense -p 8108:8108 -v /tmp/data:/data typesense/typesense:27.1 --data-dir /data --api-key=xyz --enable-cors"
+  },
+  "website_url": "https://typesense.org",
+  "ai_report": "Typesense is an in-memory search engine developed in C++ as an open-source alternative to Algolia and Elasticsearch. By prioritizing in-memory data structures with asynchronous disk persistence (RocksDB), Typesense delivers instantaneous search-as-you-type responses with minimal latency overhead. It features native typo tolerance, multi-field faceting, vector search embeddings, and automatic clustering for high availability.\n\nThe C++ codebase employs modern C++20 standards, AddressSanitizer, and automated static code analysis to guard against memory defects. API authentication relies on granular scoped keys, allowing frontend web clients to perform read-only searches with preset filter parameters without exposing index mutation permissions.\n\nTypesense holds an 8.3 OpenSSF Scorecard rating, backed by predictable release schedules and robust automated testing suites. While administrators must monitor RAM usage as document collections grow, the engine exhibits remarkable operational stability. Typesense is rated Healthy with a 92/100 Safety Score.",
+  "scanned_at": "2026-09-18T10:00:00.000Z"
+}

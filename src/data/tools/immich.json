@@ -1,0 +1,33 @@
+{
+  "slug": "immich",
+  "repo": "immich-app/immich",
+  "name": "Immich",
+  "tagline": "High performance self-hosted photo and video management solution.",
+  "category": "photo-management",
+  "license_spdx": "AGPL-3.0-only",
+  "stars": 54100,
+  "contributors": 430,
+  "last_push_days": 1,
+  "latest_release": "v1.124.0",
+  "safety_score": 95,
+  "verdict": "healthy",
+  "risk_reasons": [
+    "Rapid release cycle requires reading release notes prior to upgrading container versions.",
+    "Heavy machine-learning operations benefit from hardware GPU/NPU allocation."
+  ],
+  "scorecard": 8.9,
+  "components": {
+    "security_health": 96,
+    "maintenance": 98,
+    "community": 94,
+    "releases": 93
+  },
+  "language": "TypeScript / Dart",
+  "self_host_difficulty": "Medium",
+  "install_commands": {
+    "docker": "docker compose up -d"
+  },
+  "website_url": "https://immich.app",
+  "ai_report": "Immich is arguably the crown jewel of modern self-hosted media software, offering a 1:1 drop-in replacement for Google Photos and Apple iCloud Photos. With native mobile applications for iOS and Android, Immich delivers instantaneous background camera roll backups, AI facial recognition, object detection, reverse geocoding maps, and shared partner galleries.\n\nThe project's engineering discipline is extraordinary. Immich operates under the FUTO software organization, employing dedicated full-time core maintainers. Vulnerabilities are handled with high urgency under coordinated disclosure, and code is screened via automated CodeQL, container vulnerability scanners, and rigorous integration suites. Machine learning pipelines (CLIP, facial recognition) run locally on dedicated sandboxed microservices.\n\nImmich achieves an 8.9 OpenSSF Scorecard. Storage routines are strictly non-destructive: original media files are preserved with exact metadata and checksum integrity. While the project ships rapid releases that necessitate reading breaking change notices, the software has proven remarkably resilient and reliable. Immich receives a glowing Healthy rating at 95/100.",
+  "scanned_at": "2026-09-18T10:00:00.000Z"
+}

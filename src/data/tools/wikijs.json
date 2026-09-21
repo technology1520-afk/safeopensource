@@ -1,0 +1,33 @@
+{
+  "slug": "wikijs",
+  "repo": "requarks/wiki",
+  "name": "Wiki.js",
+  "tagline": "Node.js documentation engine with Git synchronization and modular storage backends.",
+  "category": "notes-wiki",
+  "license_spdx": "AGPL-3.0-only",
+  "stars": 25400,
+  "contributors": 130,
+  "last_push_days": 62,
+  "latest_release": "2.5.303",
+  "safety_score": 67,
+  "verdict": "caution",
+  "risk_reasons": [
+    "Version 2.x is in maintenance mode while Version 3 rewrite is still in development.",
+    "Slow response to minor upstream dependency security flags."
+  ],
+  "scorecard": 6.5,
+  "components": {
+    "security_health": 68,
+    "maintenance": 62,
+    "community": 72,
+    "releases": 68
+  },
+  "language": "JavaScript / Vue",
+  "self_host_difficulty": "Medium",
+  "install_commands": {
+    "docker": "docker run -d -p 3000:3000 --name wiki --restart=always ghcr.io/requarks/wiki:2"
+  },
+  "website_url": "https://js.wiki",
+  "ai_report": "Wiki.js is one of the most visually polished open-source wiki engines available, running on Node.js with native support for PostgreSQL, MySQL, and SQLite. Its marquee architectural feature is dual-direction synchronization: documentation can be edited in a modern browser UI while simultaneously syncing as flat markdown files to a remote Git repository (GitHub, GitLab, or self-hosted Gitea).\n\nHowever, Wiki.js is currently navigating a prolonged transition phase. Version 2.x has received fewer updates as the primary author directs development time toward a complete rewrite (Wiki.js v3). Consequently, several non-critical pull requests and dependency security flags remain pending in the v2 branch. Past vulnerability advisories regarding regex denial of service (ReDoS) and authorization boundary bypasses were addressed, but release velocity has slowed.\n\nThe repository scores 6.5 on OpenSSF criteria. While Wiki.js 2.x remains broadly usable and aesthetically superior to traditional wikis, operators should be aware of the upcoming architectural migration to v3 and ensure deployments are protected behind strong authentication barriers. It is assigned a Caution rating at 67/100.",
+  "scanned_at": "2026-09-18T10:00:00.000Z"
+}

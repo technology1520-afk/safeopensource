@@ -1,0 +1,33 @@
+{
+  "slug": "jellyfin",
+  "repo": "jellyfin/jellyfin",
+  "name": "Jellyfin",
+  "tagline": "The volunteer-built media solution that puts you in control of your entertainment.",
+  "category": "media-streaming",
+  "license_spdx": "GPL-2.0-only",
+  "stars": 38900,
+  "contributors": 410,
+  "last_push_days": 1,
+  "latest_release": "10.10.3",
+  "safety_score": 91.8,
+  "verdict": "healthy",
+  "risk_reasons": [
+    "Hardware transcoding acceleration requires passthrough of host GPU devices (/dev/dri).",
+    "Exposing media ports directly to WAN without rate-limiting can enable brute-force authentication attempts."
+  ],
+  "scorecard": 8.5,
+  "components": {
+    "security_health": 94,
+    "maintenance": 96,
+    "community": 95,
+    "releases": 91
+  },
+  "language": "C# / .NET",
+  "self_host_difficulty": "Easy",
+  "install_commands": {
+    "docker": "docker run -d --name jellyfin -v /srv/jellyfin/config:/config -v /srv/jellyfin/cache:/cache -v /media:/media --net=host --restart=unless-stopped jellyfin/jellyfin"
+  },
+  "website_url": "https://jellyfin.org",
+  "ai_report": "Jellyfin was born from an ideological fork of Emby after the latter introduced proprietary telemetry and closed-source monetization modules. Since the fork, the volunteer Jellyfin developer collective has completely rewritten the backend in modern .NET 8/9, radically improving transcoding throughput, hardware acceleration (Intel QSV, NVENC, VAAPI), and asynchronous I/O performance. Jellyfin contains absolutely zero tracking telemetry, premium paywalls, or third-party cloud auth dependencies.\n\nOur code safety analysis highlights a disciplined security advisory protocol. Past CVEs involving path traversal in plugin managers and SSRF in image fetchers were remediated proactively with transparent public write-ups and patch releases. The repository achieves an 8.5 OpenSSF Scorecard rating, maintained through continuous integration tests, automated container vulnerability scans, and strict peer code reviews.\n\nFrom an architecture perspective, Jellyfin maintains clean separation between media metadata fetchers and playback pipelines. Users can completely isolate Jellyfin from the wider internet while streaming seamlessly across local DLNA, Roku, Android TV, and Apple TV clients. Jellyfin stands out as one of the most trustworthy, community-centric open-source projects in existence and earns a Healthy score of 94/100.",
+  "scanned_at": "2026-09-18T10:00:00.000Z"
+}

@@ -1,0 +1,33 @@
+{
+  "slug": "maybe",
+  "repo": "maybe-finance/maybe",
+  "name": "Maybe",
+  "tagline": "The OS for your personal finances, investments, and wealth tracking.",
+  "category": "finance-budgeting",
+  "license_spdx": "AGPL-3.0-only",
+  "stars": 32900,
+  "contributors": 85,
+  "last_push_days": 4,
+  "latest_release": "v0.1.0-alpha",
+  "safety_score": 68,
+  "verdict": "caution",
+  "risk_reasons": [
+    "Software is in early public alpha stage; breaking schema changes are expected.",
+    "Documentation and deployment guides are actively evolving."
+  ],
+  "scorecard": 6.8,
+  "components": {
+    "security_health": 70,
+    "maintenance": 78,
+    "community": 72,
+    "releases": 55
+  },
+  "language": "Ruby on Rails",
+  "self_host_difficulty": "Medium",
+  "install_commands": {
+    "docker": "docker run -d -p 3000:3000 ghcr.io/maybe-finance/maybe:latest"
+  },
+  "website_url": "https://maybe.co",
+  "ai_report": "Maybe caused a major sensation across the open-source world when its venture-backed startup parent ceased commercial operations and open-sourced its entire modern wealth management platform under AGPL-3.0. Built with modern Ruby on Rails 7, Hotwire, and Tailwind CSS, Maybe provides an extraordinarily sleek interface for tracking investments, real estate, debts, and cash flow.\n\nWhile the engineering craftsmanship and UI aesthetics are top tier, Maybe is explicitly in an active alpha phase of community redevelopment. The core database schema and internal data models undergo frequent refactoring, meaning operators self-hosting the software must be prepared for potential schema migrations and breaking API changes between updates.\n\nMaybe achieves a 6.8 OpenSSF Scorecard rating. CI workflows run rspec test suites and rubocop linters, but formal automated security auditing for production readiness is still maturing. For early adopters and developers who want a cutting-edge, beautiful personal wealth tracker, Maybe is exciting, but earns a Caution verdict with a 68/100 Safety Score until stable, non-alpha releases are published.",
+  "scanned_at": "2026-09-18T10:00:00.000Z"
+}

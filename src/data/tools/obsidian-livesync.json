@@ -1,0 +1,33 @@
+{
+  "slug": "obsidian-livesync",
+  "repo": "vrtmrz/obsidian-livesync",
+  "name": "Self-hosted LiveSync",
+  "tagline": "Community-developed CouchDB synchronization server and plugin for Obsidian notes.",
+  "category": "notes-wiki",
+  "license_spdx": "MIT",
+  "stars": 5800,
+  "contributors": 35,
+  "last_push_days": 3,
+  "latest_release": "v0.24.2",
+  "safety_score": 86,
+  "verdict": "healthy",
+  "risk_reasons": [
+    "Requires CouchDB server setup with properly secured administrative credentials.",
+    "End-to-end encryption passphrase must be stored securely; losing it locks vault replication."
+  ],
+  "scorecard": 7.7,
+  "components": {
+    "security_health": 88,
+    "maintenance": 88,
+    "community": 82,
+    "releases": 84
+  },
+  "language": "TypeScript",
+  "self_host_difficulty": "Medium",
+  "install_commands": {
+    "docker": "docker run -d -p 5984:5984 --name couchdb -e COUCHDB_USER=admin -e COUCHDB_PASSWORD=password couchdb:latest"
+  },
+  "website_url": "https://github.com/vrtmrz/obsidian-livesync",
+  "ai_report": "Self-hosted LiveSync is a community-driven synchronization solution engineered to grant Obsidian note-takers full ownership over their markdown vaults without paying for commercial sync tiers. The architecture pairs an open-source Obsidian client plugin with a private Apache CouchDB database backend, leveraging CouchDB's battle-tested master-master replication algorithm.\n\nThe security model is designed with zero-knowledge end-to-end encryption (E2EE). Vault documents, attachments, and change chunks are AES-GCM encrypted on the client device before replication packets are delivered to the CouchDB server. Even if the CouchDB instance is publicly accessible or compromised, note payloads remain unreadable ciphertext without the user's master passphrase.\n\nThe repository scores 7.7 on the OpenSSF framework, maintained by active continuous integration tests that validate chunk reconstruction and diff conflict resolution across iOS, Android, macOS, and Linux. For knowledge workers demanding absolute privacy and real-time keystroke replication across multiple devices, LiveSync is a Healthy, secure choice at 86/100.",
+  "scanned_at": "2026-09-18T10:00:00.000Z"
+}

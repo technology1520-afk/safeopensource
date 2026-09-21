@@ -1,0 +1,33 @@
+{
+  "slug": "wireguard-ui",
+  "repo": "ngoduykhanh/wireguard-ui",
+  "name": "WireGuard UI",
+  "tagline": "Web user interface to manage WireGuard VPN clients, keys, and configurations.",
+  "category": "network-vpn",
+  "license_spdx": "MIT",
+  "stars": 6400,
+  "contributors": 40,
+  "last_push_days": 48,
+  "latest_release": "v0.6.2",
+  "safety_score": 68,
+  "verdict": "caution",
+  "risk_reasons": [
+    "Directly generates host-level WireGuard configurations with root permissions.",
+    "Slower release cadence and backlog of pull requests."
+  ],
+  "scorecard": 6.6,
+  "components": {
+    "security_health": 66,
+    "maintenance": 65,
+    "community": 72,
+    "releases": 70
+  },
+  "language": "Go",
+  "self_host_difficulty": "Medium",
+  "install_commands": {
+    "docker": "docker run -d --name wireguard-ui -p 5000:5000 -v /etc/wireguard:/etc/wireguard ngoduykhanh/wireguard-ui:latest"
+  },
+  "website_url": "https://github.com/ngoduykhanh/wireguard-ui",
+  "ai_report": "WireGuard UI is a web-based administrative management portal developed in Go for creating, revoking, and generating QR codes for WireGuard VPN client profiles. It writes directly to the Linux host's /etc/wireguard/wg0.conf file, allowing non-technical family members or colleagues to join a private VPN by scanning a visual code.\n\nWhile convenient, managing low-level kernel networking configurations through a web portal creates inherent risk. WireGuard UI requires either privileged container flags or host filesystem mount permissions to reload the WireGuard interface. Furthermore, the repository's commit cadence has moderated over the past year, resulting in pending upstream dependency updates and open enhancement issues.\n\nWith an OpenSSF Scorecard of 6.6, WireGuard UI performs baseline compilation tests, but lacks enterprise-grade automated penetration testing workflows. If deployed, the administrative web interface (port 5000) must be protected with strong authentication and never exposed to the public internet without an external proxy layer. It receives a Caution verdict with a 68/100 Safety Score.",
+  "scanned_at": "2026-09-18T10:00:00.000Z"
+}

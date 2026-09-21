@@ -1,0 +1,33 @@
+{
+  "slug": "nextcloud",
+  "repo": "nextcloud/server",
+  "name": "Nextcloud Hub",
+  "tagline": "Self-hosted productivity platform providing file sync, office suite, and collaboration.",
+  "category": "cloud-storage",
+  "license_spdx": "AGPL-3.0-only",
+  "stars": 28500,
+  "contributors": 650,
+  "last_push_days": 1,
+  "latest_release": "v30.0.4",
+  "safety_score": 92,
+  "verdict": "healthy",
+  "risk_reasons": [
+    "Substantial attack surface due to hundreds of community apps and plugins.",
+    "Requires frequent database index optimization and Redis caching on enterprise deployments."
+  ],
+  "scorecard": 8.7,
+  "components": {
+    "security_health": 93,
+    "maintenance": 95,
+    "community": 94,
+    "releases": 86
+  },
+  "language": "PHP / Vue",
+  "self_host_difficulty": "Medium",
+  "install_commands": {
+    "docker": "docker run -d -p 8080:80 -v nextcloud:/var/www/html nextcloud"
+  },
+  "website_url": "https://nextcloud.com",
+  "ai_report": "Nextcloud Hub represents the most comprehensive private cloud collaboration suite in the open-source ecosystem, incorporating file synchronisation, groupware, calendar, webmail, and real-time document editing (via Collabora or OnlyOffice). With hundreds of thousands of institutional deployments across government agencies and enterprises, Nextcloud undergoes exhaustive, continuous security testing, backed by a lucrative public HackerOne bug bounty program.\n\nThe server's defense-in-depth architecture features server-side encryption, end-to-end client encryption folders, strict Content Security Policies (CSP), brute-force protection, and two-factor authentication. While PHP codebases historically carried stigma, Nextcloud’s engineering team maintains stringent static analysis tooling (Psalm, PHPStan level 8) and automated continuous integration.\n\nThe project maintains an OpenSSF Scorecard of 8.7. To maintain peak security hygiene, administrators should be cautious when installing unverified third-party apps from the Nextcloud App Store, as community extensions do not all receive equal security auditing. Operating Nextcloud with Redis memory caching, a tuned PostgreSQL database, and automated cron jobs guarantees robust performance. Nextcloud is rated Healthy at 92/100.",
+  "scanned_at": "2026-09-18T10:00:00.000Z"
+}

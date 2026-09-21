@@ -1,0 +1,32 @@
+{
+  "slug": "meilisearch",
+  "repo": "meilisearch/meilisearch",
+  "name": "Meilisearch",
+  "tagline": "Blazing fast, typo-tolerant search engine designed for delightful search experiences.",
+  "category": "databases-search",
+  "license_spdx": "MIT",
+  "stars": 46200,
+  "contributors": 220,
+  "last_push_days": 1,
+  "latest_release": "v1.12.0",
+  "safety_score": 95,
+  "verdict": "healthy",
+  "risk_reasons": [
+    "Master API key must be defined in production; default development mode allows unauthenticated indexing."
+  ],
+  "scorecard": 8.9,
+  "components": {
+    "security_health": 97,
+    "maintenance": 96,
+    "community": 93,
+    "releases": 93
+  },
+  "language": "Rust",
+  "self_host_difficulty": "Easy",
+  "install_commands": {
+    "docker": "docker run -d --name meilisearch -p 7700:7700 -e MEILI_MASTER_KEY=myMasterKey -v $(pwd)/meili_data:/meili_data getmeili/meilisearch:latest"
+  },
+  "website_url": "https://www.meilisearch.com",
+  "ai_report": "Meilisearch is an ultra-fast, open-source search engine crafted in Rust, providing instant, typo-tolerant search results out of the box with zero complex configuration. Designed to be embedded into consumer-facing websites and SaaS applications, Meilisearch returns relevant documents in less than 20 milliseconds, dynamically handling misspellings, synonyms, and localized ranking rules.\n\nMemory safety is foundational to Meilisearch due to Rust's strict ownership model, preventing vulnerabilities like memory leaks and pointer corruption. The storage engine utilizes LMDB (Lightning Memory-Mapped Database), ensuring crash resilience and ACID transactions. The project security model includes fine-grained API keys with configurable expiration dates, tenant token isolation, and index-specific read/write permissions.\n\nWith an OpenSSF Scorecard of 8.9, Meilisearch exemplifies modern open-source rigor. Continuous integration pipelines run thousands of fuzz tests and regression suites. Release packages are cryptographically signed and published across Docker Hub, Homebrew, and APT repositories. Meilisearch is an exceptional engineering achievement and scores a Healthy 95/100.",
+  "scanned_at": "2026-09-18T10:00:00.000Z"
+}

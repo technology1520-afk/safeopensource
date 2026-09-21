@@ -1,0 +1,32 @@
+{
+  "slug": "hoppscotch",
+  "repo": "hoppscotch/hoppscotch",
+  "name": "Hoppscotch",
+  "tagline": "Open-source API development ecosystem, lightweight and blazing fast.",
+  "category": "developer-tools",
+  "license_spdx": "MIT",
+  "stars": 64200,
+  "contributors": 280,
+  "last_push_days": 1,
+  "latest_release": "2024.12.0",
+  "safety_score": 93,
+  "verdict": "healthy",
+  "risk_reasons": [
+    "Self-hosted instance requires configuring OAuth providers for team synchronization."
+  ],
+  "scorecard": 8.6,
+  "components": {
+    "security_health": 94,
+    "maintenance": 95,
+    "community": 92,
+    "releases": 91
+  },
+  "language": "TypeScript / Vue",
+  "self_host_difficulty": "Easy",
+  "install_commands": {
+    "docker": "docker run -p 3000:3000 hoppscotch/hoppscotch"
+  },
+  "website_url": "https://hoppscotch.com",
+  "ai_report": "Hoppscotch is a modern, high-speed API development and testing studio created as an open-source alternative to Postman. Engineered as a Progressive Web App (PWA) with Vue and TypeScript, Hoppscotch loads instantly and requires a fraction of the memory footprint of Electron-based competitors. It supports REST, GraphQL, WebSocket, Socket.IO, and MQTT testing out of the box.\n\nFrom a privacy standpoint, Hoppscotch keeps API requests, bearer tokens, and sensitive headers on the client machine or inside the self-hosted team instance, preventing private corporate API endpoints from leaking to third-party clouds. The codebase is cleanly structured into modular packages and adheres to strict TypeScript type safety. Automated end-to-end tests execute against every pull request.\n\nThe project holds an OpenSSF Scorecard of 8.6. Code contributions are vetted through automated security scanners, and release artifacts are published with cryptographic checksums. For development teams building and verifying microservice APIs in private environments, Hoppscotch represents a premier choice, receiving a Healthy rating of 93/100.",
+  "scanned_at": "2026-09-18T10:00:00.000Z"
+}

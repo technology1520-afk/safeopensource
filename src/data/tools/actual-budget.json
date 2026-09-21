@@ -1,0 +1,32 @@
+{
+  "slug": "actual-budget",
+  "repo": "actualbudget/actual",
+  "name": "Actual Budget",
+  "tagline": "Privacy-focused zero-based budgeting system with local-first encryption.",
+  "category": "finance-budgeting",
+  "license_spdx": "MIT",
+  "stars": 18200,
+  "contributors": 165,
+  "last_push_days": 1,
+  "latest_release": "v24.12.0",
+  "safety_score": 94,
+  "verdict": "healthy",
+  "risk_reasons": [
+    "End-to-end encryption password cannot be recovered if forgotten by the user."
+  ],
+  "scorecard": 8.8,
+  "components": {
+    "security_health": 96,
+    "maintenance": 96,
+    "community": 92,
+    "releases": 93
+  },
+  "language": "TypeScript",
+  "self_host_difficulty": "Easy",
+  "install_commands": {
+    "docker": "docker run -d -p 5006:5006 -v actual_data:/data --name actual-server actualbudget/actual-server:latest"
+  },
+  "website_url": "https://actualbudget.org",
+  "ai_report": "Actual Budget is an inspiring open-source success story. Originally developed as a commercial software product by an ex-Stripe engineer, the founder open-sourced the entire platform (client apps and sync server) under the permissive MIT license in 2022. It operates on the envelope/zero-based budgeting methodology, helping individuals and households allocate income deliberately to expense categories.\n\nThe architecture is built on local-first principles. Budgets are stored locally in SQLite within the browser (via WebAssembly) or desktop application, enabling full functionality offline. When syncing across devices, transactions are encrypted client-side using end-to-end encryption (E2EE). The server stores only encrypted SQLite change sets, ensuring that financial figures, bank accounts, and balances are unreadable to anyone accessing the sync server.\n\nActual Budget holds an 8.8 OpenSSF Scorecard, supported by an energized developer community that ships monthly releases, bank-sync plugins (GoCardless/SimpleFIN), and rapid security patches. For individuals demanding financial sovereignty without compromising on polished UI or encryption standards, Actual Budget is an exceptional Healthy choice at 94/100.",
+  "scanned_at": "2026-09-18T10:00:00.000Z"
+}

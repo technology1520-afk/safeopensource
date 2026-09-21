@@ -1,0 +1,26 @@
+{
+  "name": "safety-opensource",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "node scripts/preview.js",
+    "astro": "astro",
+    "check": "astro check"
+  },
+  "dependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@astrojs/preact": "^6.0.5",
+    "@astrojs/sitemap": "^3.7.4",
+    "@lucide/astro": "^1.47.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "astro": "^7.3.3",
+    "fuse.js": "^7.5.0",
+    "lucide-astro": "^0.556.0",
+    "preact": "^10.29.8",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^6.0.3"
+  }
+}

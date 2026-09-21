@@ -1,0 +1,72 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout
+  title="Contact & Submit a Tool — SafeOpenSource"
+  description="Submit a new open-source repository for evaluation, report updated security advisories, or get in touch with the SafeOpenSource team."
+>
+  <nav class="flex items-center gap-2 text-xs font-mono text-app-subtle mb-6" aria-label="Breadcrumb">
+    <a href="/" class="hover:text-app-text">Home</a>
+    <span>/</span>
+    <span class="text-app-text font-medium">Contact</span>
+  </nav>
+
+  <article class="max-w-3xl mx-auto py-6 sm:py-10">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/30 bg-blue-950/30 text-blue-400 text-micro mb-4">
+      <span>Get in Touch</span>
+    </div>
+
+    <h1 class="text-3xl sm:text-4xl font-extrabold text-app-text tracking-tight mb-4">
+      Contact & Tool Submissions
+    </h1>
+
+    <p class="text-sm text-app-muted leading-relaxed mb-8">
+      We are dedicated to expanding our index of verified open-source software. Whether you are a project maintainer wishing to submit a repo, or a security researcher reporting an updated advisory, we want to hear from you.
+    </p>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+      <!-- Direct Contact Card -->
+      <div class="p-6 rounded-xl border border-app-border bg-app-surface flex flex-col justify-between">
+        <div>
+          <h2 class="text-base font-bold text-app-text mb-2">Direct Communication</h2>
+          <p class="text-xs text-app-muted leading-relaxed mb-4">
+            For general inquiries, security disclosures, and partnership conversations:
+          </p>
+          <div class="font-mono text-xs text-app-text space-y-1">
+            <div>Email: <strong class="text-blue-400">hello@safeopensource.org</strong></div>
+            <div>Security: <strong class="text-emerald-400">security@safeopensource.org</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Submission Guidelines Card -->
+      <div class="p-6 rounded-xl border border-app-border bg-app-surface flex flex-col justify-between">
+        <div>
+          <h2 class="text-base font-bold text-app-text mb-2">Submission Criteria</h2>
+          <p class="text-xs text-app-muted leading-relaxed mb-3">
+            To qualify for an automated Safety Score evaluation, repositories must satisfy:
+          </p>
+          <ul class="text-xs text-app-subtle space-y-1 list-disc list-inside font-mono text-[11px]">
+            <li>Public GitHub or GitLab repository</li>
+            <li>Recognized OSI / SPDX open-source license</li>
+            <li>Container or source installation instructions</li>
+            <li>Minimum of 100 stars or 10 active contributors</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feedback & Correction Notice -->
+    <div class="p-6 rounded-xl border border-app-border bg-app-surface">
+      <h2 class="text-base font-bold text-app-text mb-2">Notice for Project Maintainers</h2>
+      <p class="text-xs text-app-muted leading-relaxed mb-3">
+        Did our automated scraper flag an operational risk that your project has since remediated? Or did your OpenSSF scorecard recently improve?
+      </p>
+      <p class="text-xs text-app-muted leading-relaxed">
+        Our scoring cron recalculates telemetry on a rolling weekly schedule. If you have deployed a critical patch and require an immediate on-demand rescan, email our security desk at <a href="mailto:security@safeopensource.org" class="text-blue-400 hover:underline">security@safeopensource.org</a> with your repository URL and release tag.
+      </p>
+    </div>
+  </article>
+</Layout>
+

@@ -1,0 +1,33 @@
+{
+  "slug": "authentik",
+  "repo": "goauthentik/authentik",
+  "name": "Authentik",
+  "tagline": "Modern identity provider focused on flexibility, integration, and security protocols.",
+  "category": "password-auth",
+  "license_spdx": "GPL-3.0-only",
+  "stars": 18500,
+  "contributors": 160,
+  "last_push_days": 1,
+  "latest_release": "2024.12.3",
+  "safety_score": 90,
+  "verdict": "healthy",
+  "risk_reasons": [
+    "Complex microservice architecture (Server + Worker + Redis + PostgreSQL) increases misconfiguration risk.",
+    "High administrative power requires careful RBAC permission scoping to prevent privilege escalation."
+  ],
+  "scorecard": 8.4,
+  "components": {
+    "security_health": 91,
+    "maintenance": 93,
+    "community": 88,
+    "releases": 89
+  },
+  "language": "Python / Go",
+  "self_host_difficulty": "Medium",
+  "install_commands": {
+    "docker": "docker compose -f docker-compose.yml up -d"
+  },
+  "website_url": "https://goauthentik.io",
+  "ai_report": "Authentik is an enterprise-capable identity broker and single sign-on (SSO) gateway supporting OAuth2, OIDC, SAML 2.0, LDAP, and SCIM directory synchronization. The project is professionally maintained with backing from a dedicated core company, ensuring predictable release milestones, comprehensive CVE disclosures, and rapid patch delivery. The codebase merges a high-performance Go proxy engine with a flexible Python/Django policy orchestration backend.\n\nSecurity audits conducted on Authentik reflect strong adherence to OWASP recommendations. Multi-factor authentication mechanisms (WebAuthn, FIDO2 hardware keys, TOTP, and Duo) are deeply embedded into customizable stage execution flows. Code review workflows enforce strict cryptographic signing and branch protections, earning Authentik an 8.4 OpenSSF Scorecard. Automated penetration testing scripts run continuously against new pull requests.\n\nDeploying Authentik requires attention to operational topology: the system relies on Redis for token state cache and PostgreSQL for relational identity records. Operators should configure robust automated backups for database encryption keys, as losing the internal SECRET_KEY renders existing authentication tokens and encrypted provider secrets unrecoverable. Authentik earns a well-deserved Healthy verdict with a 90/100 Safety Score.",
+  "scanned_at": "2026-09-18T10:00:00.000Z"
+}

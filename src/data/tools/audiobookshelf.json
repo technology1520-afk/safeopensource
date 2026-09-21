@@ -1,0 +1,32 @@
+{
+  "slug": "audiobookshelf",
+  "repo": "advplyr/audiobookshelf",
+  "name": "Audiobookshelf",
+  "tagline": "Self-hosted audiobook and podcast server with position syncing and multi-user controls.",
+  "category": "media-streaming",
+  "license_spdx": "GPL-3.0-only",
+  "stars": 12100,
+  "contributors": 80,
+  "last_push_days": 2,
+  "latest_release": "v2.17.0",
+  "safety_score": 89,
+  "verdict": "healthy",
+  "risk_reasons": [
+    "SQLite database requires automated snapshotting if active multi-user listening sync is continuous."
+  ],
+  "scorecard": 7.9,
+  "components": {
+    "security_health": 90,
+    "maintenance": 91,
+    "community": 86,
+    "releases": 88
+  },
+  "language": "JavaScript / Vue",
+  "self_host_difficulty": "Easy",
+  "install_commands": {
+    "docker": "docker run -d --name audiobookshelf -p 13378:80 -v /path/to/audiobooks:/audiobooks -v /path/to/podcasts:/podcasts -v /path/to/config:/config -v /path/to/metadata:/metadata ghcr.io/advplyr/audiobookshelf:latest"
+  },
+  "website_url": "https://www.audiobookshelf.org",
+  "ai_report": "Audiobookshelf is a purpose-built open-source media server tailored specifically for spoken-word audio, including audiobooks, podcasts, and digital radio plays. Unlike generic music servers, Audiobookshelf natively understands chapter markers, multiple narrators, embedded cover art, sleep timers, and cross-device listening progress synchronization. Companion applications for Android and iOS allow offline caching without external cloud logins.\n\nArchitecturally, the server runs on Node.js using SQLite for relational state and Tone.js/FFmpeg binaries for audio metadata extraction and on-the-fly streaming transcoding. The primary repository shows rapid release cadence and responsive developer triage. Security patches addressing authentication token caching and reverse-proxy header trust were introduced cleanly in recent revisions.\n\nAudiobookshelf demonstrates solid repository hygiene with an OpenSSF Scorecard of 7.9. Code contributions are screened through GitHub Actions, and container images are automatically published to the GitHub Container Registry. For bibliophiles seeking digital sovereignty over their audiobook libraries, Audiobookshelf is a dependable and secure solution with a Healthy score of 89/100.",
+  "scanned_at": "2026-09-18T10:00:00.000Z"
+}

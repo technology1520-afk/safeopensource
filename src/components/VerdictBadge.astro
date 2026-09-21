@@ -1,0 +1,67 @@
+---
+import type { Verdict } from '../types/tool';
+
+interface Props {
+  verdict: Verdict;
+  size?: 'sm' | 'md' | 'lg';
+  class?: string;
+}
+
+const { verdict, size = 'md', class: className = '' } = Astro.props;
+
+const config = {
+  healthy: {
+    label: 'Healthy',
+    textColor: 'text-emerald-400',
+    borderColor: 'border-emerald-500/30',
+    bgColor: 'bg-emerald-950/40',
+    icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'
+  },
+  caution: {
+    label: 'Caution',
+    textColor: 'text-amber-400',
+    borderColor: 'border-amber-500/30',
+    bgColor: 'bg-amber-950/40',
+    icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z'
+  },
+  risky: {
+    label: 'Risky',
+    textColor: 'text-rose-400',
+    borderColor: 'border-rose-500/30',
+    bgColor: 'bg-rose-950/40',
+    icon: 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z'
+  }
+}[verdict];
+
+const sizeClasses = {
+  sm: 'text-xs px-2 py-0.5 gap-1',
+  md: 'text-xs px-2.5 py-1 gap-1.5',
+  lg: 'text-sm px-3 py-1.5 gap-2'
+}[size];
+
+const iconSize = {
+  sm: 'w-3.5 h-3.5',
+  md: 'w-4 h-4',
+  lg: 'w-4.5 h-4.5'
+}[size];
+---
+
+<span
+  class={`inline-flex items-center font-mono font-medium rounded-full border ${config.bgColor} ${config.borderColor} ${config.textColor} ${sizeClasses} ${className}`}
+  role="status"
+  aria-label={`Safety verdict: ${config.label}`}
+>
+  <svg
+    class={`${iconSize} shrink-0 stroke-current`}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+  >
+    <path d={config.icon} />
+  </svg>
+  <span>{config.label}</span>
+</span>
+

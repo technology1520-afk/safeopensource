@@ -1,0 +1,32 @@
+{
+  "slug": "bookstack",
+  "repo": "BookStackApp/BookStack",
+  "name": "BookStack",
+  "tagline": "Simple, self-hosted, and opinionated wiki platform organized by Books, Chapters, and Pages.",
+  "category": "notes-wiki",
+  "license_spdx": "MIT",
+  "stars": 16500,
+  "contributors": 195,
+  "last_push_days": 2,
+  "latest_release": "v24.11.1",
+  "safety_score": 93,
+  "verdict": "healthy",
+  "risk_reasons": [
+    "Image and attachment uploads require strict MIME type enforcement on the underlying web server."
+  ],
+  "scorecard": 8.6,
+  "components": {
+    "security_health": 94,
+    "maintenance": 95,
+    "community": 90,
+    "releases": 92
+  },
+  "language": "PHP / Laravel",
+  "self_host_difficulty": "Easy",
+  "install_commands": {
+    "docker": "docker run -d --name=bookstack -e PUID=1000 -e PGID=1000 -p 6875:80 -v /path/to/data:/config lscr.io/linuxserver/bookstack:latest"
+  },
+  "website_url": "https://www.bookstackapp.com",
+  "ai_report": "BookStack is an outstanding example of opinionated, purposeful software architecture. Developed on Laravel by a dedicated lead maintainer and active contributors, BookStack eschews overly complicated unstructured wiki syntax in favor of a natural, physical metaphor: Bookshelf -> Book -> Chapter -> Page. This design dramatically lowers onboarding friction for non-technical users while providing Markdown and WYSIWYG editing.\n\nThe security engineering behind BookStack is top-tier. The project maintains an immaculate security policy with coordinated vulnerability disclosure through GitHub Security Advisories. Role-based access control (RBAC) permissions are granular down to individual pages and chapters. Content security policies, strict input sanitization against XSS in custom HTML blocks, and comprehensive audit logs protect enterprise documentation.\n\nBookStack achieves an 8.6 OpenSSF Scorecard rating, backed by automated unit and integration tests covering authentication, search indexing, and export engines (PDF, plaintext, HTML). Upgrades between major versions are notoriously reliable, executing automatic database migrations without operator intervention. With MIT licensing and zero corporate monetization conflicts, BookStack is rated Healthy with a 93/100 Safety Score.",
+  "scanned_at": "2026-09-18T10:00:00.000Z"
+}

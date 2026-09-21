@@ -1,0 +1,189 @@
+---
+import Layout from '../layouts/Layout.astro';
+import AdSlot from '../components/AdSlot.astro';
+---
+
+<Layout
+  title="Scoring Methodology & Weights — SafeOpenSource"
+  description="How SafeOpenSource calculates 0–100 Safety Scores: mathematical weights, OpenSSF Scorecard integration, GitHub telemetry, and vulnerability auditing."
+>
+  <!-- Breadcrumbs -->
+  <nav class="flex items-center gap-2 text-xs font-mono text-app-subtle mb-6" aria-label="Breadcrumb">
+    <a href="/" class="hover:text-app-text">Home</a>
+    <span>/</span>
+    <span class="text-app-text font-medium">How We Score</span>
+  </nav>
+
+  <!-- Header -->
+  <header class="py-6 sm:py-10 max-w-3xl mb-8">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/30 bg-blue-950/30 text-blue-400 text-micro mb-4">
+      <span>Transparent Standards</span>
+    </div>
+
+    <h1 class="text-3xl sm:text-5xl font-extrabold text-app-text tracking-tight mb-4">
+      Scoring Methodology & Transparency
+    </h1>
+
+    <p class="text-sm sm:text-base text-app-muted leading-relaxed">
+      Trust cannot be bought. SafeOpenSource calculates objective 0–100 Safety Scores using deterministic algorithms fed by verifiable public data. We do not accept sponsorships, payments, or editorial bias to influence scores.
+    </p>
+  </header>
+
+  <!-- Weight Breakdown Section -->
+  <section class="rounded-2xl border border-app-border bg-app-surface p-6 sm:p-8 mb-8">
+    <h2 class="text-xl font-bold text-app-text mb-2">
+      The 4 Component Dimensions & Weights
+    </h2>
+    <p class="text-xs text-app-muted mb-6">
+      Every tool's composite score is computed using the following formula: <code class="font-mono text-app-text bg-app-bg px-2 py-0.5 rounded border border-app-border">Score = (Security * 0.35) + (Maintenance * 0.30) + (Community * 0.20) + (Releases * 0.15)</code>
+    </p>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- 1. Security Health -->
+      <div class="p-5 rounded-xl border border-app-border bg-app-bg">
+        <div class="flex items-center justify-between gap-2 mb-3">
+          <h3 class="font-bold text-base text-app-text flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span>Security Health</span>
+          </h3>
+          <span class="font-mono font-bold text-emerald-400 text-sm">35% Weight</span>
+        </div>
+        <p class="text-xs text-app-muted leading-relaxed mb-3">
+          Measures defensive hygiene and supply chain integrity directly from the OpenSSF (Open Source Security Foundation) Scorecard evaluation.
+        </p>
+        <ul class="text-xs text-app-subtle space-y-1.5 list-disc list-inside font-mono text-[11px]">
+          <li>Main branch protection enforcement (reviews required)</li>
+          <li>Automated dependency vulnerability scanning (Dependabot/Renovate)</li>
+          <li>Static analysis tooling in CI (CodeQL / Clippy / SonarQube)</li>
+          <li>Cryptographically pinned container and CI action hashes</li>
+        </ul>
+      </div>
+
+      <!-- 2. Maintenance -->
+      <div class="p-5 rounded-xl border border-app-border bg-app-bg">
+        <div class="flex items-center justify-between gap-2 mb-3">
+          <h3 class="font-bold text-base text-app-text flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-blue-400"></span>
+            <span>Maintenance Cadence</span>
+          </h3>
+          <span class="font-mono font-bold text-blue-400 text-sm">30% Weight</span>
+        </div>
+        <p class="text-xs text-app-muted leading-relaxed mb-3">
+          Evaluates continuous developer attention and operational vitality over the preceding 12 months.
+        </p>
+        <ul class="text-xs text-app-subtle space-y-1.5 list-disc list-inside font-mono text-[11px]">
+          <li>Days since latest commit to default branch</li>
+          <li>Average issue resolution and triage turnaround time</li>
+          <li>Ratio of open to closed pull requests</li>
+          <li>Absence of unaddressed critical security advisories</li>
+        </ul>
+      </div>
+
+      <!-- 3. Community -->
+      <div class="p-5 rounded-xl border border-app-border bg-app-bg">
+        <div class="flex items-center justify-between gap-2 mb-3">
+          <h3 class="font-bold text-base text-app-text flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+            <span>Community & Governance</span>
+          </h3>
+          <span class="font-mono font-bold text-purple-400 text-sm">20% Weight</span>
+        </div>
+        <p class="text-xs text-app-muted leading-relaxed mb-3">
+          Assesses long-term organizational viability and resistance to single-maintainer burnout (the "bus factor").
+        </p>
+        <ul class="text-xs text-app-subtle space-y-1.5 list-disc list-inside font-mono text-[11px]">
+          <li>Total unique code contributors over project lifetime</li>
+          <li>Governance model (Foundation, cooperative, or single author)</li>
+          <li>Adoption footprint (GitHub stargazers, Docker pulls)</li>
+          <li>Documentation quality, installation clarity, and community forums</li>
+        </ul>
+      </div>
+
+      <!-- 4. Releases -->
+      <div class="p-5 rounded-xl border border-app-border bg-app-bg">
+        <div class="flex items-center justify-between gap-2 mb-3">
+          <h3 class="font-bold text-base text-app-text flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+            <span>Releases & Artifact Hygiene</span>
+          </h3>
+          <span class="font-mono font-bold text-amber-400 text-sm">15% Weight</span>
+        </div>
+        <p class="text-xs text-app-muted leading-relaxed mb-3">
+          Verifies predictable packaging, artifact authenticity, and release security.
+        </p>
+        <ul class="text-xs text-app-subtle space-y-1.5 list-disc list-inside font-mono text-[11px]">
+          <li>Predictable semantic versioning cadence</li>
+          <li>Cryptographically signed git tags and release assets (Cosign/GPG)</li>
+          <li>Reproducible Docker container builds with multi-arch manifests</li>
+          <li>Published Software Bill of Materials (SBOM)</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Verdict Thresholds -->
+  <section class="rounded-2xl border border-app-border bg-app-surface p-6 sm:p-8 mb-8">
+    <h2 class="text-xl font-bold text-app-text mb-3">
+      Verdict Classifications
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+      <div class="p-4 rounded-xl border border-emerald-500/30 bg-emerald-950/20">
+        <div class="font-bold font-mono text-emerald-400 text-sm mb-1">HEALTHY (Score 80–100)</div>
+        <p class="text-app-muted leading-relaxed">
+          Active commit velocity, responsive security disclosure, reproducible builds, and verified supply-chain hygiene. Recommended for production and home lab deployment.
+        </p>
+      </div>
+
+      <div class="p-4 rounded-xl border border-amber-500/30 bg-amber-950/20">
+        <div class="font-bold font-mono text-amber-400 text-sm mb-1">CAUTION (Score 50–79)</div>
+        <p class="text-app-muted leading-relaxed">
+          Functional software with minor caveats: moderate maintainer backlog, proprietary enterprise license forks, or slower vulnerability turnaround. Deploy with isolated network policies.
+        </p>
+      </div>
+
+      <div class="p-4 rounded-xl border border-rose-500/30 bg-rose-950/20">
+        <div class="font-bold font-mono text-rose-400 text-sm mb-1">RISKY (Score 0–49)</div>
+        <p class="text-app-muted leading-relaxed">
+          Stagnant or abandoned codebases with months of inactivity, unpatched high-severity CVEs, or failing automated test pipelines. Migration to safer alternatives is strongly advised.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Data Sources & Refresh Cadence -->
+  <section class="rounded-2xl border border-app-border bg-app-surface p-6 sm:p-8 mb-8">
+    <h2 class="text-xl font-bold text-app-text mb-3">
+      Data Sources & Update Cadence
+    </h2>
+    <div class="space-y-4 text-xs sm:text-sm text-app-muted leading-relaxed">
+      <p>
+        We pull automated telemetry from four primary upstream repositories:
+      </p>
+      <ul class="space-y-2 list-disc list-inside font-mono text-xs">
+        <li><strong class="text-app-text">OpenSSF Scorecard API</strong>: Automated security heuristics developed by the Linux Foundation.</li>
+        <li><strong class="text-app-text">GitHub REST & GraphQL APIs</strong>: Public repository metrics, releases, contributors, and push timestamps.</li>
+        <li><strong class="text-app-text">OSV (Open Source Vulnerabilities)</strong>: Distributed vulnerability database for tracking active CVE notices.</li>
+        <li><strong class="text-app-text">SPDX License List</strong>: Standardized machine-readable license definitions for commercial rights classification.</li>
+      </ul>
+      <p>
+        <strong class="text-app-text">Update Cadence:</strong> Our automated scoring cron runs weekly to recalculate commit ages, pull latest releases, and verify security advisories. If a critical CVE is disclosed, scores are refreshed within 24 hours.
+      </p>
+    </div>
+  </section>
+
+  <!-- Limitations & Disclaimers -->
+  <section class="rounded-2xl border border-app-border bg-app-surface p-6 sm:p-8 mb-8">
+    <h2 class="text-xl font-bold text-app-text mb-3">
+      Limitations & Disclaimers
+    </h2>
+    <p class="text-xs sm:text-sm text-app-muted leading-relaxed">
+      While our scoring model leverages the best automated static analysis and telemetry available, synthetic audits cannot substitute for tailored enterprise penetration tests. A tool with a 95 Safety Score can still be breached if an administrator uses default credentials or exposes private endpoints directly to the public internet without proper TLS reverse proxying. Always follow defense-in-depth security principles.
+    </p>
+  </section>
+
+  <!-- Reserved Zero-CLS AdSlot Container -->
+  <section class="my-6">
+    <AdSlot format="leaderboard" />
+  </section>
+</Layout>
+

@@ -1,0 +1,167 @@
+---
+import VerdictBadge from './VerdictBadge.astro';
+
+interface FlaggedIncident {
+  id: string;
+  slug: string;
+  name: string;
+  repo: string;
+  timestamp: string;
+  score: number;
+  verdict: 'caution' | 'risky';
+  reasonChip: string;
+  chipColor: string;
+  summary: string;
+  recommendedAlternative: {
+    name: string;
+    slug: string;
+    score: number;
+  };
+}
+
+const incidents: FlaggedIncident[] = [
+  {
+    id: 'SEC-2026-091',
+    slug: 'huginn',
+    name: 'Huginn',
+    repo: 'huginn/huginn',
+    timestamp: '14:22:04 UTC • SEP 18',
+    score: 42.0,
+    verdict: 'risky',
+    reasonChip: 'ARCHIVED / DORMANT 180D+',
+    chipColor: 'bg-rose-950/50 text-rose-400 border-rose-500/40',
+    summary: 'Repository commit cadence ceased over 6 months ago. 14 critical-severity Ruby gem CVE advisories remain unresolved in main branch CI pipelines.',
+    recommendedAlternative: { name: 'n8n', slug: 'n8n', score: 89.0 }
+  },
+  {
+    id: 'SEC-2026-088',
+    slug: 'statping-ng',
+    name: 'Statping-ng',
+    repo: 'statping-ng/statping-ng',
+    timestamp: '09:15:22 UTC • SEP 17',
+    score: 56.0,
+    verdict: 'caution',
+    reasonChip: '2 CONTRIBUTORS — BUS FACTOR',
+    chipColor: 'bg-amber-950/50 text-amber-400 border-amber-500/40',
+    summary: 'Community rescue fork exhibits single-maintainer dependency risk. Pull request triage has stalled with unreviewed database schema migrations.',
+    recommendedAlternative: { name: 'Uptime Kuma', slug: 'uptime-kuma', score: 93.0 }
+  },
+  {
+    id: 'SEC-2026-084',
+    slug: 'photoprism',
+    name: 'PhotoPrism',
+    repo: 'photoprism/photoprism',
+    timestamp: '18:40:11 UTC • SEP 16',
+    score: 72.0,
+    verdict: 'caution',
+    reasonChip: 'COMMERCIAL GATING TENSION',
+    chipColor: 'bg-amber-950/50 text-amber-400 border-amber-500/40',
+    summary: 'Essential multi-user permission controls and high-resolution map tiles gated behind commercial sponsor subscription tiers.',
+    recommendedAlternative: { name: 'Immich', slug: 'immich', score: 95.0 }
+  },
+  {
+    id: 'SEC-2026-079',
+    slug: 'owncloud',
+    name: 'ownCloud Classic',
+    repo: 'owncloud/core',
+    timestamp: '11:04:55 UTC • SEP 15',
+    score: 63.0,
+    verdict: 'caution',
+    reasonChip: 'LEGACY CORE / SUPERSEDED BY OCIS',
+    chipColor: 'bg-amber-950/50 text-amber-400 border-amber-500/40',
+    summary: 'PHP 10.x core is in maintenance-only status. Historical CVE-2023-49103 requires immediate configuration verification on active host nodes.',
+    recommendedAlternative: { name: 'Nextcloud Hub', slug: 'nextcloud', score: 92.0 }
+  }
+];
+---
+
+<section class="my-14 rounded-2xl border border-app-border bg-[#0d0f13] p-6 sm:p-8" id="flag-wall">
+  <!-- Section Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-5 border-b border-app-border">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+        <span class="text-micro text-rose-400 tracking-wider">DEFENSIVE ADVISORY FEED</span>
+      </div>
+      <h2 class="text-xl sm:text-2xl font-bold tracking-tight text-app-text flex items-center gap-2">
+        <span>The Flag Wall</span>
+      </h2>
+      <p class="text-xs text-app-muted mt-1 max-w-xl leading-relaxed">
+        Security bulletins highlighting supply-chain dormancy, commercial governance pivots, and unpatched CVE exposure. We watch these repos so you don't get burned.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <div class="px-3 py-1.5 rounded-lg bg-app-bg border border-app-border font-mono text-[11px] text-app-subtle">
+        <span>ACTIVE ALERTS: </span>
+        <strong class="text-rose-400 font-bold">{incidents.length}</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Incident Feed Cards Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    {incidents.map((item) => (
+      <div
+        class={`group relative rounded-xl border border-app-border bg-app-surface p-5 transition-all duration-150 hover:bg-app-surface-hover ${
+          item.verdict === 'risky'
+            ? 'border-l-4 border-l-rose-500'
+            : 'border-l-4 border-l-amber-500'
+        }`}
+      >
+        <!-- Card Top: Incident ID, Timestamp, Reason Chip -->
+        <div class="flex items-start justify-between gap-3 mb-3">
+          <div>
+            <div class="font-mono text-[10px] text-app-subtle tracking-wider uppercase mb-1">
+              BULLETIN #{item.id} • {item.timestamp}
+            </div>
+            <h3 class="font-bold text-base text-app-text group-hover:text-blue-400 transition-colors flex items-center gap-2">
+              <a href={`/tools/${item.slug}`} class="hover:underline">
+                {item.name}
+              </a>
+              <span class="text-micro text-app-subtle font-mono font-normal">
+                {item.repo}
+              </span>
+            </h3>
+          </div>
+
+          <div class="shrink-0 text-right">
+            <span class="font-mono font-bold text-xs block text-app-text">
+              {item.score}<span class="text-[10px] text-app-subtle font-normal">/100</span>
+            </span>
+            <VerdictBadge verdict={item.verdict} size="sm" class="mt-1" />
+          </div>
+        </div>
+
+        <!-- Reason Chip -->
+        <div class="mb-3">
+          <span class={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded font-mono text-[10px] font-semibold tracking-wide border uppercase ${item.chipColor}`}>
+            <span class="w-1 h-1 rounded-full bg-current"></span>
+            <span>{item.reasonChip}</span>
+          </span>
+        </div>
+
+        <!-- Advisory Summary -->
+        <p class="text-xs text-app-muted leading-relaxed mb-4">
+          {item.summary}
+        </p>
+
+        <!-- Footer: Safer Alternative Link -->
+        <div class="pt-3 border-t border-app-border/80 flex items-center justify-between text-xs font-mono">
+          <span class="text-app-subtle text-[11px]">
+            Safer Drop-in Alternative:
+          </span>
+          <a
+            href={`/tools/${item.recommendedAlternative.slug}`}
+            class="inline-flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 transition-colors font-medium text-[11px]"
+          >
+            <span>{item.recommendedAlternative.name}</span>
+            <span class="text-app-subtle">({item.recommendedAlternative.score}/100)</span>
+            <span aria-hidden="true">&rarr;</span>
+          </a>
+        </div>
+      </div>
+    ))}
+  </div>
+</section>
+

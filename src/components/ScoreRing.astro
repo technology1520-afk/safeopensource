@@ -1,0 +1,135 @@
+---
+interface Props {
+  score: number;
+  size?: 'sm' | 'md' | 'lg';
+  animate?: boolean;
+  class?: string;
+}
+
+const { score, size = 'md', animate = true, class: className = '' } = Astro.props;
+
+// Determine status color based on thresholds
+const colorClass =
+  score >= 80
+    ? 'text-emerald-500 stroke-emerald-500'
+    : score >= 50
+      ? 'text-amber-500 stroke-amber-500'
+      : 'text-rose-500 stroke-rose-500';
+
+const bgStrokeColor =
+  score >= 80
+    ? 'stroke-emerald-950/60'
+    : score >= 50
+      ? 'stroke-amber-950/60'
+      : 'stroke-rose-950/60';
+
+const dimensions = {
+  sm: { size: 64, strokeWidth: 5, fontSize: 'text-base', labelSize: 'text-[9px]' },
+  md: { size: 96, strokeWidth: 7, fontSize: 'text-2xl', labelSize: 'text-[11px]' },
+  lg: { size: 128, strokeWidth: 9, fontSize: 'text-4xl', labelSize: 'text-xs' }
+}[size];
+
+const radius = (dimensions.size - dimensions.strokeWidth * 2) / 2;
+const circumference = 2 * Math.PI * radius;
+const dashoffset = circumference - (score / 100) * circumference;
+---
+
+<div
+  class={`relative inline-flex items-center justify-center font-mono ${className}`}
+  role="progressbar"
+  aria-valuenow={score}
+  aria-valuemin="0"
+  aria-valuemax="100"
+  aria-label={`Safety score ${score} out of 100`}
+  data-score-ring={animate ? 'true' : 'false'}
+  data-dashoffset={dashoffset}
+  data-score={score}
+>
+  <svg
+    width={dimensions.size}
+    height={dimensions.size}
+    viewBox={`0 0 ${dimensions.size} ${dimensions.size}`}
+    class="rotate-[-90deg] transform"
+    aria-hidden="true"
+  >
+    <!-- Background track -->
+    <circle
+      cx={dimensions.size / 2}
+      cy={dimensions.size / 2}
+      r={radius}
+      class={`fill-none ${bgStrokeColor}`}
+      stroke-width={dimensions.strokeWidth}
+    />
+    <!-- Foreground score arc -->
+    <circle
+      cx={dimensions.size / 2}
+      cy={dimensions.size / 2}
+      r={radius}
+      class={`score-arc fill-none ${colorClass} transition-[stroke-dashoffset] duration-700 ease-out`}
+      stroke-width={dimensions.strokeWidth}
+      stroke-dasharray={circumference}
+      stroke-dashoffset={animate ? circumference : dashoffset}
+      stroke-linecap="round"
+    />
+  </svg>
+
+  <div class="absolute inset-0 flex flex-col items-center justify-center text-center select-none">
+    <span
+      class={`score-value font-bold font-mono tracking-tight leading-none text-app-text ${dimensions.fontSize}`}
+    >
+      {score % 1 !== 0 ? score.toFixed(1) : score}
+    </span>
+    <span class={`font-mono text-app-subtle mt-0.5 leading-none ${dimensions.labelSize}`}>
+      /100
+    </span>
+  </div>
+</div>
+
+<script>
+  function initScoreRings() {
+    const rings = document.querySelectorAll<HTMLElement>('[data-score-ring="true"]');
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    rings.forEach((container) => {
+      const targetScore = parseFloat(container.getAttribute('data-score') || '0');
+      const isDecimal = targetScore % 1 !== 0;
+      const targetOffset = parseFloat(container.getAttribute('data-dashoffset') || '0');
+      const arc = container.querySelector<SVGCircleElement>('.score-arc');
+      const valueEl = container.querySelector<HTMLElement>('.score-value');
+
+      if (!arc || !valueEl) return;
+      const displayEl = valueEl;
+
+      if (prefersReducedMotion) {
+        arc.style.strokeDashoffset = targetOffset.toString();
+        displayEl.textContent = isDecimal ? targetScore.toFixed(1) : targetScore.toString();
+        return;
+      }
+
+      requestAnimationFrame(() => {
+        arc.style.strokeDashoffset = targetOffset.toString();
+      });
+
+      let start: number | null = null;
+      const duration = 600;
+      function step(timestamp: number) {
+        if (!start) start = timestamp;
+        const progress = Math.min((timestamp - start) / duration, 1);
+        const current = progress * targetScore;
+        displayEl.textContent = isDecimal ? current.toFixed(1) : Math.round(current).toString();
+        if (progress < 1) {
+          requestAnimationFrame(step);
+        } else {
+          displayEl.textContent = isDecimal ? targetScore.toFixed(1) : targetScore.toString();
+        }
+      }
+      requestAnimationFrame(step);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initScoreRings);
+  } else {
+    initScoreRings();
+  }
+</script>

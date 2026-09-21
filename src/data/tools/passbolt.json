@@ -1,0 +1,33 @@
+{
+  "slug": "passbolt",
+  "repo": "passbolt/passbolt_api",
+  "name": "Passbolt",
+  "tagline": "Open-source password manager designed specifically for agile team collaboration.",
+  "category": "password-auth",
+  "license_spdx": "AGPL-3.0-only",
+  "stars": 4800,
+  "contributors": 85,
+  "last_push_days": 3,
+  "latest_release": "v4.10.1",
+  "safety_score": 88,
+  "verdict": "healthy",
+  "risk_reasons": [
+    "Strict OpenPGP key management requirements increase user onboarding friction.",
+    "Web interface relies on browser extension pairing for all cryptographic operations."
+  ],
+  "scorecard": 8.2,
+  "components": {
+    "security_health": 90,
+    "maintenance": 89,
+    "community": 84,
+    "releases": 87
+  },
+  "language": "PHP",
+  "self_host_difficulty": "Medium",
+  "install_commands": {
+    "docker": "docker run -d --name passbolt -p 80:80 -p 443:443 passbolt/passbolt:latest"
+  },
+  "website_url": "https://www.passbolt.com",
+  "ai_report": "Passbolt takes a distinct approach to team credential sharing by centering all zero-knowledge cryptographic exchanges on the OpenPGP standard. Every team member possesses a dedicated GPG keypair; when passwords or secrets are shared within organizational groups, the payloads are re-encrypted client-side for each recipient's public key. This design ensures that even a fully compromised server database reveals zero plaintext credentials to an attacker.\n\nThe core API engine is built on CakePHP with strict security middleware that validates nonce tokens, prevents CSRF attacks, and logs comprehensive immutable audit trails for every credential access event. Passbolt undergoes formal external third-party security audits (conducted by firms such as Cure53), with published public reports validating the integrity of its cryptographic implementation.\n\nWith an OpenSSF Scorecard of 8.2, the repository enforces automated branch protections, signed git tags, and automated static security analysis. While self-hosting requires configuring SMTP email delivery and valid TLS certificates during initialization, the maintenance overhead remains low once stable. Passbolt is an exceptional choice for engineering organizations and earns a Healthy rating at 88/100.",
+  "scanned_at": "2026-09-18T10:00:00.000Z"
+}

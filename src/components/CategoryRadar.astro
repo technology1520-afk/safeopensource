@@ -1,0 +1,284 @@
+---
+import { categories } from '../data/categories';
+import { getToolsByCategory } from '../utils/tools';
+
+interface Props {
+  class?: string;
+}
+
+const { class: className = '' } = Astro.props;
+
+// Calculate stats for all 13 categories
+const radarSectors = categories.map((cat, index) => {
+  const tools = getToolsByCategory(cat.slug);
+  const avgScore = tools.length > 0
+    ? Number((tools.reduce((acc, t) => acc + t.safety_score, 0) / tools.length).toFixed(1))
+    : 0;
+
+  const totalSectors = categories.length; // 13
+  const angleDeg = (index * 360) / totalSectors - 90; // Start at top (-90deg)
+  const angleRad = (angleDeg * Math.PI) / 180;
+
+  // Radar center (260, 260), max radius 210
+  const center = 260;
+  const maxR = 190;
+  const minR = 40;
+  // Map score (0-100) to radius
+  const r = minR + ((avgScore) / 100) * (maxR - minR);
+  const x = center + r * Math.cos(angleRad);
+  const y = center + r * Math.sin(angleRad);
+
+  // Label coordinates (further out)
+  const labelR = maxR + 28;
+  const labelX = center + labelR * Math.cos(angleRad);
+  const labelY = center + labelR * Math.sin(angleRad);
+
+  // Status color
+  const color =
+    avgScore >= 80
+      ? '#10B981'
+      : avgScore >= 50
+        ? '#F59E0B'
+        : '#EF4444';
+
+  const dotSize = Math.max(5, Math.min(11, 4 + tools.length * 1.5));
+
+  return {
+    ...cat,
+    index,
+    avgScore,
+    toolCount: tools.length,
+    angleDeg,
+    x,
+    y,
+    labelX,
+    labelY,
+    color,
+    dotSize,
+    isHighlighted: cat.slug === 'media-streaming' // Default hover state demonstration
+  };
+});
+
+// Build SVG polygon points path for the composite web
+const polygonPoints = radarSectors.map((s) => `${s.x.toFixed(1)},${s.y.toFixed(1)}`).join(' ');
+---
+
+<section class={`my-14 rounded-2xl border border-app-border bg-[#0a0c10] p-6 sm:p-8 ${className}`} id="ecosystem-radar">
+  <!-- Section Title -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-app-border">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+        <span class="text-micro text-blue-400 tracking-wider">ECOSYSTEM HEALTH MAPPING</span>
+      </div>
+      <h2 class="text-xl sm:text-2xl font-bold tracking-tight text-app-text">
+        Category Defense Radar
+      </h2>
+      <p class="text-xs text-app-muted mt-1 leading-relaxed">
+        13 sectors mapped radially. Sector distance and color indicate average Safety Score (🟢 &ge;80, 🟡 50–79, 🔴 &lt;50). Node radius represents evaluated project density.
+      </p>
+    </div>
+
+    <!-- Active Hover Sector Stat Box -->
+    <div
+      id="radar-inspected-card"
+      class="p-3 sm:p-4 rounded-xl border border-blue-500/40 bg-[#131519] min-w-[260px] font-mono text-xs shadow-lg transition-all"
+    >
+      <div class="flex items-center justify-between text-[10px] text-blue-400 tracking-wider mb-1">
+        <span>INSPECTED SECTOR</span>
+        <span id="inspect-status" class="px-1.5 py-0.2 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-500/30">OPTIMAL</span>
+      </div>
+      <div id="inspect-name" class="font-bold text-sm text-app-text truncate">
+        Media & Streaming
+      </div>
+      <div class="mt-2 flex items-center justify-between text-[11px] text-app-muted pt-2 border-t border-app-border">
+        <span>Average Score: <strong id="inspect-score" class="text-emerald-400 font-bold">91.3</strong>/100</span>
+        <span id="inspect-tools" class="text-app-subtle">3 Tools</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Radar SVG Display -->
+  <div class="relative w-full max-w-[620px] mx-auto flex items-center justify-center p-2">
+    <svg
+      viewBox="0 0 520 520"
+      class="w-full h-auto max-h-[520px] overflow-visible select-none"
+      aria-label="13-Sector Category Safety Radar"
+    >
+      <defs>
+        <!-- Radial gradient fill for coverage mesh -->
+        <radialGradient id="radar-mesh-gradient" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#3B82F6" stop-opacity="0.15" />
+          <stop offset="70%" stop-color="#10B981" stop-opacity="0.08" />
+          <stop offset="100%" stop-color="#10B981" stop-opacity="0.01" />
+        </radialGradient>
+      </defs>
+
+      <!-- Concentric threshold rings -->
+      <!-- Range 100: Outer ring -->
+      <circle cx="260" cy="260" r="190" fill="none" stroke="#23262E" stroke-width="1.5" />
+      <text x="264" y="74" fill="#6B7280" font-family="monospace" font-size="9">100 (HEALTHY)</text>
+
+      <!-- Range 80: Healthy boundary -->
+      <circle cx="260" cy="260" r="152" fill="none" stroke="#23262E" stroke-dasharray="3 3" stroke-width="1" />
+      <text x="264" y="112" fill="#6B7280" font-family="monospace" font-size="9">80 (STABLE)</text>
+
+      <!-- Range 50: Caution boundary -->
+      <circle cx="260" cy="260" r="95" fill="none" stroke="#23262E" stroke-dasharray="2 2" stroke-width="1" />
+      <text x="264" y="169" fill="#6B7280" font-family="monospace" font-size="9">50 (RISK)</text>
+
+      <!-- Radar Center Origin -->
+      <circle cx="260" cy="260" r="4" fill="#3B82F6" />
+
+      <!-- 13 Radial Spokes -->
+      {radarSectors.map((sector) => {
+        const outerX = 260 + 190 * Math.cos((sector.angleDeg * Math.PI) / 180);
+        const outerY = 260 + 190 * Math.sin((sector.angleDeg * Math.PI) / 180);
+        return (
+          <line
+            x1="260"
+            y1="260"
+            x2={outerX}
+            y2={outerY}
+            stroke="#1b1e26"
+            stroke-width="1"
+          />
+        );
+      })}
+
+      <!-- Composite Ecosystem Mesh Polygon -->
+      <polygon
+        points={polygonPoints}
+        fill="url(#radar-mesh-gradient)"
+        stroke="#3B82F6"
+        stroke-width="1.5"
+        stroke-linejoin="round"
+        opacity="0.75"
+      />
+
+      <!-- Sector Nodes & Labels -->
+      {radarSectors.map((sector) => (
+        <g
+          class="radar-sector-node cursor-pointer transition-transform duration-150 group"
+          data-name={sector.name}
+          data-score={sector.avgScore}
+          data-tools={sector.toolCount}
+          data-slug={sector.slug}
+          data-color={sector.color}
+          role="button"
+          tabindex="0"
+          aria-label={`${sector.name}: Safety Score ${sector.avgScore}, ${sector.toolCount} tools`}
+        >
+          <!-- Hover halo -->
+          <circle
+            cx={sector.x}
+            cy={sector.y}
+            r={sector.dotSize + 6}
+            fill={sector.color}
+            opacity={sector.isHighlighted ? '0.25' : '0'}
+            class="sector-halo transition-opacity duration-150"
+          />
+
+          <!-- Plotted Data Point -->
+          <circle
+            cx={sector.x}
+            cy={sector.y}
+            r={sector.dotSize}
+            fill={sector.color}
+            stroke="#0A0B0E"
+            stroke-width="2"
+            class="transition-transform group-hover:scale-125"
+          />
+
+          <!-- Category Label on Outer Perimeter -->
+          <text
+            x={sector.labelX}
+            y={sector.labelY}
+            text-anchor="middle"
+            dominant-baseline="middle"
+            fill={sector.isHighlighted ? '#E6E8EB' : '#9BA1AB'}
+            font-family="monospace"
+            font-size="9"
+            font-weight={sector.isHighlighted ? 'bold' : 'normal'}
+            class="sector-label transition-colors duration-150 group-hover:fill-white"
+          >
+            {sector.name.split(' ')[0].toUpperCase()}
+          </text>
+        </g>
+      ))}
+    </svg>
+  </div>
+
+  <!-- Radar Footer Controls -->
+  <div class="mt-4 pt-4 border-t border-app-border flex flex-wrap items-center justify-between gap-4 font-mono text-[11px] text-app-subtle">
+    <div class="flex items-center gap-4">
+      <span class="flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+        <span>Healthy (&ge;80)</span>
+      </span>
+      <span class="flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+        <span>Caution (50–79)</span>
+      </span>
+      <span class="flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-rose-400"></span>
+        <span>Risky (&lt;50)</span>
+      </span>
+    </div>
+
+    <a href="/#categories" class="text-blue-400 hover:text-blue-300 transition-colors">
+      View full category directory &rarr;
+    </a>
+  </div>
+</section>
+
+<script is:inline>
+  (function () {
+    const nodes = document.querySelectorAll('.radar-sector-node');
+    const inspectName = document.getElementById('inspect-name');
+    const inspectScore = document.getElementById('inspect-score');
+    const inspectTools = document.getElementById('inspect-tools');
+    const inspectStatus = document.getElementById('inspect-status');
+
+    nodes.forEach((node) => {
+      node.addEventListener('mouseenter', () => {
+        const name = node.getAttribute('data-name');
+        const score = parseFloat(node.getAttribute('data-score') || '0');
+        const tools = node.getAttribute('data-tools');
+        const color = node.getAttribute('data-color');
+
+        if (inspectName) inspectName.textContent = name;
+        if (inspectScore) {
+          inspectScore.textContent = score.toString();
+          inspectScore.style.color = color;
+        }
+        if (inspectTools) inspectTools.textContent = `${tools} Monitored Tools`;
+        if (inspectStatus) {
+          if (score >= 80) {
+            inspectStatus.textContent = 'OPTIMAL';
+            inspectStatus.className = 'px-1.5 py-0.2 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-500/30';
+          } else if (score >= 50) {
+            inspectStatus.textContent = 'MODERATE';
+            inspectStatus.className = 'px-1.5 py-0.2 rounded bg-amber-950/60 text-amber-400 border border-amber-500/30';
+          } else {
+            inspectStatus.textContent = 'ELEVATED RISK';
+            inspectStatus.className = 'px-1.5 py-0.2 rounded bg-rose-950/60 text-rose-400 border border-rose-500/30';
+          }
+        }
+
+        // Highlight halo
+        document.querySelectorAll('.sector-halo').forEach((h) => (h.style.opacity = '0'));
+        const halo = node.querySelector('.sector-halo');
+        if (halo) halo.style.opacity = '0.35';
+      });
+
+      node.addEventListener('click', () => {
+        const slug = node.getAttribute('data-slug');
+        if (slug) {
+          window.location.href = `/categories/${slug}`;
+        }
+      });
+    });
+  })();
+</script>
+

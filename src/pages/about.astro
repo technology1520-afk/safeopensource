@@ -1,0 +1,52 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout
+  title="About SafeOpenSource — Independent Open-Source Tool Audits"
+  description="SafeOpenSource is an independent evaluation platform dedicated to bringing verifiable security metrics and transparency to open-source software."
+>
+  <nav class="flex items-center gap-2 text-xs font-mono text-app-subtle mb-6" aria-label="Breadcrumb">
+    <a href="/" class="hover:text-app-text">Home</a>
+    <span>/</span>
+    <span class="text-app-text font-medium">About</span>
+  </nav>
+
+  <article class="max-w-3xl mx-auto py-6 sm:py-10">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/30 bg-blue-950/30 text-blue-400 text-micro mb-4">
+      <span>Our Mission</span>
+    </div>
+
+    <h1 class="text-3xl sm:text-4xl font-extrabold text-app-text tracking-tight mb-6">
+      Building Trust in Open-Source Infrastructure
+    </h1>
+
+    <div class="space-y-6 text-sm text-app-text leading-relaxed">
+      <p>
+        Open-source software powers the global digital economy. From small home lab servers running Docker to Fortune 500 Kubernetes clusters, developers and sysadmins rely on thousands of community repositories every day.
+      </p>
+
+      <p>
+        However, choosing the right tool has historically relied on flawed heuristics: GitHub star counts (easily gamed or outdated), marketing blog posts, or anecdotal Reddit threads. Critical security facts—such as abandoned commit activity, missing branch protections, or unpinned dependencies—frequently remain hidden until an outage or supply-chain compromise occurs.
+      </p>
+
+      <div class="p-6 rounded-xl border border-app-border bg-app-surface my-8">
+        <h2 class="text-base font-bold text-app-text mb-2">Our Guiding Principle: Trust Through Data</h2>
+        <p class="text-xs text-app-muted leading-relaxed">
+          SafeOpenSource was founded to replace anecdotal recommendations with verifiable, objective software hygiene metrics. Every tool page on SafeOpenSource clearly explains <em>why</em> a tool is rated healthy, caution, or risky, highlighting both its strengths and operational risk factors.
+        </p>
+      </div>
+
+      <h2 class="text-xl font-bold text-app-text mt-8 mb-3">Independent & Community-First</h2>
+      <p class="text-app-muted">
+        SafeOpenSource does not accept vendor payments to artificially inflate scores, nor do we run sponsored rankings. All algorithmic models, score weights, and data ingestion processes are publicly documented.
+      </p>
+
+      <h2 class="text-xl font-bold text-app-text mt-8 mb-3">Get Involved</h2>
+      <p class="text-app-muted">
+        Have a tool you would like evaluated? Want to propose an update to an existing scoring model? We welcome community contributions, suggestions, and corrections. Reach out via our <a href="/contact" class="text-blue-400 hover:underline">contact page</a>.
+      </p>
+    </div>
+  </article>
+</Layout>
+
