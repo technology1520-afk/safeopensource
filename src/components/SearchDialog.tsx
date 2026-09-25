@@ -136,26 +136,26 @@ export default function SearchDialog({ tools }: SearchDialogProps) {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        class="inline-flex items-center justify-between gap-2.5 w-full px-3.5 py-2 sm:py-2.5 rounded-xl bg-[#131519] border border-[#23262E] hover:border-[#3B82F6]/50 text-[#9BA1AB] hover:text-[#E6E8EB] text-xs font-sans transition-all cursor-pointer shadow-xs group"
+        class="inline-flex items-center justify-between gap-2.5 w-full px-3.5 py-2 sm:py-2.5 rounded-xl bg-app-surface border border-app-border hover:border-blue-500/50 text-app-muted hover:text-app-text text-xs font-sans transition-all cursor-pointer shadow-xs group"
         aria-label="Open search and suggestion box"
       >
         <span class="flex items-center gap-2 min-w-0">
-          <svg class="w-3.5 h-3.5 text-[#6B7280] group-hover:text-blue-400 shrink-0 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg class="w-3.5 h-3.5 text-app-subtle group-hover:text-blue-400 shrink-0 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="11" cy="11" r="8" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
-          <span class="truncate text-left text-xs text-[#9BA1AB] group-hover:text-app-text transition-colors">Search 39 tools, sectors, or natural goals...</span>
+          <span class="truncate text-left text-xs text-app-muted group-hover:text-app-text transition-colors">Search 43 tools, sectors, or natural goals...</span>
         </span>
         <div class="flex items-center gap-1.5 shrink-0 font-mono text-[10px]">
-          <kbd class="hidden sm:inline-block px-1.5 py-0.5 rounded bg-[#0A0B0E] border border-[#23262E] text-[#9BA1AB]">{osShortcut}</kbd>
-          <kbd class="hidden sm:inline-block px-1.5 py-0.5 rounded bg-[#0A0B0E] border border-[#23262E] text-[#9BA1AB]">/</kbd>
+          <kbd class="hidden sm:inline-block px-1.5 py-0.5 rounded bg-app-surface-2 border border-app-border text-app-muted">{osShortcut}</kbd>
+          <kbd class="hidden sm:inline-block px-1.5 py-0.5 rounded bg-app-surface-2 border border-app-border text-app-muted">/</kbd>
         </div>
       </button>
 
       {/* Suggest Box Modal */}
       {isOpen && (
         <div
-          class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-12 sm:pt-20 bg-black/80 backdrop-blur-xs animate-in fade-in duration-150"
+          class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-12 sm:pt-20 bg-black/70 backdrop-blur-xs animate-in fade-in duration-150"
           onClick={(e) => {
             if (e.target === e.currentTarget) setIsOpen(false);
           }}
@@ -163,11 +163,11 @@ export default function SearchDialog({ tools }: SearchDialogProps) {
           aria-modal="true"
           aria-label="Search and suggestion console"
         >
-          <div class="relative w-full max-w-2xl rounded-2xl border border-[#23262E] bg-[#131519] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
+          <div class="relative w-full max-w-2xl rounded-2xl border border-app-border bg-app-surface shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
             
             {/* Input Header */}
-            <div class="flex items-center px-4 py-3.5 border-b border-[#23262E] bg-[#0E1014] gap-3 shrink-0">
-              <svg class="w-4 h-4 text-[#3B82F6] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <div class="flex items-center px-4 py-3.5 border-b border-app-border bg-app-surface-2 gap-3 shrink-0">
+              <svg class="w-4 h-4 text-blue-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="11" cy="11" r="8" />
                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
               </svg>
@@ -181,13 +181,13 @@ export default function SearchDialog({ tools }: SearchDialogProps) {
                 }}
                 onKeyDown={handleInputKeyDown}
                 placeholder="Type a tool name, category, or natural goal (e.g. google photos alternative)..."
-                class="w-full bg-transparent text-sm font-mono text-[#E6E8EB] placeholder:text-[#6B7280] focus:outline-none"
+                class="w-full bg-transparent text-sm font-mono text-app-text placeholder:text-app-subtle focus:outline-none"
               />
               {query && (
                 <button
                   type="button"
                   onClick={() => setQuery('')}
-                  class="text-xs text-[#6B7280] hover:text-white px-1.5"
+                  class="text-xs text-app-subtle hover:text-app-text px-1.5"
                   aria-label="Clear query"
                 >
                   ✕
@@ -201,7 +201,7 @@ export default function SearchDialog({ tools }: SearchDialogProps) {
               {/* EMPTY STATE: Show 6 Curated Intent Chips */}
               {!cleanQuery && (
                 <div class="space-y-4 py-2">
-                  <div class="flex items-center justify-between text-micro text-[#6B7280]">
+                  <div class="flex items-center justify-between text-micro text-app-subtle">
                     <span>NATURAL LANGUAGE INTENTS (SUGGESTED DISCOVERIES)</span>
                     <span>DIRECT JUMP</span>
                   </div>
@@ -212,22 +212,22 @@ export default function SearchDialog({ tools }: SearchDialogProps) {
                         type="button"
                         key={chip.label}
                         onClick={() => handleIntentClick(chip.targetUrl)}
-                        class="text-left p-3 rounded-xl border border-[#23262E] bg-[#0A0B0E] hover:border-blue-500/40 hover:bg-[#181B21] transition-all group cursor-pointer"
+                        class="text-left p-3 rounded-xl border border-app-border bg-app-surface-2 hover:border-blue-500/40 hover:bg-app-bg transition-all group cursor-pointer"
                       >
-                        <div class="font-semibold text-xs text-[#E6E8EB] group-hover:text-blue-400 flex items-center justify-between">
+                        <div class="font-semibold text-xs text-app-text group-hover:text-blue-400 flex items-center justify-between">
                           <span>{chip.label}</span>
-                          <span class="text-[#6B7280] text-[10px] font-mono group-hover:text-white">&rarr;</span>
+                          <span class="text-app-subtle text-[10px] font-mono group-hover:text-app-text">&rarr;</span>
                         </div>
-                        <span class="text-[10px] font-mono text-[#6B7280] block mt-0.5">
+                        <span class="text-[10px] font-mono text-app-subtle block mt-0.5">
                           "{chip.query}"
                         </span>
                       </button>
                     ))}
                   </div>
 
-                  <div class="pt-4 border-t border-[#23262E]/60 text-center">
-                    <span class="text-micro text-[#6B7280]">
-                      TIP: PRESS <kbd class="px-1 py-0.5 rounded bg-[#0A0B0E] border border-[#23262E]">↑</kbd> <kbd class="px-1 py-0.5 rounded bg-[#0A0B0E] border border-[#23262E]">↓</kbd> TO NAVIGATE, <kbd class="px-1 py-0.5 rounded bg-[#0A0B0E] border border-[#23262E]">ENTER</kbd> TO OPEN
+                  <div class="pt-4 border-t border-app-border/60 text-center">
+                    <span class="text-micro text-app-subtle">
+                      TIP: PRESS <kbd class="px-1 py-0.5 rounded bg-app-surface-2 border border-app-border">↑</kbd> <kbd class="px-1 py-0.5 rounded bg-app-surface-2 border border-app-border">↓</kbd> TO NAVIGATE, <kbd class="px-1 py-0.5 rounded bg-app-surface-2 border border-app-border">ENTER</kbd> TO OPEN
                     </span>
                   </div>
                 </div>
@@ -235,7 +235,7 @@ export default function SearchDialog({ tools }: SearchDialogProps) {
 
               {/* SEARCH RESULTS (When query is entered) */}
               {cleanQuery && flatItems.length === 0 && (
-                <div class="py-12 text-center text-xs font-mono text-[#6B7280]">
+                <div class="py-12 text-center text-xs font-mono text-app-subtle">
                   No matching tools, categories, or natural language intents found for "{cleanQuery}".
                 </div>
               )}
@@ -265,28 +265,28 @@ export default function SearchDialog({ tools }: SearchDialogProps) {
                           onClick={() => { window.location.href = `/tools/${tool.slug}`; }}
                           class={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${
                             isSelected
-                              ? 'border-blue-500/60 bg-[#181B21] shadow-md'
-                              : 'border-[#23262E] bg-[#0A0B0E] hover:border-[#23262E]/80 hover:bg-[#181B21]/60'
+                              ? 'border-blue-500/60 bg-app-surface-2 shadow-md'
+                              : 'border-app-border bg-app-bg hover:border-app-border/80 hover:bg-app-surface-2'
                           }`}
                         >
                           <div class="flex-1 min-w-0 pr-3">
                             <div class="flex items-center gap-2">
-                              <span class="font-bold text-xs text-white truncate">{tool.name}</span>
-                              <span class="text-[10px] font-mono text-[#6B7280]">{tool.repo}</span>
-                              <span class="text-[9px] font-mono px-1.5 py-0.2 rounded bg-[#131519] border border-[#23262E] text-[#9BA1AB]">
+                              <span class="font-bold text-xs text-app-text truncate">{tool.name}</span>
+                              <span class="text-[10px] font-mono text-app-subtle">{tool.repo}</span>
+                              <span class="text-[9px] font-mono px-1.5 py-0.2 rounded bg-app-surface border border-app-border text-app-muted">
                                 {tool.license_spdx}
                               </span>
                             </div>
-                            <p class="text-[11px] text-[#9BA1AB] truncate mt-0.5">{tool.tagline}</p>
+                            <p class="text-[11px] text-app-muted truncate mt-0.5">{tool.tagline}</p>
                           </div>
 
                           <div class="shrink-0 flex items-center gap-3 font-mono text-xs">
-                            <span class="text-[11px] text-[#6B7280]">★ {(tool.stars / 1000).toFixed(1)}k</span>
+                            <span class="text-[11px] text-app-subtle">★ {(tool.stars / 1000).toFixed(1)}k</span>
                             <div class="text-right">
                               <span class={`font-bold ${scoreColor}`}>{tool.safety_score}</span>
-                              <span class="text-[10px] text-[#6B7280]">/100</span>
+                              <span class="text-[10px] text-app-subtle">/100</span>
                             </div>
-                            <span class="text-[#6B7280] text-xs">&rarr;</span>
+                            <span class="text-app-subtle text-xs">&rarr;</span>
                           </div>
                         </div>
                       );
@@ -297,7 +297,7 @@ export default function SearchDialog({ tools }: SearchDialogProps) {
 
               {/* GROUP 2: CATEGORIES */}
               {cleanQuery && matchedCategories.length > 0 && (
-                <div class="space-y-2 pt-2 border-t border-[#23262E]">
+                <div class="space-y-2 pt-2 border-t border-app-border">
                   <div class="text-micro text-emerald-400 font-bold flex items-center gap-1.5">
                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                     <span>SECTOR CATEGORIES ({matchedCategories.length})</span>
@@ -314,13 +314,13 @@ export default function SearchDialog({ tools }: SearchDialogProps) {
                           onClick={() => { window.location.href = `/categories/${cat.slug}`; }}
                           class={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${
                             isSelected
-                              ? 'border-emerald-500/60 bg-[#181B21] shadow-md'
-                              : 'border-[#23262E] bg-[#0A0B0E] hover:bg-[#181B21]/60'
+                              ? 'border-emerald-500/60 bg-app-surface-2 shadow-md'
+                              : 'border-app-border bg-app-bg hover:bg-app-surface-2'
                           }`}
                         >
                           <div>
-                            <span class="font-bold text-xs text-white">{cat.name} Sector</span>
-                            <p class="text-[11px] text-[#9BA1AB] truncate mt-0.5">{cat.tagline}</p>
+                            <span class="font-bold text-xs text-app-text">{cat.name} Sector</span>
+                            <p class="text-[11px] text-app-muted truncate mt-0.5">{cat.tagline}</p>
                           </div>
                           <span class="font-mono text-xs text-emerald-400 flex items-center gap-1">
                             <span>Open Sector</span>
@@ -335,7 +335,7 @@ export default function SearchDialog({ tools }: SearchDialogProps) {
 
               {/* GROUP 3: INTENTS */}
               {cleanQuery && matchedIntents.length > 0 && (
-                <div class="space-y-2 pt-2 border-t border-[#23262E]">
+                <div class="space-y-2 pt-2 border-t border-app-border">
                   <div class="text-micro text-purple-400 font-bold flex items-center gap-1.5">
                     <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
                     <span>CURATED INTENTS & GOALS ({matchedIntents.length})</span>
@@ -352,13 +352,13 @@ export default function SearchDialog({ tools }: SearchDialogProps) {
                           onClick={() => { window.location.href = intent.targetUrl; }}
                           class={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${
                             isSelected
-                              ? 'border-purple-500/60 bg-[#181B21] shadow-md'
-                              : 'border-[#23262E] bg-[#0A0B0E] hover:bg-[#181B21]/60'
+                              ? 'border-purple-500/60 bg-app-surface-2 shadow-md'
+                              : 'border-app-border bg-app-bg hover:bg-app-surface-2'
                           }`}
                         >
                           <div>
                             <span class="font-bold text-xs text-purple-300">{intent.label}</span>
-                            <p class="text-[11px] text-[#9BA1AB] truncate mt-0.5">{intent.description}</p>
+                            <p class="text-[11px] text-app-muted truncate mt-0.5">{intent.description}</p>
                           </div>
                           <span class="font-mono text-xs text-purple-400 flex items-center gap-1">
                             <span>Jump to Stack</span>
@@ -373,11 +373,11 @@ export default function SearchDialog({ tools }: SearchDialogProps) {
             </div>
 
             {/* Modal Footer Shortcuts */}
-            <div class="px-4 py-2.5 border-t border-[#23262E] bg-[#0E1014] flex items-center justify-between text-[11px] font-mono text-[#6B7280] shrink-0">
+            <div class="px-4 py-2.5 border-t border-app-border bg-app-surface-2 flex items-center justify-between text-[11px] font-mono text-app-subtle shrink-0">
               <div class="flex items-center gap-3">
-                <span><kbd class="px-1.5 py-0.5 rounded bg-[#131519] border border-[#23262E]">↑↓</kbd> navigate</span>
-                <span><kbd class="px-1.5 py-0.5 rounded bg-[#131519] border border-[#23262E]">↵</kbd> select</span>
-                <span><kbd class="px-1.5 py-0.5 rounded bg-[#131519] border border-[#23262E]">esc</kbd> dismiss</span>
+                <span><kbd class="px-1.5 py-0.5 rounded bg-app-surface border border-app-border">↑↓</kbd> navigate</span>
+                <span><kbd class="px-1.5 py-0.5 rounded bg-app-surface border border-app-border">↵</kbd> select</span>
+                <span><kbd class="px-1.5 py-0.5 rounded bg-app-surface border border-app-border">esc</kbd> dismiss</span>
               </div>
               <span class="hidden sm:inline-block uppercase tracking-wider">Zero telemetry phoning home</span>
             </div>

@@ -1,4 +1,5 @@
 ---
+import '../../styles/global.css';
 import { listToolsSummary, getDraftTools } from '../../lib/admin/tools-service';
 import { listRecentJobs } from '../../lib/admin/jobs';
 import { getRecentAuditEntries } from '../../lib/admin/audit';
@@ -22,7 +23,7 @@ const recentAudit = getRecentAuditEntries(10);
 ---
 
 <!doctype html>
-<html lang="en" class="dark h-full bg-[#0A0B0E] text-[#E6E8EB]">
+<html lang="en" data-theme="cosmic-void" class="dark h-full bg-app-bg text-app-text">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -32,12 +33,12 @@ const recentAudit = getRecentAuditEntries(10);
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
   </head>
-  <body class="min-h-screen bg-[#0A0B0E] text-[#E6E8EB] font-sans antialiased flex flex-col">
+  <body class="min-h-screen bg-app-bg text-app-text font-sans antialiased flex flex-col">
     <!-- Top Control Bar -->
-    <header class="border-b border-[#23262E] bg-[#131519] px-6 py-3.5 sticky top-0 z-50">
+    <header class="border-b border-app-border bg-app-surface px-6 py-3.5 sticky top-0 z-50">
       <div class="max-w-[1440px] mx-auto flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <div class="flex items-center gap-2 px-2.5 py-1 rounded bg-black/40 border border-[#23262E]">
+          <div class="flex items-center gap-2 px-2.5 py-1 rounded bg-black/40 border border-app-border">
             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             <span class="font-mono text-xs font-bold tracking-wider text-emerald-400">SOC CONTROL PLANE</span>
           </div>
@@ -67,7 +68,7 @@ const recentAudit = getRecentAuditEntries(10);
       <!-- Section 1: Instrument Status Metrics -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- Pipeline Freshness -->
-        <div class="p-4 rounded border border-[#23262E] bg-[#131519]">
+        <div class="p-4 rounded border border-app-border bg-app-surface">
           <div class="flex items-center justify-between mb-2">
             <span class="font-mono text-xs text-zinc-400 uppercase tracking-wider">PIPELINE SWEEP</span>
             <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
@@ -79,7 +80,7 @@ const recentAudit = getRecentAuditEntries(10);
         </div>
 
         <!-- Monitored Tools -->
-        <div class="p-4 rounded border border-[#23262E] bg-[#131519]">
+        <div class="p-4 rounded border border-app-border bg-app-surface">
           <div class="flex items-center justify-between mb-2">
             <span class="font-mono text-xs text-zinc-400 uppercase tracking-wider">CATALOG ENROLLED</span>
             <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono bg-blue-500/10 text-blue-400 border border-blue-500/20">
@@ -91,7 +92,7 @@ const recentAudit = getRecentAuditEntries(10);
         </div>
 
         <!-- Pending Review Drafts -->
-        <div class="p-4 rounded border border-[#23262E] bg-[#131519]">
+        <div class="p-4 rounded border border-app-border bg-app-surface">
           <div class="flex items-center justify-between mb-2">
             <span class="font-mono text-xs text-zinc-400 uppercase tracking-wider">AI REVIEW QUEUE</span>
             <span class={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono ${drafts.length > 0 ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-zinc-800 text-zinc-400'}`}>
@@ -103,7 +104,7 @@ const recentAudit = getRecentAuditEntries(10);
         </div>
 
         <!-- API Budgets -->
-        <div class="p-4 rounded border border-[#23262E] bg-[#131519]">
+        <div class="p-4 rounded border border-app-border bg-app-surface">
           <div class="flex items-center justify-between mb-2">
             <span class="font-mono text-xs text-zinc-400 uppercase tracking-wider">UPSTREAM BUDGETS</span>
             <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
@@ -116,7 +117,7 @@ const recentAudit = getRecentAuditEntries(10);
       </div>
 
       <!-- Section 2: Pipeline Operations & Actions Bar -->
-      <div class="border border-[#23262E] bg-[#131519] p-5 rounded">
+      <div class="border border-app-border bg-app-surface p-5 rounded">
         <div class="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 class="text-sm font-bold font-mono uppercase tracking-wider text-white mb-1">Pipeline Direct Action Controls</h2>
@@ -131,7 +132,7 @@ const recentAudit = getRecentAuditEntries(10);
                 type="text"
                 name="repo"
                 placeholder="slug or 'all'"
-                class="px-2.5 py-1.5 rounded bg-black/40 border border-[#23262E] text-xs font-mono text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-blue-500 w-32"
+                class="px-2.5 py-1.5 rounded bg-black/40 border border-app-border text-xs font-mono text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-blue-500 w-32"
               />
               <button
                 type="submit"
@@ -158,8 +159,8 @@ const recentAudit = getRecentAuditEntries(10);
       <!-- Section 3: Two Columns Layout (Review Queue & Flagged Items) -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- AI Review Queue -->
-        <div class="border border-[#23262E] bg-[#131519] rounded flex flex-col">
-          <div class="border-b border-[#23262E] px-4 py-3 flex items-center justify-between">
+        <div class="border border-app-border bg-app-surface rounded flex flex-col">
+          <div class="border-b border-app-border px-4 py-3 flex items-center justify-between">
             <div class="flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-amber-400"></span>
               <h3 class="font-mono text-xs font-bold uppercase tracking-wider text-white">AI Report Review Queue</h3>
@@ -175,7 +176,7 @@ const recentAudit = getRecentAuditEntries(10);
             ) : (
               <div class="space-y-3">
                 {drafts.map((d) => (
-                  <div class="p-3.5 rounded bg-black/40 border border-[#23262E] flex items-start justify-between gap-4">
+                  <div class="p-3.5 rounded bg-black/40 border border-app-border flex items-start justify-between gap-4">
                     <div class="space-y-1">
                       <div class="flex items-center gap-2">
                         <span class="font-mono text-sm font-bold text-white">{d.name}</span>
@@ -205,8 +206,8 @@ const recentAudit = getRecentAuditEntries(10);
         </div>
 
         <!-- Flagged Watchlist -->
-        <div class="border border-[#23262E] bg-[#131519] rounded flex flex-col">
-          <div class="border-b border-[#23262E] px-4 py-3 flex items-center justify-between">
+        <div class="border border-app-border bg-app-surface rounded flex flex-col">
+          <div class="border-b border-app-border px-4 py-3 flex items-center justify-between">
             <div class="flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-red-400"></span>
               <h3 class="font-mono text-xs font-bold uppercase tracking-wider text-white">Security Flagged Watchlist</h3>
@@ -217,7 +218,7 @@ const recentAudit = getRecentAuditEntries(10);
           <div class="p-4 flex-1">
             <div class="space-y-2.5 max-h-[320px] overflow-y-auto pr-1">
               {flaggedTools.map((t) => (
-                <div class="p-3 rounded bg-black/40 border border-[#23262E] flex items-center justify-between">
+                <div class="p-3 rounded bg-black/40 border border-app-border flex items-center justify-between">
                   <div class="flex items-center gap-3">
                     <span class={`font-mono text-xs font-bold px-2 py-0.5 rounded ${t.verdict === 'risky' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}`}>
                       {t.safety_score.toFixed(1)}
@@ -245,8 +246,8 @@ const recentAudit = getRecentAuditEntries(10);
       <!-- Section 4: Recent Pipeline Jobs & Audit Log Tail -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Recent Jobs -->
-        <div class="border border-[#23262E] bg-[#131519] rounded">
-          <div class="border-b border-[#23262E] px-4 py-3 flex items-center justify-between">
+        <div class="border border-app-border bg-app-surface rounded">
+          <div class="border-b border-app-border px-4 py-3 flex items-center justify-between">
             <h3 class="font-mono text-xs font-bold uppercase tracking-wider text-white">Pipeline Execution Jobs</h3>
             <span class="font-mono text-[11px] text-zinc-500">Live Async Queue</span>
           </div>
@@ -256,7 +257,7 @@ const recentAudit = getRecentAuditEntries(10);
             ) : (
               <div class="space-y-2">
                 {recentJobs.map((j) => (
-                  <div class="p-2.5 rounded bg-black/40 border border-[#23262E] flex items-center justify-between text-xs font-mono">
+                  <div class="p-2.5 rounded bg-black/40 border border-app-border flex items-center justify-between text-xs font-mono">
                     <div class="flex items-center gap-2">
                       <span class={`px-1.5 py-0.5 rounded text-[10px] ${j.status === 'completed' ? 'bg-emerald-500/10 text-emerald-400' : j.status === 'running' ? 'bg-blue-500/10 text-blue-400 animate-pulse' : 'bg-zinc-800 text-zinc-400'}`}>
                         {j.status.toUpperCase()}
@@ -273,8 +274,8 @@ const recentAudit = getRecentAuditEntries(10);
         </div>
 
         <!-- Append-Only Audit Log Tail -->
-        <div class="border border-[#23262E] bg-[#131519] rounded">
-          <div class="border-b border-[#23262E] px-4 py-3 flex items-center justify-between">
+        <div class="border border-app-border bg-app-surface rounded">
+          <div class="border-b border-app-border px-4 py-3 flex items-center justify-between">
             <h3 class="font-mono text-xs font-bold uppercase tracking-wider text-white">Append-Only Audit Log</h3>
             <span class="font-mono text-[11px] text-zinc-500">data/audit.jsonl</span>
           </div>
@@ -284,7 +285,7 @@ const recentAudit = getRecentAuditEntries(10);
             ) : (
               <div class="space-y-2 max-h-[260px] overflow-y-auto pr-1">
                 {recentAudit.map((a) => (
-                  <div class="p-2.5 rounded bg-black/40 border border-[#23262E] flex items-center justify-between text-xs font-mono">
+                  <div class="p-2.5 rounded bg-black/40 border border-app-border flex items-center justify-between text-xs font-mono">
                     <div class="flex items-center gap-2">
                       <span class={`px-1.5 py-0.5 rounded text-[10px] font-bold ${a.principal === 'agent' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : a.principal === 'owner' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'}`}>
                         [{a.principal.toUpperCase()}]

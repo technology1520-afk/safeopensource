@@ -37,7 +37,7 @@ function getDecidingFactor(t: ToolData): string {
 }
 ---
 
-<section class={`my-14 rounded-2xl border border-app-border bg-[#0a0c10] p-6 sm:p-8 scroll-mt-24 ${className}`} id="top-repos">
+<section class={`my-14 rounded-2xl border border-app-border bg-app-surface p-6 sm:p-8 scroll-mt-24 ${className}`} id="top-repos">
   <!-- Section Title & Real URL Tabs -->
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-app-border mb-6">
     <div>
@@ -54,13 +54,13 @@ function getDecidingFactor(t: ToolData): string {
     </div>
 
     <!-- Sort Tabs as REAL URL Links (SEO Requirement) -->
-    <nav class="flex items-center gap-1.5 p-1 rounded-xl bg-[#131519] border border-app-border font-mono text-xs" aria-label="Ranking tabs">
+    <nav class="flex items-center gap-1.5 p-1 rounded-xl bg-app-surface-2 border border-app-border font-mono text-xs" aria-label="Ranking tabs">
       <a
         href="/#top-repos"
         class={`px-3 py-1.5 rounded-lg transition-colors ${
           activeSort === 'score'
             ? 'bg-blue-600 text-white font-medium shadow-xs'
-            : 'text-app-muted hover:text-white hover:bg-app-surface'
+            : 'text-app-muted hover:text-app-text hover:bg-app-surface'
         }`}
       >
         Overall Score
@@ -70,7 +70,7 @@ function getDecidingFactor(t: ToolData): string {
         class={`px-3 py-1.5 rounded-lg transition-colors ${
           activeSort === 'stars'
             ? 'bg-blue-600 text-white font-medium shadow-xs'
-            : 'text-app-muted hover:text-white hover:bg-app-surface'
+            : 'text-app-muted hover:text-app-text hover:bg-app-surface'
         }`}
       >
         Most Starred
@@ -80,7 +80,7 @@ function getDecidingFactor(t: ToolData): string {
         class={`px-3 py-1.5 rounded-lg transition-colors ${
           activeSort === 'beginners'
             ? 'bg-blue-600 text-white font-medium shadow-xs'
-            : 'text-app-muted hover:text-white hover:bg-app-surface'
+            : 'text-app-muted hover:text-app-text hover:bg-app-surface'
         }`}
       >
         Best for Beginners
@@ -92,7 +92,7 @@ function getDecidingFactor(t: ToolData): string {
   <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
     <!-- RANK 1: BENTO LARGE CARD (5 cols) -->
     {rankOne && (
-      <div class="lg:col-span-5 rounded-xl border border-blue-500/40 bg-[#131519] p-6 flex flex-col justify-between shadow-xl relative overflow-hidden group">
+      <div class="lg:col-span-5 rounded-xl border border-blue-500/40 bg-app-surface-2 p-6 flex flex-col justify-between shadow-xl relative overflow-hidden group">
         <div>
           <div class="flex items-center justify-between gap-3 mb-4">
             <span class="font-mono text-4xl sm:text-5xl font-extrabold text-blue-500 tracking-tighter">
@@ -101,7 +101,7 @@ function getDecidingFactor(t: ToolData): string {
             <VerdictBadge verdict={rankOne.verdict} size="sm" />
           </div>
 
-          <h3 class="text-xl sm:text-2xl font-extrabold text-white group-hover:text-blue-400 transition-colors mb-2">
+          <h3 class="text-xl sm:text-2xl font-extrabold text-app-text group-hover:text-blue-400 transition-colors mb-2">
             <a href={`/tools/${rankOne.slug}`} class="hover:underline">
               {rankOne.name}
             </a>
@@ -115,11 +115,11 @@ function getDecidingFactor(t: ToolData): string {
           </p>
 
           <!-- Why is this #1 Deciding Sub-Score (Tinted, no extra border) -->
-          <div class="p-3.5 rounded-lg bg-[#0A0B0E] mb-6 font-mono text-xs space-y-1">
+          <div class="p-3.5 rounded-lg bg-app-bg mb-6 font-mono text-xs space-y-1">
             <span class="text-micro text-blue-400 block">DECIDING BENCHMARK</span>
-            <div class="font-bold text-white flex items-center justify-between">
+            <div class="font-bold text-app-text flex items-center justify-between">
               <span class="text-app-muted font-normal">{getDecidingFactor(rankOne)}</span>
-              <span class="text-white font-mono text-sm">{rankOne.safety_score}/100</span>
+              <span class="text-app-text font-mono text-sm">{rankOne.safety_score}/100</span>
             </div>
           </div>
         </div>
@@ -145,7 +145,7 @@ function getDecidingFactor(t: ToolData): string {
         return (
           <a
             href={`/tools/${tool.slug}`}
-            class="group flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border border-app-border bg-[#131519] hover:bg-app-surface-hover hover:border-blue-500/30 transition-all duration-150"
+            class="group flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border border-app-border bg-app-surface-2 hover:bg-app-surface hover:border-blue-500/30 transition-all duration-150"
           >
             <div class="flex items-center gap-4 min-w-0">
               <span class="font-mono text-xl sm:text-2xl font-bold text-app-subtle group-hover:text-blue-400 transition-colors w-10 shrink-0">

@@ -9,19 +9,12 @@ interface Props {
 const { score, size = 'md', animate = true, class: className = '' } = Astro.props;
 
 // Determine status color based on thresholds
-const colorClass =
+const strokeColorVar =
   score >= 80
-    ? 'text-emerald-500 stroke-emerald-500'
+    ? 'var(--healthy)'
     : score >= 50
-      ? 'text-amber-500 stroke-amber-500'
-      : 'text-rose-500 stroke-rose-500';
-
-const bgStrokeColor =
-  score >= 80
-    ? 'stroke-emerald-950/60'
-    : score >= 50
-      ? 'stroke-amber-950/60'
-      : 'stroke-rose-950/60';
+      ? 'var(--caution)'
+      : 'var(--risky)';
 
 const dimensions = {
   sm: { size: 64, strokeWidth: 5, fontSize: 'text-base', labelSize: 'text-[9px]' },
@@ -57,7 +50,8 @@ const dashoffset = circumference - (score / 100) * circumference;
       cx={dimensions.size / 2}
       cy={dimensions.size / 2}
       r={radius}
-      class={`fill-none ${bgStrokeColor}`}
+      class="fill-none"
+      stroke="var(--surface-2)"
       stroke-width={dimensions.strokeWidth}
     />
     <!-- Foreground score arc -->
@@ -65,7 +59,8 @@ const dashoffset = circumference - (score / 100) * circumference;
       cx={dimensions.size / 2}
       cy={dimensions.size / 2}
       r={radius}
-      class={`score-arc fill-none ${colorClass} transition-[stroke-dashoffset] duration-700 ease-out`}
+      class="score-arc fill-none transition-[stroke-dashoffset] duration-700 ease-out"
+      stroke={strokeColorVar}
       stroke-width={dimensions.strokeWidth}
       stroke-dasharray={circumference}
       stroke-dashoffset={animate ? circumference : dashoffset}

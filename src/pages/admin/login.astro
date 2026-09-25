@@ -1,4 +1,5 @@
 ---
+import '../../styles/global.css';
 import { verifyOwnerPassword, createSession, recordAuthFailure, isRateLimited, getClientIp, resetAuthFailures } from '../../lib/admin/auth';
 import { logAudit } from '../../lib/admin/audit';
 
@@ -45,7 +46,7 @@ if (Astro.request.method === 'POST') {
 ---
 
 <!doctype html>
-<html lang="en" class="dark h-full bg-[#0A0B0E] text-[#E6E8EB]">
+<html lang="en" data-theme="cosmic-void" class="dark h-full bg-app-bg text-app-text">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -55,10 +56,10 @@ if (Astro.request.method === 'POST') {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
   </head>
-  <body class="h-full flex items-center justify-center p-4 font-sans bg-[#0A0B0E] text-[#E6E8EB] antialiased">
+  <body class="h-full flex items-center justify-center p-4 font-sans bg-app-bg text-app-text antialiased">
     <div class="w-full max-w-md">
       <!-- Terminal Header -->
-      <div class="border border-[#23262E] bg-[#131519] rounded-t-lg px-4 py-3 flex items-center justify-between">
+      <div class="border border-app-border bg-app-surface rounded-t-lg px-4 py-3 flex items-center justify-between">
         <div class="flex items-center gap-2">
           <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
           <span class="font-mono text-xs text-zinc-400 font-semibold tracking-wider uppercase">SOC // CONTROL PLANE</span>
@@ -67,7 +68,7 @@ if (Astro.request.method === 'POST') {
       </div>
 
       <!-- Main Login Container -->
-      <div class="border-x border-b border-[#23262E] bg-[#0E1015] p-6 rounded-b-lg shadow-2xl">
+      <div class="border-x border-b border-app-border bg-app-surface-2 p-6 rounded-b-lg shadow-2xl">
         <div class="mb-6 text-center">
           <h1 class="text-xl font-bold tracking-tight text-white mb-1">Human Operator Gateway</h1>
           <p class="text-xs text-zinc-400 font-mono">Argon2id Session Token · Dual-Gate Protected</p>
@@ -96,7 +97,7 @@ if (Astro.request.method === 'POST') {
               required
               autocomplete="username"
               placeholder="owner@safeopensource.org"
-              class="w-full px-3.5 py-2.5 rounded bg-[#131519] border border-[#23262E] text-zinc-200 text-sm font-mono placeholder:text-zinc-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+              class="w-full px-3.5 py-2.5 rounded bg-app-surface border border-app-border text-zinc-200 text-sm font-mono placeholder:text-zinc-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
             />
           </div>
 
@@ -111,7 +112,7 @@ if (Astro.request.method === 'POST') {
               required
               autocomplete="current-password"
               placeholder="••••••••••••••••"
-              class="w-full px-3.5 py-2.5 rounded bg-[#131519] border border-[#23262E] text-zinc-200 text-sm font-mono placeholder:text-zinc-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+              class="w-full px-3.5 py-2.5 rounded bg-app-surface border border-app-border text-zinc-200 text-sm font-mono placeholder:text-zinc-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
             />
           </div>
 
@@ -127,7 +128,7 @@ if (Astro.request.method === 'POST') {
           </button>
         </form>
 
-        <div class="mt-6 pt-4 border-t border-[#23262E]/60 text-center">
+        <div class="mt-6 pt-4 border-t border-app-border/60 text-center">
           <p class="font-mono text-[10px] text-zinc-600 leading-relaxed">
             All attempts recorded in append-only audit trail. IP rate limiting strictly enforced at 5 failures/min.
           </p>

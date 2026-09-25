@@ -13,12 +13,12 @@ const recentScans = getRecentPublicScans(5);
 ---
 
 <div class={`w-full max-w-3xl mx-auto scroll-mt-24 ${className}`} id="telemetry-status-container">
-  <div class="rounded-xl border border-app-border bg-[#0e1014] shadow-2xl overflow-hidden">
+  <div class="rounded-xl border border-app-border bg-app-surface shadow-2xl overflow-hidden">
     <!-- Window Bar -->
-    <div class="flex items-center justify-between px-4 py-2.5 bg-[#131519] border-b border-app-border font-mono text-[11px]">
+    <div class="flex items-center justify-between px-4 py-2.5 bg-app-surface-2 border-b border-app-border font-mono text-[11px]">
       <div class="flex items-center gap-2">
         <span class="w-2.5 h-2.5 rounded-full bg-emerald-500/80 inline-block"></span>
-        <span class="text-app-subtle tracking-wider uppercase font-bold text-white">
+        <span class="text-app-subtle tracking-wider uppercase font-bold text-app-text">
           CONTINUOUS TELEMETRY MONITOR
         </span>
       </div>
@@ -26,7 +26,7 @@ const recentScans = getRecentPublicScans(5);
       <div class="flex items-center gap-2">
         <a
           href="/scan"
-          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white border border-blue-500/30 text-[10px] font-mono font-semibold transition-colors"
+          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-blue-600/20 text-blue-400 hover:bg-blue-600 border border-blue-500/30 text-[10px] font-mono font-semibold transition-colors"
         >
           <span>+ Scan Any Repo</span>
         </a>
@@ -34,7 +34,7 @@ const recentScans = getRecentPublicScans(5);
     </div>
 
     <!-- Telemetry List -->
-    <div class="p-4 sm:p-5 font-mono text-xs text-app-text space-y-2 bg-[#0A0B0E]/95">
+    <div class="p-4 sm:p-5 font-mono text-xs text-app-text space-y-2 bg-app-bg/80">
       <div class="text-[11px] text-app-subtle mb-3 flex items-center justify-between border-b border-app-border/40 pb-2">
         <span>RECENT TELEMETRY VERIFICATIONS</span>
         <span class="text-emerald-400 font-bold">100% CORROBORATED</span>
@@ -44,7 +44,7 @@ const recentScans = getRecentPublicScans(5);
         {recentScans.map((item) => (
           <a
             href={`/tools/${item.slug}`}
-            class="flex items-center justify-between gap-2 py-1.5 px-2.5 rounded hover:bg-app-surface/60 transition-colors group"
+            class="flex items-center justify-between gap-2 py-1.5 px-2.5 rounded hover:bg-app-surface-2 transition-colors group"
           >
             <div class="flex items-center gap-2 min-w-0">
               <span class="text-app-subtle group-hover:text-blue-400">▸</span>
@@ -54,7 +54,7 @@ const recentScans = getRecentPublicScans(5);
             </div>
 
             <div class="flex items-center gap-3 shrink-0">
-              <span class="font-bold text-white">{Math.round(item.safety_score)}</span>
+              <span class="font-bold text-app-text">{Math.round(item.safety_score)}</span>
               <VerdictBadge verdict={item.verdict} size="sm" />
               <span class="text-app-subtle text-[10px] hidden md:inline-block font-mono">
                 [{item.license_spdx}]
@@ -66,7 +66,7 @@ const recentScans = getRecentPublicScans(5);
     </div>
 
     <!-- Console Footer Stats Strip -->
-    <div class="px-4 py-2.5 bg-[#111317] border-t border-app-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 font-mono text-[11px] text-app-muted">
+    <div class="px-4 py-2.5 bg-app-surface-2 border-t border-app-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 font-mono text-[11px] text-app-muted">
       <div class="flex items-center gap-3">
         <span class="flex items-center gap-1.5 text-app-text font-medium">
           <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>

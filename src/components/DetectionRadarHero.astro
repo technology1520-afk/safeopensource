@@ -12,7 +12,7 @@ const defaultBlip = blips.find((b) => b.isFlagged) || blips[0];
 ---
 
 <div class={`w-full max-w-4xl mx-auto ${className}`} id="detection-radar-scope">
-  <div class="rounded-xl border border-app-border bg-[#0a0c10] shadow-2xl p-6 sm:p-8 relative">
+  <div class="rounded-xl border border-app-border bg-app-surface p-6 sm:p-8 relative">
     
     <!-- Top Telemetry Header (Instrument Bar, zero mockup flavor text) -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-app-border text-xs font-mono">
@@ -23,9 +23,9 @@ const defaultBlip = blips.find((b) => b.isFlagged) || blips[0];
         </span>
       </div>
       <div class="flex items-center gap-3 text-app-subtle text-[11px]">
-        <span>WATCHLIST: <strong class="text-white">{telemetry.totalWatched} REPOS</strong></span>
+        <span>WATCHLIST: <strong class="text-app-text">{telemetry.totalWatched} REPOS</strong></span>
         <span>·</span>
-        <span>SECTOR DOMAINS: <strong class="text-white">14 TAXONOMIES</strong></span>
+        <span>SECTOR DOMAINS: <strong class="text-app-text">14 TAXONOMIES</strong></span>
         <span>·</span>
         <span>LAST SWEEP: <strong class="text-emerald-400">{telemetry.latestSweepTimestamp}</strong></span>
       </div>
@@ -37,10 +37,16 @@ const defaultBlip = blips.find((b) => b.isFlagged) || blips[0];
       <!-- RADAR SCOPE SCREEN (7 cols) -->
       <div class="lg:col-span-7 flex flex-col items-center">
         <div class="relative w-[320px] h-[320px] sm:w-[360px] sm:h-[360px] flex items-center justify-center select-none">
+          <!-- Static Conic Sweep Trail (Violet 25%->0% in Lavender Lab / Starlight Lavender in Cosmic Void) -->
+          <div
+            class="radar-sky-trail absolute w-[88%] h-[88%] rounded-full pointer-events-none"
+            aria-hidden="true"
+          ></div>
+
           <!-- Base SVG Scope -->
           <svg
             viewBox="0 0 360 360"
-            class="w-full h-full"
+            class="w-full h-full relative z-10"
             aria-label="Radar Scope Display"
           >
             <defs>
@@ -50,67 +56,89 @@ const defaultBlip = blips.find((b) => b.isFlagged) || blips[0];
               </clipPath>
             </defs>
 
+            <!-- Thin Starfield Bezel Ring (Observatory celestial degree ring) -->
+            <circle
+              cx="180"
+              cy="180"
+              r="165"
+              fill="none"
+              stroke="var(--radar-bezel-ring)"
+              stroke-width="1.5"
+              stroke-dasharray="1 7"
+              class="radar-starfield-bezel"
+            />
+
             <!-- Outer Bezel Ring -->
-            <circle cx="180" cy="180" r="160" fill="#08090C" stroke="#23262E" stroke-width="2" />
+            <circle cx="180" cy="180" r="160" fill="var(--radar-bg)" fill-opacity="0.82" stroke="var(--radar-stroke)" stroke-width="2" />
+
+            <!-- Inner Starfield Ring -->
+            <circle
+              cx="180"
+              cy="180"
+              r="154"
+              fill="none"
+              stroke="var(--radar-bezel-ring)"
+              stroke-width="1"
+              stroke-dasharray="0.8 11"
+            />
 
             <!-- Range Rings (Clipped at Bezel) -->
             <g clip-path="url(#bezel-clip)">
-              <circle cx="180" cy="180" r="120" fill="none" stroke="#1c1f26" stroke-width="1" stroke-dasharray="3 3" />
-              <circle cx="180" cy="180" r="80" fill="none" stroke="#1c1f26" stroke-width="1" stroke-dasharray="2 2" />
-              <circle cx="180" cy="180" r="40" fill="none" stroke="#1c1f26" stroke-width="1" />
+              <circle cx="180" cy="180" r="120" fill="var(--radar-sector-fill)" stroke="var(--radar-stroke)" stroke-width="1" stroke-dasharray="3 3" />
+              <circle cx="180" cy="180" r="80" fill="none" stroke="var(--radar-stroke)" stroke-width="1" stroke-dasharray="2 2" />
+              <circle cx="180" cy="180" r="40" fill="var(--radar-sector-fill)" stroke="var(--radar-stroke)" stroke-width="1" />
 
               <!-- Crosshairs strictly trimmed at the 160 radius bezel -->
-              <line x1="180" y1="20" x2="180" y2="340" stroke="#1f232b" stroke-width="1.5" />
-              <line x1="20" y1="180" x2="340" y2="180" stroke="#1f232b" stroke-width="1.5" />
+              <line x1="180" y1="20" x2="180" y2="340" stroke="var(--radar-sector-line)" stroke-width="1.5" />
+              <line x1="20" y1="180" x2="340" y2="180" stroke="var(--radar-sector-line)" stroke-width="1.5" />
 
               <!-- 45-degree angle guide dashes -->
-              <line x1="67" y1="67" x2="293" y2="293" stroke="#16181f" stroke-width="1" stroke-dasharray="2 4" />
-              <line x1="67" y1="293" x2="293" y2="67" stroke="#16181f" stroke-width="1" stroke-dasharray="2 4" />
+              <line x1="67" y1="67" x2="293" y2="293" stroke="var(--radar-sector-line)" stroke-width="1" stroke-dasharray="2 4" />
+              <line x1="67" y1="293" x2="293" y2="67" stroke="var(--radar-sector-line)" stroke-width="1" stroke-dasharray="2 4" />
             </g>
 
             <!-- Cardinal Bearing Ticks & Labels -->
             <!-- 000° (N) -->
-            <line x1="180" y1="16" x2="180" y2="24" stroke="#3B82F6" stroke-width="2" />
-            <text x="180" y="12" fill="#6B7280" font-family="monospace" font-size="9" text-anchor="middle" font-weight="bold">000°</text>
+            <line x1="180" y1="16" x2="180" y2="24" stroke="var(--accent)" stroke-width="2" />
+            <text x="180" y="12" fill="var(--text-2)" font-family="monospace" font-size="9" text-anchor="middle" font-weight="bold">000°</text>
 
             <!-- 090° (E) -->
-            <line x1="336" y1="180" x2="344" y2="180" stroke="#3B82F6" stroke-width="2" />
-            <text x="354" y="183" fill="#6B7280" font-family="monospace" font-size="9" text-anchor="start" font-weight="bold">090°</text>
+            <line x1="336" y1="180" x2="344" y2="180" stroke="var(--accent)" stroke-width="2" />
+            <text x="354" y="183" fill="var(--text-2)" font-family="monospace" font-size="9" text-anchor="start" font-weight="bold">090°</text>
 
             <!-- 180° (S) -->
-            <line x1="180" y1="336" x2="180" y2="344" stroke="#3B82F6" stroke-width="2" />
-            <text x="180" y="356" fill="#6B7280" font-family="monospace" font-size="9" text-anchor="middle" font-weight="bold">180°</text>
+            <line x1="180" y1="336" x2="180" y2="344" stroke="var(--accent)" stroke-width="2" />
+            <text x="180" y="356" fill="var(--text-2)" font-family="monospace" font-size="9" text-anchor="middle" font-weight="bold">180°</text>
 
             <!-- 270° (W) -->
-            <line x1="16" y1="180" x2="24" y2="180" stroke="#3B82F6" stroke-width="2" />
-            <text x="6" y="183" fill="#6B7280" font-family="monospace" font-size="9" text-anchor="end" font-weight="bold">270°</text>
+            <line x1="16" y1="180" x2="24" y2="180" stroke="var(--accent)" stroke-width="2" />
+            <text x="6" y="183" fill="var(--text-2)" font-family="monospace" font-size="9" text-anchor="end" font-weight="bold">270°</text>
 
             <!-- Range-Ring Distance Labels -->
-            <text x="184" y="145" fill="#3B4252" font-family="monospace" font-size="7">RNG 0.25</text>
-            <text x="184" y="105" fill="#3B4252" font-family="monospace" font-size="7">RNG 0.50</text>
-            <text x="184" y="65" fill="#3B4252" font-family="monospace" font-size="7">RNG 0.75</text>
-            <text x="184" y="27" fill="#3B4252" font-family="monospace" font-size="7">RNG 1.00</text>
+            <text x="184" y="145" fill="var(--text-2)" font-family="monospace" font-size="7">RNG 0.25</text>
+            <text x="184" y="105" fill="var(--text-2)" font-family="monospace" font-size="7">RNG 0.50</text>
+            <text x="184" y="65" fill="var(--text-2)" font-family="monospace" font-size="7">RNG 0.75</text>
+            <text x="184" y="27" fill="var(--text-2)" font-family="monospace" font-size="7">RNG 1.00</text>
 
-            <!-- Rotating Leading-Edge Line (Synchronized with conic overlay) -->
+            <!-- Leading-Edge Azimuth Vector -->
             <g class="radar-leading-edge origin-[180px_180px]">
-              <line x1="180" y1="180" x2="180" y2="20" stroke="#60A5FA" stroke-width="1.5" opacity="0.9" />
+              <line x1="180" y1="180" x2="180" y2="20" stroke="var(--accent)" stroke-width="1.5" opacity="0.85" />
             </g>
 
             <!-- Center Origin Hub -->
-            <circle cx="180" cy="180" r="4" fill="#3B82F6" />
-            <circle cx="180" cy="180" r="1.5" fill="#FFFFFF" />
+            <circle cx="180" cy="180" r="4" fill="var(--accent)" />
+            <circle cx="180" cy="180" r="1.5" fill="var(--surface)" />
 
-            <!-- Dynamically Plotted Repos with Phosphor Persistence -->
+            <!-- Dynamically Plotted Repos (Glow like celestial observations in Cosmic Void) -->
             {blips.map((t) => {
               const rad = ((t.angle - 90) * Math.PI) / 180;
               const bx = Math.round(180 + t.radius * Math.cos(rad));
               const by = Math.round(180 + t.radius * Math.sin(rad));
-              // Delay calculation for 4-second clockwise sweep (0 deg at top)
-              const decayDelay = ((t.angle / 360) * 4).toFixed(2);
 
               return (
                 <g
                   class="radar-blip-target cursor-pointer transition-transform hover:scale-125"
+                  style={`color: ${t.color};`}
                   data-name={t.name}
                   data-slug={t.slug}
                   data-repo={t.repo}
@@ -139,28 +167,27 @@ const defaultBlip = blips.find((b) => b.isFlagged) || blips[0];
                     class="blip-reticle opacity-0 transition-opacity"
                   />
 
-                  <!-- Phosphor Decay Circle -->
+                  <!-- Observation Blip Circle (Glows like star in Cosmic Void) -->
                   <circle
                     cx={bx}
                     cy={by}
                     r="4.5"
                     fill={t.color}
-                    stroke="#0A0B0E"
+                    stroke="var(--bg)"
                     stroke-width="1.5"
-                    class="blip-dot"
-                    style={`animation: phosphor-decay 4s linear infinite; animation-delay: -${decayDelay}s;`}
+                    class={`blip-dot ${t.isFlagged ? 'blip-flagged-pulse' : ''}`}
                   />
 
-                  <!-- Flagged Opacity Pulse (Strictly opacity-only, no geometry shifts) -->
+                  <!-- Flagged Opacity Pulse Ring (Strictly opacity-only) -->
                   {t.isFlagged && (
                     <circle
                       cx={bx}
                       cy={by}
-                      r="8"
+                      r="8.5"
                       fill="none"
-                      stroke={t.color}
-                      stroke-width="1"
-                      class="animate-pulse"
+                      stroke="var(--risky)"
+                      stroke-width="1.2"
+                      class="blip-flagged-pulse"
                     />
                   )}
 
@@ -182,7 +209,7 @@ const defaultBlip = blips.find((b) => b.isFlagged) || blips[0];
           </svg>
         </div>
 
-        <!-- Scope Legend (Mandatory for real instrumentation) -->
+        <!-- Scope Legend -->
         <div class="flex items-center justify-center gap-6 mt-3 font-mono text-[11px] text-app-subtle">
           <div class="flex items-center gap-1.5">
             <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
@@ -201,7 +228,7 @@ const defaultBlip = blips.find((b) => b.isFlagged) || blips[0];
 
       <!-- SIDE TELEMETRY & TARGET INSPECTION PANEL (5 cols) -->
       <div class="lg:col-span-5 space-y-4 font-mono">
-        <div class="p-5 rounded-xl bg-[#131519] border border-app-border space-y-4">
+        <div class="p-5 rounded-xl bg-app-surface-2 border border-app-border space-y-4">
           <div class="flex items-center justify-between border-b border-app-border pb-3">
             <span class="text-micro text-blue-400 font-bold">TARGET TELEMETRY INSPECTOR</span>
             <span class="text-[10px] text-app-subtle uppercase" id="inspector-coords">{defaultBlip.bearing} // {defaultBlip.rangeVal}</span>
@@ -211,27 +238,27 @@ const defaultBlip = blips.find((b) => b.isFlagged) || blips[0];
           <div>
             <div class="flex items-start justify-between gap-3 mb-1">
               <div>
-                <h4 class="text-base font-bold text-white font-sans" id="inspector-name">{defaultBlip.name}</h4>
+                <h4 class="text-base font-bold text-app-text font-sans" id="inspector-name">{defaultBlip.name}</h4>
                 <span class="text-xs text-app-subtle block" id="inspector-repo">{defaultBlip.repo}</span>
               </div>
               <div class="text-right">
-                <span class="text-xl font-extrabold text-white" id="inspector-score">{defaultBlip.score}</span>
+                <span class="text-xl font-extrabold text-app-text" id="inspector-score">{defaultBlip.score}</span>
                 <span class="text-[10px] text-app-subtle block">/ 100</span>
               </div>
             </div>
             <div class="flex items-center gap-2 mt-2">
               <span class="text-[10px] px-2 py-0.5 rounded bg-app-bg border border-app-border text-app-text uppercase" id="inspector-category">{defaultBlip.category}</span>
-              <span class="text-[10px] px-2 py-0.5 rounded uppercase font-bold text-rose-400 bg-rose-950/40 border border-rose-500/30" id="inspector-verdict">{defaultBlip.verdict.toUpperCase()}</span>
+              <span class="text-[10px] px-2 py-0.5 rounded uppercase font-bold verdict-badge-risky border" id="inspector-verdict">{defaultBlip.verdict.toUpperCase()}</span>
             </div>
           </div>
 
           <!-- Target Scan Metrics -->
           <div class="grid grid-cols-2 gap-2 text-[11px] pt-3 border-t border-app-border text-app-muted">
-            <div class="p-2 rounded bg-[#0A0B0E] border border-app-border/70">
+            <div class="p-2 rounded bg-app-bg border border-app-border/70">
               <span class="text-[9px] text-app-subtle block">LAST AUDIT PASS</span>
               <span class="text-app-text font-semibold" id="inspector-date">{defaultBlip.lastScanned.split('T')[0]}</span>
             </div>
-            <div class="p-2 rounded bg-[#0A0B0E] border border-app-border/70">
+            <div class="p-2 rounded bg-app-bg border border-app-border/70">
               <span class="text-[9px] text-app-subtle block">SWEEP STATUS</span>
               <span class="text-emerald-400 font-semibold" id="inspector-sweep">PAINTED &middot; NOMINAL</span>
             </div>
@@ -240,7 +267,7 @@ const defaultBlip = blips.find((b) => b.isFlagged) || blips[0];
           <a
             id="inspector-link"
             href={`/tools/${defaultBlip.slug}`}
-            class="w-full py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+            class="w-full py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
           >
             <span>Inspect Full Dossier</span>
             <span>&rarr;</span>
@@ -249,17 +276,17 @@ const defaultBlip = blips.find((b) => b.isFlagged) || blips[0];
 
         <!-- Global Monitor Metrics (Derived strictly from dataset) -->
         <div class="grid grid-cols-3 gap-2 text-center text-xs">
-          <div class="p-3 rounded-lg bg-[#131519] border border-app-border">
+          <div class="p-3 rounded-lg bg-app-surface-2 border border-app-border">
             <span class="text-[10px] text-app-subtle block mb-1">HEALTHY RATIO</span>
             <span class="text-emerald-400 font-extrabold text-sm">{telemetry.nominalPercentage}%</span>
           </div>
-          <div class="p-3 rounded-lg bg-[#131519] border border-app-border">
+          <div class="p-3 rounded-lg bg-app-surface-2 border border-app-border">
             <span class="text-[10px] text-app-subtle block mb-1">FLAGGED</span>
             <span class="text-rose-400 font-extrabold text-sm">{telemetry.flaggedCount} REPOS</span>
           </div>
-          <div class="p-3 rounded-lg bg-[#131519] border border-app-border">
+          <div class="p-3 rounded-lg bg-app-surface-2 border border-app-border">
             <span class="text-[10px] text-app-subtle block mb-1">AVG SCORE</span>
-            <span class="text-white font-extrabold text-sm">{telemetry.averageScore}</span>
+            <span class="text-app-text font-extrabold text-sm">{telemetry.averageScore}</span>
           </div>
         </div>
       </div>
@@ -277,12 +304,6 @@ const defaultBlip = blips.find((b) => b.isFlagged) || blips[0];
     </div>
   </div>
 </div>
-
-<style>
-  .blip-dot {
-    opacity: 0.9;
-  }
-</style>
 
 <script is:inline>
   (function () {
@@ -319,7 +340,7 @@ const defaultBlip = blips.find((b) => b.isFlagged) || blips[0];
         const bearing = blip.getAttribute('data-bearing');
         const range = blip.getAttribute('data-range');
         const scanned = blip.getAttribute('data-scanned');
-        const color = blip.getAttribute('data-color') || '#10B981';
+        const color = blip.getAttribute('data-color') || 'var(--healthy)';
 
         if (inspectorName) inspectorName.textContent = name;
         if (inspectorRepo) inspectorRepo.textContent = repo;
@@ -331,11 +352,11 @@ const defaultBlip = blips.find((b) => b.isFlagged) || blips[0];
         if (inspectorVerdict) {
           inspectorVerdict.textContent = verdict.toUpperCase();
           if (verdict === 'healthy') {
-            inspectorVerdict.className = 'text-[10px] px-2 py-0.5 rounded uppercase font-bold text-emerald-400 bg-emerald-950/40 border border-emerald-500/30';
+            inspectorVerdict.className = 'text-[10px] px-2 py-0.5 rounded uppercase font-bold border verdict-badge-healthy';
           } else if (verdict === 'caution') {
-            inspectorVerdict.className = 'text-[10px] px-2 py-0.5 rounded uppercase font-bold text-amber-400 bg-amber-950/40 border border-amber-500/30';
+            inspectorVerdict.className = 'text-[10px] px-2 py-0.5 rounded uppercase font-bold border verdict-badge-caution';
           } else {
-            inspectorVerdict.className = 'text-[10px] px-2 py-0.5 rounded uppercase font-bold text-rose-400 bg-rose-950/40 border border-rose-500/30';
+            inspectorVerdict.className = 'text-[10px] px-2 py-0.5 rounded uppercase font-bold border verdict-badge-risky';
           }
         }
         if (inspectorDate) inspectorDate.textContent = scanned;

@@ -75,7 +75,7 @@ const incidents: FlaggedIncident[] = [
 ];
 ---
 
-<section class="my-14 rounded-2xl border border-app-border bg-[#0d0f13] p-6 sm:p-8 scroll-mt-24" id="flag-wall">
+<section class="my-14 rounded-2xl border border-app-border bg-app-surface p-6 sm:p-8 scroll-mt-24" id="flag-wall">
   <!-- Section Header -->
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-5 border-b border-app-border">
     <div>
@@ -103,17 +103,14 @@ const incidents: FlaggedIncident[] = [
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
     {incidents.map((item) => (
       <div
-        class={`group relative rounded-xl border border-app-border bg-app-surface p-5 transition-all duration-150 hover:bg-app-surface-hover ${
-          item.verdict === 'risky'
-            ? 'border-l-4 border-l-rose-500'
-            : 'border-l-4 border-l-amber-500'
-        }`}
+        class="group relative rounded-xl border border-app-border border-l-4 border-l-rose-500 bg-app-surface-2 p-5 transition-all duration-150 hover:bg-app-surface-hover"
       >
-        <!-- Card Top: Incident ID, Timestamp, Reason Chip -->
+        <!-- Card Top: Incident ID, Timestamp (in starlight lavender), Reason Chip -->
         <div class="flex items-start justify-between gap-3 mb-3">
           <div>
             <div class="font-mono text-[10px] text-app-subtle tracking-wider uppercase mb-1">
-              BULLETIN #{item.id} • {item.timestamp}
+              <span>BULLETIN #{item.id} • </span>
+              <span class="text-app-accent font-semibold flag-timestamp">{item.timestamp}</span>
             </div>
             <h3 class="font-bold text-base text-app-text group-hover:text-blue-400 transition-colors flex items-center gap-2">
               <a href={`/tools/${item.slug}`} class="hover:underline">

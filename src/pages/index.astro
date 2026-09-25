@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import LiveScanConsole from '../components/LiveScanConsole.astro';
+import DetectionRadarHero from '../components/DetectionRadarHero.astro';
 import FlagWall from '../components/FlagWall.astro';
 import CategoryRadar from '../components/CategoryRadar.astro';
 import BentoRow from '../components/BentoRow.astro';
@@ -54,9 +55,9 @@ const categoriesWithStats = categories.map((cat) => {
 
       <!-- Real-Time On-Demand Scanner Input Box -->
       <form action="/scan" method="GET" class="w-full max-w-xl mx-auto mb-4">
-        <div class="flex flex-col sm:flex-row items-stretch gap-2 p-1.5 rounded-2xl border border-app-border bg-[#0e1014] shadow-xl">
+        <div class="flex flex-col sm:flex-row items-stretch gap-2 p-1.5 rounded-2xl border border-app-border bg-app-surface shadow-xl">
           <div class="relative flex-1">
-            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-500">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-app-subtle">
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               </svg>
@@ -66,7 +67,7 @@ const categoriesWithStats = categories.map((cat) => {
               name="url"
               required
               placeholder="Paste any GitHub repository (e.g. github.com/owner/repo)"
-              class="w-full pl-10 pr-3 py-2.5 rounded-xl bg-black/40 text-white placeholder-zinc-500 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-blue-500 border border-transparent"
+              class="w-full pl-10 pr-3 py-2.5 rounded-xl bg-app-surface-2 text-app-text placeholder:text-app-subtle text-xs font-mono focus:outline-none focus:ring-1 focus:ring-blue-500 border border-transparent"
               autocomplete="off"
               spellcheck="false"
             />
@@ -82,18 +83,23 @@ const categoriesWithStats = categories.map((cat) => {
 
         <div class="flex items-center justify-center gap-2 mt-2 font-mono text-[11px] text-app-subtle">
           <span>Popular:</span>
-          <a href="/scan?url=jellyfin/jellyfin" class="text-zinc-400 hover:text-white underline">jellyfin</a>
+          <a href="/scan?url=jellyfin/jellyfin" class="text-app-muted hover:text-app-accent underline">jellyfin</a>
           <span>&middot;</span>
-          <a href="/scan?url=dani-garcia/vaultwarden" class="text-zinc-400 hover:text-white underline">vaultwarden</a>
+          <a href="/scan?url=dani-garcia/vaultwarden" class="text-app-muted hover:text-app-accent underline">vaultwarden</a>
           <span>&middot;</span>
-          <a href="/scan?url=louislam/uptime-kuma" class="text-zinc-400 hover:text-white underline">uptime-kuma</a>
+          <a href="/scan?url=louislam/uptime-kuma" class="text-app-muted hover:text-app-accent underline">uptime-kuma</a>
         </div>
       </form>
     </div>
 
     <!-- Live Telemetry Monitor (Real Data Strip) -->
-    <div class="block mb-8">
+    <div class="block mb-8 text-left">
       <LiveScanConsole />
+    </div>
+
+    <!-- Observatory Radar Scope Hero -->
+    <div class="block mb-8 text-left">
+      <DetectionRadarHero />
     </div>
   </section>
 

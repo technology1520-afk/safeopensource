@@ -33,13 +33,13 @@ const radarSectors = categories.map((cat, index) => {
   const labelX = center + labelR * Math.cos(angleRad);
   const labelY = center + labelR * Math.sin(angleRad);
 
-  // Status color
+  // Status color via CSS custom properties
   const color =
     avgScore >= 80
-      ? '#10B981'
+      ? 'var(--healthy)'
       : avgScore >= 50
-        ? '#F59E0B'
-        : '#EF4444';
+        ? 'var(--caution)'
+        : 'var(--risky)';
 
   const dotSize = Math.max(5, Math.min(11, 4 + tools.length * 1.5));
 
@@ -63,7 +63,7 @@ const radarSectors = categories.map((cat, index) => {
 const polygonPoints = radarSectors.map((s) => `${s.x.toFixed(1)},${s.y.toFixed(1)}`).join(' ');
 ---
 
-<section class={`my-14 rounded-2xl border border-app-border bg-[#0a0c10] p-6 sm:p-8 scroll-mt-24 ${className}`} id="ecosystem-radar">
+<section class={`my-14 rounded-2xl border border-app-border bg-app-surface p-6 sm:p-8 scroll-mt-24 ${className}`} id="ecosystem-radar">
   <!-- Section Title -->
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-app-border">
     <div>
@@ -82,11 +82,11 @@ const polygonPoints = radarSectors.map((s) => `${s.x.toFixed(1)},${s.y.toFixed(1
     <!-- Active Hover Sector Stat Box -->
     <div
       id="radar-inspected-card"
-      class="p-3 sm:p-4 rounded-xl border border-blue-500/40 bg-[#131519] min-w-[260px] font-mono text-xs shadow-lg transition-all"
+      class="p-3 sm:p-4 rounded-xl border border-blue-500/40 bg-app-surface-2 min-w-[260px] font-mono text-xs transition-all"
     >
       <div class="flex items-center justify-between text-[10px] text-blue-400 tracking-wider mb-1">
         <span>INSPECTED SECTOR</span>
-        <span id="inspect-status" class="px-1.5 py-0.2 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-500/30">OPTIMAL</span>
+        <span id="inspect-status" class="px-1.5 py-0.2 rounded verdict-badge-healthy border">OPTIMAL</span>
       </div>
       <div id="inspect-name" class="font-bold text-sm text-app-text truncate">
         Media & Streaming
@@ -105,32 +105,23 @@ const polygonPoints = radarSectors.map((s) => `${s.x.toFixed(1)},${s.y.toFixed(1
       class="w-full h-auto max-h-[520px] overflow-visible select-none"
       aria-label="13-Sector Category Safety Radar"
     >
-      <defs>
-        <!-- Radial gradient fill for coverage mesh -->
-        <radialGradient id="radar-mesh-gradient" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stop-color="#3B82F6" stop-opacity="0.15" />
-          <stop offset="70%" stop-color="#10B981" stop-opacity="0.08" />
-          <stop offset="100%" stop-color="#10B981" stop-opacity="0.01" />
-        </radialGradient>
-      </defs>
-
       <!-- Concentric threshold rings -->
       <!-- Range 100: Outer ring -->
-      <circle cx="260" cy="260" r="190" fill="none" stroke="#23262E" stroke-width="1.5" />
-      <text x="264" y="74" fill="#6B7280" font-family="monospace" font-size="9">100 (HEALTHY)</text>
+      <circle cx="260" cy="260" r="190" fill="none" stroke="var(--radar-stroke)" stroke-width="1.5" />
+      <text x="264" y="74" fill="var(--text-2)" font-family="monospace" font-size="9">100 (HEALTHY)</text>
 
       <!-- Range 80: Healthy boundary -->
-      <circle cx="260" cy="260" r="152" fill="none" stroke="#23262E" stroke-dasharray="3 3" stroke-width="1" />
-      <text x="264" y="112" fill="#6B7280" font-family="monospace" font-size="9">80 (STABLE)</text>
+      <circle cx="260" cy="260" r="152" fill="none" stroke="var(--radar-stroke)" stroke-dasharray="3 3" stroke-width="1" />
+      <text x="264" y="112" fill="var(--text-2)" font-family="monospace" font-size="9">80 (STABLE)</text>
 
       <!-- Range 50: Caution boundary -->
-      <circle cx="260" cy="260" r="95" fill="none" stroke="#23262E" stroke-dasharray="2 2" stroke-width="1" />
-      <text x="264" y="169" fill="#6B7280" font-family="monospace" font-size="9">50 (RISK)</text>
+      <circle cx="260" cy="260" r="95" fill="none" stroke="var(--radar-stroke)" stroke-dasharray="2 2" stroke-width="1" />
+      <text x="264" y="169" fill="var(--text-2)" font-family="monospace" font-size="9">50 (RISK)</text>
 
       <!-- Radar Center Origin -->
-      <circle cx="260" cy="260" r="4" fill="#3B82F6" />
+      <circle cx="260" cy="260" r="4" fill="var(--accent)" />
 
-      <!-- 13 Radial Spokes -->
+      <!-- 13 Radial Sector Lines (Orbit/constellation detail via var(--radar-sector-line)) -->
       {radarSectors.map((sector) => {
         const outerX = 260 + 190 * Math.cos((sector.angleDeg * Math.PI) / 180);
         const outerY = 260 + 190 * Math.sin((sector.angleDeg * Math.PI) / 180);
@@ -140,20 +131,19 @@ const polygonPoints = radarSectors.map((s) => `${s.x.toFixed(1)},${s.y.toFixed(1
             y1="260"
             x2={outerX}
             y2={outerY}
-            stroke="#1b1e26"
+            stroke="var(--radar-sector-line)"
             stroke-width="1"
           />
         );
       })}
 
-      <!-- Composite Ecosystem Mesh Polygon -->
+      <!-- Composite Ecosystem Mesh Polygon (12% opacity sector fill, --radar-stroke outline) -->
       <polygon
         points={polygonPoints}
-        fill="url(#radar-mesh-gradient)"
-        stroke="#3B82F6"
+        fill="var(--radar-sector-fill)"
+        stroke="var(--radar-stroke)"
         stroke-width="1.5"
         stroke-linejoin="round"
-        opacity="0.75"
       />
 
       <!-- Sector Nodes & Labels -->
@@ -185,9 +175,10 @@ const polygonPoints = radarSectors.map((s) => `${s.x.toFixed(1)},${s.y.toFixed(1
             cy={sector.y}
             r={sector.dotSize}
             fill={sector.color}
-            stroke="#0A0B0E"
+            stroke="var(--bg)"
             stroke-width="2"
-            class="transition-transform group-hover:scale-125"
+            class="blip-dot transition-transform group-hover:scale-125"
+            style={`color: ${sector.color};`}
           />
 
           <!-- Category Label on Outer Perimeter -->
@@ -196,11 +187,11 @@ const polygonPoints = radarSectors.map((s) => `${s.x.toFixed(1)},${s.y.toFixed(1
             y={sector.labelY}
             text-anchor="middle"
             dominant-baseline="middle"
-            fill={sector.isHighlighted ? '#E6E8EB' : '#9BA1AB'}
+            fill={sector.isHighlighted ? 'var(--text)' : 'var(--text-2)'}
             font-family="monospace"
             font-size="9"
             font-weight={sector.isHighlighted ? 'bold' : 'normal'}
-            class="sector-label transition-colors duration-150 group-hover:fill-white"
+            class="sector-label transition-colors duration-150"
           >
             {sector.name.split(' ')[0].toUpperCase()}
           </text>
@@ -256,13 +247,13 @@ const polygonPoints = radarSectors.map((s) => `${s.x.toFixed(1)},${s.y.toFixed(1
         if (inspectStatus) {
           if (score >= 80) {
             inspectStatus.textContent = 'OPTIMAL';
-            inspectStatus.className = 'px-1.5 py-0.2 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-500/30';
+            inspectStatus.className = 'px-1.5 py-0.2 rounded border verdict-badge-healthy';
           } else if (score >= 50) {
             inspectStatus.textContent = 'MODERATE';
-            inspectStatus.className = 'px-1.5 py-0.2 rounded bg-amber-950/60 text-amber-400 border border-amber-500/30';
+            inspectStatus.className = 'px-1.5 py-0.2 rounded border verdict-badge-caution';
           } else {
             inspectStatus.textContent = 'ELEVATED RISK';
-            inspectStatus.className = 'px-1.5 py-0.2 rounded bg-rose-950/60 text-rose-400 border border-rose-500/30';
+            inspectStatus.className = 'px-1.5 py-0.2 rounded border verdict-badge-risky';
           }
         }
 
@@ -281,4 +272,3 @@ const polygonPoints = radarSectors.map((s) => `${s.x.toFixed(1)},${s.y.toFixed(1
     });
   })();
 </script>
-

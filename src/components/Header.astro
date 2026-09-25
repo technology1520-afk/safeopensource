@@ -5,11 +5,11 @@ import SearchDialog from './SearchDialog';
 const allTools = getAllTools();
 ---
 
-<header class="sticky top-0 z-40 w-full border-b border-app-border bg-[#0a0b0e]/95 backdrop-blur-md">
+<header class="sticky top-0 z-40 w-full border-b border-app-border bg-app-bg/95 backdrop-blur-md">
   <div class="max-w-[1200px] mx-auto px-4 sm:px-6 h-16 grid grid-cols-[auto_1fr_auto] items-center gap-3 sm:gap-6">
     <!-- Zone 1: Brand Logo & Live SOC Status LED -->
     <div class="flex items-center gap-3 shrink-0">
-      <a href="/" class="flex items-center gap-2.5 text-app-text hover:text-white shrink-0 group">
+      <a href="/" class="flex items-center gap-2.5 text-app-text hover:text-app-accent shrink-0 group">
         <div class="w-8 h-8 rounded-lg bg-blue-600/10 border border-blue-500/30 flex items-center justify-center text-blue-400 group-hover:border-blue-500/60 transition-colors shrink-0">
           <svg class="w-4 h-4 stroke-current" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -60,7 +60,7 @@ const allTools = getAllTools();
 
       <a
         href="/scan"
-        class="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white border border-blue-500/30 transition-colors font-mono font-bold text-xs"
+        class="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-blue-600/20 text-blue-400 hover:bg-blue-600 border border-blue-500/30 transition-colors font-mono font-bold text-xs"
       >
         <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -68,12 +68,13 @@ const allTools = getAllTools();
         <span>Scan Repo</span>
       </a>
 
-      <!-- Light/Dark Theme Toggle -->
+      <!-- Dual Personality Theme Toggle (Lavender Lab <-> Cosmic Void) -->
       <button
         type="button"
         id="theme-toggle"
-        class="p-2 rounded-lg border border-app-border bg-app-surface hover:bg-app-surface-hover text-app-muted hover:text-app-text transition-colors"
-        aria-label="Toggle light/dark theme"
+        class="p-2 rounded-lg border border-app-border bg-app-surface hover:bg-app-surface-hover text-app-muted hover:text-app-text transition-colors cursor-pointer"
+        aria-label="Switch between Lavender Lab and Cosmic Void themes"
+        title="Switch Theme (Lavender Lab / Cosmic Void)"
       >
         <svg id="theme-moon" class="w-4 h-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
@@ -100,25 +101,36 @@ const allTools = getAllTools();
     const sun = document.getElementById('theme-sun');
     const moon = document.getElementById('theme-moon');
 
+    function resolveTheme() {
+      const currentAttr = document.documentElement.getAttribute('data-theme');
+      if (currentAttr === 'lavender-lab' || currentAttr === 'light') return 'lavender-lab';
+      if (currentAttr === 'cosmic-void' || currentAttr === 'dark') return 'cosmic-void';
+      const saved = localStorage.getItem('sos-theme') || localStorage.getItem('theme');
+      if (saved === 'lavender-lab' || saved === 'light') return 'lavender-lab';
+      if (saved === 'cosmic-void' || saved === 'dark') return 'cosmic-void';
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      return prefersDark ? 'cosmic-void' : 'lavender-lab';
+    }
+
     function applyTheme(theme) {
-      if (theme === 'light') {
-        document.documentElement.setAttribute('data-theme', 'light');
+      const normalized = (theme === 'lavender-lab' || theme === 'light') ? 'lavender-lab' : 'cosmic-void';
+      document.documentElement.setAttribute('data-theme', normalized);
+      if (normalized === 'lavender-lab') {
         sun?.classList.add('hidden');
         moon?.classList.remove('hidden');
       } else {
-        document.documentElement.removeAttribute('data-theme');
         sun?.classList.remove('hidden');
         moon?.classList.add('hidden');
       }
     }
 
-    const savedTheme = localStorage.getItem('sos-theme') || 'dark';
-    applyTheme(savedTheme);
+    applyTheme(resolveTheme());
 
     toggle?.addEventListener('click', () => {
-      const current = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
-      const next = current === 'light' ? 'dark' : 'light';
+      const current = resolveTheme();
+      const next = current === 'lavender-lab' ? 'cosmic-void' : 'lavender-lab';
       localStorage.setItem('sos-theme', next);
+      localStorage.setItem('theme', next);
       applyTheme(next);
     });
   })();

@@ -74,7 +74,7 @@ export function getTelemetryStats(): TelemetryStats {
     const radius = Math.round(normalizedDist * 160);
 
     const isFlagged = t.verdict === 'risky' || t.verdict === 'caution';
-    const color = t.verdict === 'healthy' ? '#10B981' : t.verdict === 'caution' ? '#F59E0B' : '#EF4444';
+    const color = t.verdict === 'healthy' ? 'var(--healthy)' : t.verdict === 'caution' ? 'var(--caution)' : 'var(--risky)';
 
     return {
       name: t.name,

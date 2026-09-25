@@ -31,6 +31,24 @@ const siteName = 'SafeOpenSource';
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Synchronous Theme Bootstrap (Prevents flash of wrong theme before first paint) -->
+    <script is:inline>
+      (function () {
+        try {
+          var saved = localStorage.getItem('sos-theme') || localStorage.getItem('theme');
+          var theme = saved;
+          if (theme === 'light') theme = 'lavender-lab';
+          if (theme === 'dark') theme = 'cosmic-void';
+          if (theme !== 'lavender-lab' && theme !== 'cosmic-void') {
+            var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            theme = prefersDark ? 'cosmic-void' : 'lavender-lab';
+          }
+          document.documentElement.setAttribute('data-theme', theme);
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'cosmic-void');
+        }
+      })();
+    </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
 

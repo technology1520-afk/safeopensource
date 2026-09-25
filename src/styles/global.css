@@ -1,48 +1,175 @@
 @import "tailwindcss";
 
-:root {
-  --color-bg: #0a0b0e;
-  --color-surface: #131519;
-  --color-surface-hover: #181b21;
-  --color-surface-elevated: #1e2129;
-  --color-border: #23262e;
-  --color-border-hover: #333842;
-  --color-text-primary: #e6e8eb;
-  --color-text-secondary: #9ba1ab;
-  --color-text-tertiary: #6b7280;
-  --color-accent: #3b82f6;
-  --color-accent-hover: #60a5fa;
-  --color-healthy: #10b981;
-  --color-healthy-bg: rgba(16, 185, 129, 0.1);
-  --color-caution: #f59e0b;
-  --color-caution-bg: rgba(245, 158, 11, 0.1);
-  --color-risky: #ef4444;
-  --color-risky-bg: rgba(239, 68, 68, 0.1);
+/* ==========================================================================
+   THEME 1: "Lavender Lab" (Day Mode — Soft-lavender security console)
+   ========================================================================== */
+:root,
+[data-theme="lavender-lab"],
+[data-theme="light"] {
+  --bg: #F4F1FA;
+  --surface: #FFFFFF;
+  --surface-2: #EFEAF7;
+  --border: #DCD4EC;
+  --text: #2B2438;
+  --text-2: #6B637E;
+  --accent: #7C5CFC;
+  --accent-text: #6D4AF6;
+  --accent-hover: #6946F5;
+  --accent-soft: rgba(124, 92, 252, 0.10);
+  --accent-border: rgba(124, 92, 252, 0.32);
+
+  /* Status colors re-tuned for WCAG AA contrast on light backgrounds */
+  --healthy: #0B7A4B;
+  --healthy-bg: rgba(11, 122, 75, 0.10);
+  --healthy-border: rgba(11, 122, 75, 0.30);
+  --caution: #9A6700;
+  --caution-text: #946200;
+  --caution-bg: rgba(154, 103, 0, 0.10);
+  --caution-border: rgba(154, 103, 0, 0.30);
+  --risky: #C22736;
+  --risky-bg: rgba(194, 39, 54, 0.10);
+  --risky-border: rgba(194, 39, 54, 0.30);
+
+  /* Charts & Radar tokens */
+  --radar-bg: #F4F1FA;
+  --radar-stroke: #B9A8E8;
+  --radar-sector-fill: rgba(185, 168, 232, 0.12);
+  --radar-sector-line: rgba(185, 168, 232, 0.45);
+  --radar-bezel-ring: rgba(124, 92, 252, 0.35);
+  --radar-sweep: conic-gradient(from 0deg, rgba(124, 92, 252, 0.25) 0deg, rgba(124, 92, 252, 0.08) 45deg, rgba(124, 92, 252, 0) 90deg, transparent 360deg);
+  --blip-glow: none;
+
+  /* Elevation & Flourishes */
+  --card-shadow: 0 1px 3px rgba(43, 36, 56, 0.08);
+  --verdict-glow-healthy: none;
+  --verdict-glow-caution: none;
+  --verdict-glow-risky: none;
+  --micro-label: #7C5CFC;
+
+  /* Mapped Tailwind semantic variables */
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-2);
+  --color-surface-elevated: var(--surface-2);
+  --color-border: var(--border);
+  --color-border-hover: #B9A8E8;
+  --color-text-primary: var(--text);
+  --color-text-secondary: var(--text-2);
+  --color-text-tertiary: var(--text-2);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-healthy: var(--healthy);
+  --color-healthy-bg: var(--healthy-bg);
+  --color-caution: var(--caution);
+  --color-caution-bg: var(--caution-bg);
+  --color-risky: var(--risky);
+  --color-risky-bg: var(--risky-bg);
 }
 
-[data-theme="light"] {
-  --color-bg: #f8fafc;
-  --color-surface: #ffffff;
-  --color-surface-hover: #f1f5f9;
-  --color-surface-elevated: #e2e8f0;
-  --color-border: #e2e8f0;
-  --color-border-hover: #cbd5e1;
-  --color-text-primary: #0f172a;
-  --color-text-secondary: #475569;
-  --color-text-tertiary: #64748b;
-  --color-accent: #2563eb;
-  --color-accent-hover: #1d4ed8;
-  --color-healthy: #059669;
-  --color-healthy-bg: rgba(5, 150, 105, 0.1);
-  --color-caution: #d97706;
-  --color-caution-bg: rgba(217, 119, 6, 0.1);
-  --color-risky: #dc2626;
-  --color-risky-bg: rgba(220, 38, 38, 0.1);
+/* ==========================================================================
+   THEME 2: "Cosmic Void" (Night Mode — Deep-space observatory)
+   ========================================================================== */
+[data-theme="cosmic-void"],
+[data-theme="dark"] {
+  --bg: #0A0912;
+  --surface: #131022;
+  --surface-2: #1B1730;
+  --border: #2C2547;
+  --text: #EDE9F8;
+  --text-2: #A79FC0;
+  --accent: #A78BFA;
+  --accent-hover: #C4B5FD;
+  --accent-soft: rgba(167, 139, 250, 0.14);
+  --accent-border: rgba(167, 139, 250, 0.35);
+
+  /* Status colors for dark space observatory */
+  --healthy: #4ADE80;
+  --healthy-bg: rgba(74, 222, 128, 0.12);
+  --healthy-border: rgba(74, 222, 128, 0.35);
+  --caution: #FBBF24;
+  --caution-bg: rgba(251, 191, 36, 0.12);
+  --caution-border: rgba(251, 191, 36, 0.35);
+  --risky: #F87171;
+  --risky-bg: rgba(248, 113, 113, 0.12);
+  --risky-border: rgba(248, 113, 113, 0.35);
+
+  /* Charts & Radar tokens */
+  --radar-bg: #0A0912;
+  --radar-stroke: rgba(109, 79, 194, 0.38);
+  --radar-sector-fill: rgba(167, 139, 250, 0.12);
+  --radar-sector-line: rgba(109, 79, 194, 0.20);
+  --radar-bezel-ring: rgba(237, 233, 248, 0.42);
+  --radar-sweep: conic-gradient(from 0deg, rgba(167, 139, 250, 0.25) 0deg, rgba(167, 139, 250, 0.08) 45deg, rgba(167, 139, 250, 0) 90deg, transparent 360deg);
+  --blip-glow: drop-shadow(0 0 6px currentColor);
+
+  /* Voids have no elevation (borders, never shadows) + Verdict badge outer glow */
+  --card-shadow: none;
+  --verdict-glow-healthy: 0 0 12px rgba(74, 222, 128, 0.30);
+  --verdict-glow-caution: 0 0 12px rgba(251, 191, 36, 0.30);
+  --verdict-glow-risky: 0 0 12px rgba(248, 113, 113, 0.30);
+  --micro-label: #A78BFA;
+
+  /* Mapped Tailwind semantic variables */
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-2);
+  --color-surface-elevated: var(--surface-2);
+  --color-border: var(--border);
+  --color-border-hover: #6D4FC2;
+  --color-text-primary: var(--text);
+  --color-text-secondary: var(--text-2);
+  --color-text-tertiary: var(--text-2);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-healthy: var(--healthy);
+  --color-healthy-bg: var(--healthy-bg);
+  --color-caution: var(--caution);
+  --color-caution-bg: var(--caution-bg);
+  --color-risky: var(--risky);
+  --color-risky-bg: var(--risky-bg);
+}
+
+/* Automatic OS fallback when data-theme has not yet been set */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="lavender-lab"]):not([data-theme="light"]) {
+    --bg: #0A0912;
+    --surface: #131022;
+    --surface-2: #1B1730;
+    --border: #2C2547;
+    --text: #EDE9F8;
+    --text-2: #A79FC0;
+    --accent: #A78BFA;
+    --accent-hover: #C4B5FD;
+    --accent-soft: rgba(167, 139, 250, 0.14);
+    --accent-border: rgba(167, 139, 250, 0.35);
+    --healthy: #4ADE80;
+    --healthy-bg: rgba(74, 222, 128, 0.12);
+    --healthy-border: rgba(74, 222, 128, 0.35);
+    --caution: #FBBF24;
+    --caution-bg: rgba(251, 191, 36, 0.12);
+    --caution-border: rgba(251, 191, 36, 0.35);
+    --risky: #F87171;
+    --risky-bg: rgba(248, 113, 113, 0.12);
+    --risky-border: rgba(248, 113, 113, 0.35);
+    --radar-bg: #0A0912;
+    --radar-stroke: rgba(109, 79, 194, 0.38);
+    --radar-sector-fill: rgba(167, 139, 250, 0.12);
+    --radar-sector-line: rgba(109, 79, 194, 0.20);
+    --radar-bezel-ring: rgba(237, 233, 248, 0.42);
+    --radar-sweep: conic-gradient(from 0deg, rgba(167, 139, 250, 0.25) 0deg, rgba(167, 139, 250, 0.08) 45deg, rgba(167, 139, 250, 0) 90deg, transparent 360deg);
+    --blip-glow: drop-shadow(0 0 6px currentColor);
+    --card-shadow: none;
+    --verdict-glow-healthy: 0 0 12px rgba(74, 222, 128, 0.30);
+    --verdict-glow-caution: 0 0 12px rgba(251, 191, 36, 0.30);
+    --verdict-glow-risky: 0 0 12px rgba(248, 113, 113, 0.30);
+    --micro-label: #A78BFA;
+  }
 }
 
 @theme {
   --color-app-bg: var(--color-bg);
   --color-app-surface: var(--color-surface);
+  --color-app-surface-2: var(--surface-2);
   --color-app-surface-hover: var(--color-surface-hover);
   --color-app-surface-elevated: var(--color-surface-elevated);
   --color-app-border: var(--color-border);
@@ -74,28 +201,230 @@ body {
   margin-top: 0 !important;
   padding-top: 0 !important;
   outline: none !important;
-  background-color: var(--color-bg);
-  color: var(--color-text-primary);
+  background-color: var(--bg);
+  color: var(--text);
   font-family: var(--font-sans);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  position: relative;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Fluid scale & typography helpers */
+/* ==========================================================================
+   COSMIC VOID FIXED NEBULA & SPARSE STARFIELD LAYER
+   Single fixed GPU-cheap layer, <1KB inline SVG data-URI, zero JS, zero animation
+   ========================================================================== */
+[data-theme="cosmic-void"] body::before,
+[data-theme="dark"] body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(circle at 18% 22%, rgba(109, 79, 194, 0.06) 0%, transparent 55%),
+    radial-gradient(circle at 82% 76%, rgba(147, 51, 234, 0.04) 0%, transparent 50%),
+    radial-gradient(circle at 52% 48%, rgba(109, 79, 194, 0.06) 0%, transparent 60%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320' viewBox='0 0 320 320'%3E%3Cg fill='%23EDE9F8' fill-opacity='0.08'%3E%3Ccircle cx='24' cy='38' r='1'/%3E%3Ccircle cx='142' cy='19' r='1'/%3E%3Ccircle cx='278' cy='52' r='1'/%3E%3Ccircle cx='88' cy='112' r='1'/%3E%3Ccircle cx='216' cy='94' r='1'/%3E%3Ccircle cx='304' cy='158' r='1'/%3E%3Ccircle cx='46' cy='194' r='1'/%3E%3Ccircle cx='164' cy='178' r='1'/%3E%3Ccircle cx='118' cy='256' r='1'/%3E%3Ccircle cx='252' cy='234' r='1'/%3E%3Ccircle cx='62' cy='298' r='1'/%3E%3Ccircle cx='290' cy='288' r='1'/%3E%3Ccircle cx='195' cy='305' r='1'/%3E%3C/g%3E%3C/svg%3E");
+  background-repeat: no-repeat, no-repeat, no-repeat, repeat;
+}
+
+/* ==========================================================================
+   SURFACE ELEVATION & SHADOW RULES PER THEME
+   - Lavender Lab: 0 1px 3px rgba(43, 36, 56, 0.08) on surfaces
+   - Cosmic Void: Borders, never shadows (voids have no elevation)
+   ========================================================================== */
+.bg-app-surface,
+.soc-surface {
+  box-shadow: var(--card-shadow);
+}
+
+[data-theme="cosmic-void"] .shadow-xs,
+[data-theme="cosmic-void"] .shadow-sm,
+[data-theme="cosmic-void"] .shadow-md,
+[data-theme="cosmic-void"] .shadow-lg,
+[data-theme="cosmic-void"] .shadow-xl,
+[data-theme="cosmic-void"] .shadow-2xl {
+  box-shadow: none !important;
+}
+
+/* Verdict badge outer glow (the one allowed flourish in Cosmic Void) */
+.verdict-badge-healthy {
+  color: var(--healthy) !important;
+  background-color: var(--healthy-bg) !important;
+  border-color: var(--healthy-border) !important;
+  box-shadow: var(--verdict-glow-healthy) !important;
+}
+
+.verdict-badge-caution {
+  color: var(--caution) !important;
+  background-color: var(--caution-bg) !important;
+  border-color: var(--caution-border) !important;
+  box-shadow: var(--verdict-glow-caution) !important;
+}
+
+.verdict-badge-risky {
+  color: var(--risky) !important;
+  background-color: var(--risky-bg) !important;
+  border-color: var(--risky-border) !important;
+  box-shadow: var(--verdict-glow-risky) !important;
+}
+
+/* ==========================================================================
+   MONO MICRO-LABELS & STATUS COLOR RE-TUNING
+   Never reuse dark-mode neon values in Lavender Lab
+   ========================================================================== */
 .text-micro {
   font-family: var(--font-mono);
   font-size: 11px;
   line-height: 14px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  color: var(--micro-label);
+}
+
+/* Status color bindings so utility classes strictly follow --healthy, --caution, --risky, --accent */
+.text-emerald-400,
+.text-emerald-500,
+.text-emerald-300 {
+  color: var(--healthy) !important;
+}
+
+.bg-emerald-400,
+.bg-emerald-500 {
+  background-color: var(--healthy) !important;
+}
+
+.bg-emerald-950\/40,
+.bg-emerald-950\/60,
+.bg-emerald-950\/20,
+.bg-emerald-500\/10 {
+  background-color: var(--healthy-bg) !important;
+}
+
+.border-emerald-500\/30,
+.border-emerald-500\/40,
+.border-emerald-500 {
+  border-color: var(--healthy-border) !important;
+}
+
+.text-amber-400,
+.text-amber-500,
+.text-amber-300 {
+  color: var(--caution) !important;
+}
+
+.bg-amber-400,
+.bg-amber-500 {
+  background-color: var(--caution) !important;
+}
+
+.bg-amber-950\/40,
+.bg-amber-950\/50,
+.bg-amber-500\/10 {
+  background-color: var(--caution-bg) !important;
+}
+
+.border-amber-500\/30,
+.border-amber-500\/40,
+.border-amber-500 {
+  border-color: var(--caution-border) !important;
+}
+
+.text-rose-400,
+.text-rose-500,
+.text-red-400 {
+  color: var(--risky) !important;
+}
+
+.bg-rose-500,
+.bg-rose-400 {
+  background-color: var(--risky) !important;
+}
+
+.bg-rose-950\/40,
+.bg-rose-950\/50,
+.bg-rose-950\/30,
+.bg-rose-950\/20,
+.bg-rose-500\/10 {
+  background-color: var(--risky-bg) !important;
+}
+
+.border-rose-500\/30,
+.border-rose-500\/40,
+.border-rose-500 {
+  border-color: var(--risky-border) !important;
+}
+
+.text-blue-400,
+.text-blue-500,
+.text-purple-400,
+.text-purple-300 {
+  color: var(--accent) !important;
+}
+
+.bg-blue-600,
+.bg-blue-500 {
+  background-color: var(--accent) !important;
+  color: #FFFFFF !important;
+}
+
+.bg-blue-600\/10,
+.bg-blue-600\/20,
+.bg-blue-950\/40,
+.bg-blue-950\/20 {
+  background-color: var(--accent-soft) !important;
+}
+
+.border-blue-500\/30,
+.border-blue-500\/40,
+.border-blue-500\/50,
+.border-blue-500 {
+  border-color: var(--accent-border) !important;
+}
+
+/* Ensure any legacy text-white on surface cards renders deep plum in Lavender Lab */
+[data-theme="lavender-lab"] .text-white:not(.bg-blue-600):not(.bg-blue-500):not(.btn-solid),
+[data-theme="light"] .text-white:not(.bg-blue-600):not(.bg-blue-500):not(.btn-solid) {
+  color: var(--text) !important;
+}
+
+[data-theme="lavender-lab"] .bg-blue-600 .text-white,
+[data-theme="lavender-lab"] a.bg-blue-600,
+[data-theme="lavender-lab"] button.bg-blue-600 {
+  color: #FFFFFF !important;
+}
+
+/* ==========================================================================
+   RADAR & OBSERVATORY INSTRUMENT STYLES
+   ========================================================================== */
+.radar-sky-trail {
+  background: var(--radar-sweep);
+}
+
+.blip-dot {
+  filter: var(--blip-glow);
+}
+
+@keyframes blip-opacity-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
+.blip-flagged-pulse {
+  animation: blip-opacity-pulse 2.2s ease-in-out infinite;
 }
 
 /* 150ms transitions */
 * {
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, box-shadow;
   transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
   transition-duration: 150ms;
 }
@@ -108,4 +437,3 @@ body {
     scroll-behavior: auto !important;
   }
 }
-

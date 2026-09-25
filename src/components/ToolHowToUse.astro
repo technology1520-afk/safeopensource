@@ -25,7 +25,7 @@ const { steps, class: className = '' } = Astro.props;
       const pillClass = levelColors[step.level] || 'border-app-border text-app-subtle bg-app-bg';
 
       return (
-        <div class="p-4 rounded-xl border border-app-border bg-[#0A0B0E] space-y-2.5">
+        <div class="p-4 rounded-xl border border-app-border bg-app-bg space-y-2.5">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <div class="flex items-center gap-2">
               <span class={`text-micro px-2 py-0.5 rounded-md border font-mono font-bold ${pillClass}`}>
@@ -54,11 +54,11 @@ const { steps, class: className = '' } = Astro.props;
 
           {step.command && (
             <div class="relative group mt-2">
-              <div class="p-3 rounded-lg bg-[#131519] border border-app-border font-mono text-xs text-emerald-300 overflow-x-auto flex items-center justify-between gap-4">
+              <div class="p-3 rounded-lg bg-app-surface-2 border border-app-border font-mono text-xs text-emerald-300 overflow-x-auto flex items-center justify-between gap-4">
                 <code class="select-all break-all whitespace-pre-wrap">{step.command}</code>
                 <button
                   type="button"
-                  class="btn-copy-cmd shrink-0 px-2.5 py-1 rounded bg-[#0A0B0E] hover:bg-app-border border border-app-border text-app-subtle hover:text-white text-[10px] font-mono transition-colors"
+                  class="btn-copy-cmd shrink-0 px-2.5 py-1 rounded bg-app-bg hover:bg-app-border border border-app-border text-app-subtle hover:text-app-text text-[10px] font-mono transition-colors"
                   data-cmd={step.command}
                   title="Copy command to clipboard"
                 >
