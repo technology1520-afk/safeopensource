@@ -49,7 +49,7 @@ const boxId = `install-box-${Math.random().toString(36).substring(2, 9)}`;
     </button>
   </div>
 
-  <div class="p-4 bg-app-bg">
+  <div class="p-4 bg-app-surface-2">
     {activeTabs.map(([type, cmd], idx) => (
       <div
         id={`${boxId}-panel-${type}`}
@@ -117,12 +117,12 @@ const boxId = `install-box-${Math.random().toString(36).substring(2, 9)}`;
         const label = copyBtn.querySelector('.copy-label');
         if (label) {
           const original = label.textContent;
-          label.textContent = 'Copied!';
+          label.textContent = 'copied ✓';
           copyBtn.classList.add('text-emerald-400');
           setTimeout(() => {
             label.textContent = original;
             copyBtn.classList.remove('text-emerald-400');
-          }, 1500);
+          }, 1200);
         }
       } catch (err) {
         console.error('Failed to copy command', err);

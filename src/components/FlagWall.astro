@@ -103,36 +103,36 @@ const incidents: FlaggedIncident[] = [
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
     {incidents.map((item) => (
       <div
-        class="group relative rounded-xl border border-app-border border-l-4 border-l-rose-500 bg-app-surface-2 p-5 transition-all duration-150 hover:bg-app-surface-hover"
+        class="flag-wall-card group relative rounded-xl border border-app-border bg-app-surface p-5 transition-all duration-150 hover:bg-app-surface-hover"
       >
-        <!-- Card Top: Incident ID, Timestamp (in starlight lavender), Reason Chip -->
+        <!-- Card Top: Incident ID, Timestamp (mono --text-3), Verdict Badge -->
         <div class="flex items-start justify-between gap-3 mb-3">
           <div>
-            <div class="font-mono text-[10px] text-app-subtle tracking-wider uppercase mb-1">
-              <span>BULLETIN #{item.id} • </span>
-              <span class="text-app-accent font-semibold flag-timestamp">{item.timestamp}</span>
+            <div class="font-mono text-[11px] tracking-wider uppercase mb-1">
+              <span class="text-app-muted">BULLETIN #{item.id} • </span>
+              <span class="flag-timestamp">{item.timestamp}</span>
             </div>
-            <h3 class="font-bold text-base text-app-text group-hover:text-blue-400 transition-colors flex items-center gap-2">
+            <h3 class="font-semibold text-base text-app-text group-hover:text-app-accent transition-colors flex items-center gap-2">
               <a href={`/tools/${item.slug}`} class="hover:underline">
                 {item.name}
               </a>
-              <span class="text-micro text-app-subtle font-mono font-normal">
+              <span class="text-xs text-app-muted font-mono font-normal">
                 {item.repo}
               </span>
             </h3>
           </div>
 
           <div class="shrink-0 text-right">
-            <span class="font-mono font-bold text-xs block text-app-text">
-              {item.score}<span class="text-[10px] text-app-subtle font-normal">/100</span>
+            <span class="font-mono font-semibold text-xs block text-app-text">
+              {item.score}<span class="text-[10px] text-app-muted font-normal">/100</span>
             </span>
             <VerdictBadge verdict={item.verdict} size="sm" class="mt-1" />
           </div>
         </div>
 
-        <!-- Reason Chip -->
+        <!-- Reason Chip in --risky-soft -->
         <div class="mb-3">
-          <span class={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded font-mono text-[10px] font-semibold tracking-wide border uppercase ${item.chipColor}`}>
+          <span class="flag-reason-chip inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded font-mono text-[10px] font-semibold tracking-wide border uppercase">
             <span class="w-1 h-1 rounded-full bg-current"></span>
             <span>{item.reasonChip}</span>
           </span>
@@ -144,16 +144,16 @@ const incidents: FlaggedIncident[] = [
         </p>
 
         <!-- Footer: Safer Alternative Link -->
-        <div class="pt-3 border-t border-app-border/80 flex items-center justify-between text-xs font-mono">
-          <span class="text-app-subtle text-[11px]">
+        <div class="pt-3 border-t border-app-border flex items-center justify-between text-xs font-mono">
+          <span class="text-app-muted text-[11px]">
             Safer Drop-in Alternative:
           </span>
           <a
             href={`/tools/${item.recommendedAlternative.slug}`}
-            class="inline-flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 transition-colors font-medium text-[11px]"
+            class="inline-flex items-center gap-1.5 text-emerald-400 hover:underline transition-colors font-medium text-[11px]"
           >
             <span>{item.recommendedAlternative.name}</span>
-            <span class="text-app-subtle">({item.recommendedAlternative.score}/100)</span>
+            <span class="text-app-muted">({item.recommendedAlternative.score}/100)</span>
             <span aria-hidden="true">&rarr;</span>
           </a>
         </div>

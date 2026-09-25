@@ -28,18 +28,18 @@ const textColor =
   <div class="flex items-baseline justify-between text-xs">
     <div class="flex items-center gap-2">
       <span class="font-medium text-app-text">{label}</span>
-      <span class="text-micro text-app-subtle">
-        (Weight {weight}%)
+      <span class="font-mono text-[11px] text-app-accent">
+        (&times;{(weight / 100).toFixed(2)})
       </span>
     </div>
-    <div class="font-mono font-bold">
+    <div class="font-mono font-semibold">
       <span class={textColor}>{score}</span>
-      <span class="text-app-subtle text-[11px]">/100</span>
+      <span class="text-app-muted text-[11px]">/100</span>
     </div>
   </div>
 
   <div
-    class="h-2 w-full overflow-hidden rounded-full bg-app-surface border border-app-border"
+    class="h-2.5 w-full overflow-hidden rounded-full bg-app-surface-2 border border-app-border"
     role="progressbar"
     aria-valuenow={score}
     aria-valuemin="0"
@@ -47,7 +47,7 @@ const textColor =
     aria-label={`${label} score: ${score} out of 100`}
   >
     <div
-      class={`h-full ${barColor} rounded-full transition-all duration-500 ease-out`}
+      class={`h-full ${barColor} rounded-full transition-all duration-150 ease-out`}
       style={`width: ${Math.min(Math.max(score, 0), 100)}%`}
     />
   </div>

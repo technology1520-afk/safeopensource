@@ -29,9 +29,9 @@ export const GET: APIRoute = async ({ params, request, clientAddress, url }) => 
   }
 
   const themeParam = url.searchParams.get('theme');
-  const palette = themeParam === 'lavender-lab' || themeParam === 'light'
-    ? THEME_TOKENS.lavenderLab
-    : THEME_TOKENS.cosmicVoid;
+  const palette = themeParam === 'cosmic-void' || themeParam === 'dark'
+    ? THEME_TOKENS.cosmicVoid
+    : THEME_TOKENS.lavenderLab;
 
   const rawOwner = params.owner || '';
   const rawRepo = (params.repo || '').replace(/\.svg$/, '');

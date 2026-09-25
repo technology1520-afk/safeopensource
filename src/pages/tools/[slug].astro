@@ -225,13 +225,13 @@ const jsonLd = {
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <ScoreBar
         label="Security Health & Supply Chain"
-        weight={isAiAgent ? 55 : 35}
+        weight={isAiAgent ? 55 : 40}
         score={tool.components.security_health}
         description={isAiAgent ? "Elevated 55% weight for autonomous agents. Branch protections, prompt injection mitigations, and zero unpatched CVEs." : "Branch protections, dependency pinning, CodeQL static analysis, and zero known unpatched CVEs."}
       />
       <ScoreBar
         label="Maintenance & Commit Cadence"
-        weight={isAiAgent ? 25 : 30}
+        weight={isAiAgent ? 25 : 25}
         score={tool.components.maintenance}
         description="Days since last commit, pull request turnaround time, and issue closure velocity."
       />

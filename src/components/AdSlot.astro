@@ -12,15 +12,15 @@ const formatClasses = format === 'leaderboard'
 ---
 
 <div
-  class={`relative flex flex-col items-center justify-center rounded-xl border border-dashed border-app-border/70 bg-app-surface/40 p-4 select-none ${formatClasses} ${className}`}
+  class={`ad-slot-container relative flex flex-col items-center justify-center rounded-xl border border-app-border bg-app-surface-2 p-4 select-none ${formatClasses} ${className}`}
   aria-label="Advertisement placeholder"
   role="region"
 >
-  <span class="text-micro text-app-subtle tracking-widest text-[10px] mb-1">
-    SPONSORED PLACEMENT
+  <span class="font-mono uppercase tracking-widest text-[10px] text-app-muted mb-0.5">
+    ADVERTISEMENT
   </span>
-  <span class="text-xs text-app-subtle/80">
-    Reserved Ad Slot (Zero-CLS container)
+  <span class="font-mono text-[11px] text-app-muted">
+    Reserved Zero-CLS Placement
   </span>
 </div>
 

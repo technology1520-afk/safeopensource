@@ -105,11 +105,10 @@ const allTools = getAllTools();
       const currentAttr = document.documentElement.getAttribute('data-theme');
       if (currentAttr === 'lavender-lab' || currentAttr === 'light') return 'lavender-lab';
       if (currentAttr === 'cosmic-void' || currentAttr === 'dark') return 'cosmic-void';
-      const saved = localStorage.getItem('sos-theme') || localStorage.getItem('theme');
+      const saved = localStorage.getItem('sos-primary-theme') || localStorage.getItem('sos-theme') || localStorage.getItem('theme');
       if (saved === 'lavender-lab' || saved === 'light') return 'lavender-lab';
       if (saved === 'cosmic-void' || saved === 'dark') return 'cosmic-void';
-      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      return prefersDark ? 'cosmic-void' : 'lavender-lab';
+      return 'lavender-lab';
     }
 
     function applyTheme(theme) {
@@ -129,6 +128,7 @@ const allTools = getAllTools();
     toggle?.addEventListener('click', () => {
       const current = resolveTheme();
       const next = current === 'lavender-lab' ? 'cosmic-void' : 'lavender-lab';
+      localStorage.setItem('sos-primary-theme', next);
       localStorage.setItem('sos-theme', next);
       localStorage.setItem('theme', next);
       applyTheme(next);
