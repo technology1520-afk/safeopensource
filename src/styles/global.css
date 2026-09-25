@@ -387,6 +387,82 @@ button[type="submit"]:active,
   border-color: var(--accent) !important;
 }
 
+/* ==========================================================================
+   AUTO-SCROLLING SECTOR FILTER BAR (Seamless Marquee + 40px Edge Fades)
+   ========================================================================== */
+@keyframes sector-marquee-scroll {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.sector-edge-fade-left {
+  background: linear-gradient(to right, var(--surface) 0%, transparent 100%);
+}
+
+.sector-edge-fade-right {
+  background: linear-gradient(to left, var(--surface) 0%, transparent 100%);
+}
+
+.sector-marquee-viewport {
+  overflow-x: hidden;
+  position: relative;
+  mask-image: linear-gradient(to right, transparent 0px, black 40px, black calc(100% - 40px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0px, black 40px, black calc(100% - 40px), transparent 100%);
+}
+
+.sector-marquee-track {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+  animation: sector-marquee-scroll var(--marquee-duration, 52s) linear infinite;
+}
+
+/* Pause on hover, focus-within, user pause toggle, or when off-viewport */
+.sector-marquee-viewport:hover .sector-marquee-track,
+.sector-marquee-viewport:focus-within .sector-marquee-track,
+.sector-marquee-viewport[data-user-paused="true"] .sector-marquee-track,
+.sector-marquee-viewport[data-offscreen="true"] .sector-marquee-track {
+  animation-play-state: paused !important;
+}
+
+/* Stop on user scroll/drag: disable auto-scroll for session and enable native scrollbar */
+.sector-marquee-viewport[data-manual-scroll="true"] {
+  overflow-x: auto !important;
+  mask-image: none !important;
+  -webkit-mask-image: none !important;
+}
+
+.sector-marquee-viewport[data-manual-scroll="true"] .sector-marquee-track {
+  animation: none !important;
+  transform: none !important;
+}
+
+.sector-marquee-viewport[data-manual-scroll="true"] .sector-chip-group-clone {
+  display: none !important;
+}
+
+/* prefers-reduced-motion: no auto-scroll at all — static row, native scrollbar */
+@media (prefers-reduced-motion: reduce) {
+  .sector-marquee-viewport {
+    overflow-x: auto !important;
+    mask-image: none !important;
+    -webkit-mask-image: none !important;
+  }
+  .sector-marquee-track {
+    animation: none !important;
+    transform: none !important;
+  }
+  .sector-chip-group-clone,
+  .sector-edge-fade-left,
+  .sector-edge-fade-right {
+    display: none !important;
+  }
+}
+
 /* Verdict badges: pill, soft variant background (--healthy-soft / --caution-soft / --risky-soft), status-color text */
 .verdict-badge-healthy {
   color: var(--healthy) !important;

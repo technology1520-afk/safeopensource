@@ -76,48 +76,155 @@ const defaultBlip = sortedFlagged[0] || blips[0];
       <span class="text-[10px] uppercase tracking-wider font-semibold">DEGRADED FEED</span>
     </div>
 
-    <!-- 3b & 3d. Interactive Sector Taxonomy Filters + "Show flagged only" Toggle -->
+    <!-- 3b & 3d. Auto-Scrolling Sector Taxonomy Marquee + Right-Edge Pause/Play Control -->
     <div class="mt-4 pb-4 border-b border-app-border flex flex-col gap-2.5">
       <div class="flex items-center justify-between gap-2 flex-wrap">
-        <span class="text-micro">SECTOR FILTER (14 TAXONOMIES)</span>
-        <button
-          type="button"
-          id="toggle-flagged-only"
-          aria-pressed="false"
-          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-app-border bg-app-surface-2 hover:bg-app-surface text-xs font-mono text-app-text cursor-pointer transition-colors"
-        >
-          <span class="w-2 h-2 rounded-full bg-rose-500" aria-hidden="true"></span>
-          <span>Show flagged only</span>
-        </button>
+        <span class="text-micro">SECTOR FILTER (14 TAXONOMIES &middot; AMBIENT TICKER)</span>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            id="toggle-flagged-only"
+            aria-pressed="false"
+            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-app-border bg-app-surface-2 hover:bg-app-surface text-xs font-mono text-app-text cursor-pointer transition-colors"
+          >
+            <span class="w-2 h-2 rounded-full bg-rose-500" aria-hidden="true"></span>
+            <span>Show flagged only</span>
+          </button>
+        </div>
       </div>
 
-      <div
-        class="flex items-center gap-1.5 overflow-x-auto pb-1"
-        role="toolbar"
-        aria-label="Filter radar blips by sector category"
-        id="radar-sector-filter-bar"
-      >
+      <!-- Ticker Row Container with 40px Edge Fade Masks + Right-Edge Pause/Play Button -->
+      <div class="relative flex items-center gap-2">
+        <div class="relative flex-1 min-w-0 overflow-hidden">
+          <!-- Left 40px Gradient Edge Fade Mask -->
+          <div
+            class="sector-edge-fade-left pointer-events-none absolute left-0 top-0 bottom-0 w-[40px] z-20"
+            aria-hidden="true"
+          ></div>
+
+          <!-- Right 40px Gradient Edge Fade Mask -->
+          <div
+            class="sector-edge-fade-right pointer-events-none absolute right-0 top-0 bottom-0 w-[40px] z-20"
+            aria-hidden="true"
+          ></div>
+
+          <!-- Interactive Sector Filter Bar (Role & semantics unchanged: group of filter buttons) -->
+          <div
+            class="sector-marquee-viewport pb-1"
+            role="toolbar"
+            aria-label="Filter radar blips by sector category"
+            id="radar-sector-filter-bar"
+            data-user-paused="false"
+            data-manual-scroll="false"
+            data-offscreen="false"
+          >
+            <div
+              class="sector-marquee-track flex items-center w-max"
+              id="radar-sector-marquee-track"
+            >
+              <!-- Copy 1: Primary Interactive Accessible Chip Set -->
+              <div
+                class="sector-chip-group flex items-center gap-1.5 pr-1.5 shrink-0"
+                id="sector-chip-group-primary"
+              >
+                <button
+                  type="button"
+                  data-sector="all"
+                  aria-pressed="true"
+                  class="sector-filter-chip active-sector-chip shrink-0 px-2.5 py-1 rounded-md font-mono text-[11px] font-semibold border cursor-pointer transition-colors"
+                >
+                  SECTOR: ALL ({blips.length})
+                </button>
+                {categories.map((cat) => {
+                  const count = blips.filter((b) => b.category === cat.slug).length;
+                  return (
+                    <button
+                      type="button"
+                      data-sector={cat.slug}
+                      aria-pressed="false"
+                      class="sector-filter-chip shrink-0 px-2.5 py-1 rounded-md font-mono text-[11px] border border-app-border bg-app-surface-2 text-app-muted hover:text-app-text cursor-pointer transition-colors"
+                    >
+                      {cat.slug.toUpperCase()} ({count})
+                    </button>
+                  );
+                })}
+              </div>
+
+              <!-- Copy 2: Seamless Marquee Duplicate Set (aria-hidden="true" + tabindex="-1") -->
+              <div
+                class="sector-chip-group sector-chip-group-clone flex items-center gap-1.5 pr-1.5 shrink-0"
+                id="sector-chip-group-clone"
+                aria-hidden="true"
+              >
+                <button
+                  type="button"
+                  data-sector="all"
+                  data-marquee-clone="true"
+                  aria-hidden="true"
+                  tabindex="-1"
+                  class="sector-filter-chip active-sector-chip shrink-0 px-2.5 py-1 rounded-md font-mono text-[11px] font-semibold border cursor-pointer transition-colors"
+                >
+                  SECTOR: ALL ({blips.length})
+                </button>
+                {categories.map((cat) => {
+                  const count = blips.filter((b) => b.category === cat.slug).length;
+                  return (
+                    <button
+                      type="button"
+                      data-sector={cat.slug}
+                      data-marquee-clone="true"
+                      aria-hidden="true"
+                      tabindex="-1"
+                      class="sector-filter-chip shrink-0 px-2.5 py-1 rounded-md font-mono text-[11px] border border-app-border bg-app-surface-2 text-app-muted hover:text-app-text cursor-pointer transition-colors"
+                    >
+                      {cat.slug.toUpperCase()} ({count})
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Small Pause/Play Toggle Button at the Row's Right Edge (Persists to localStorage) -->
         <button
           type="button"
-          data-sector="all"
-          aria-pressed="true"
-          class="sector-filter-chip active-sector-chip shrink-0 px-2.5 py-1 rounded-md font-mono text-[11px] font-semibold border cursor-pointer transition-colors"
+          id="sector-marquee-toggle-btn"
+          aria-pressed="false"
+          aria-label="Pause sector filter auto-scroll"
+          title="Pause / Resume sector ticker"
+          class="shrink-0 inline-flex items-center justify-center w-7 h-7 rounded-md border border-app-border bg-app-surface-2 hover:bg-app-surface text-app-muted hover:text-app-text cursor-pointer transition-colors"
         >
-          SECTOR: ALL ({blips.length})
+          <!-- Pause SVG Icon -->
+          <svg
+            id="sector-marquee-icon-pause"
+            class="w-3.5 h-3.5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="6" y="4" width="4" height="16" rx="1" />
+            <rect x="14" y="4" width="4" height="16" rx="1" />
+          </svg>
+          <!-- Play SVG Icon -->
+          <svg
+            id="sector-marquee-icon-play"
+            class="w-3.5 h-3.5 hidden"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <polygon points="5 3 19 12 5 21 5 3" />
+          </svg>
         </button>
-        {categories.map((cat) => {
-          const count = blips.filter((b) => b.category === cat.slug).length;
-          return (
-            <button
-              type="button"
-              data-sector={cat.slug}
-              aria-pressed="false"
-              class="sector-filter-chip shrink-0 px-2.5 py-1 rounded-md font-mono text-[11px] border border-app-border bg-app-surface-2 text-app-muted hover:text-app-text cursor-pointer transition-colors"
-            >
-              {cat.slug.toUpperCase()} ({count})
-            </button>
-          );
-        })}
       </div>
     </div>
 
@@ -749,18 +856,136 @@ const defaultBlip = sortedFlagged[0] || blips[0];
       });
     });
 
-    // Sector Filter Chip Click Handlers
+    // Sector Filter Chip Click Handlers (Mid-scroll click applies radar filter without snapping ticker position)
     sectorChips.forEach((chip) => {
       chip.addEventListener('click', () => {
         currentSector = chip.getAttribute('data-sector') || 'all';
         sectorChips.forEach((c) => {
           const isActive = c.getAttribute('data-sector') === currentSector;
-          c.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+          if (!c.hasAttribute('data-marquee-clone')) {
+            c.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+          }
           c.classList.toggle('active-sector-chip', isActive);
         });
         applyFiltersAndRecomputeStats();
       });
     });
+
+    // Auto-Scrolling Sector Marquee Controls (Constant ~30px/s, Pause/Play localStorage, Stop on Manual Scroll, Off-Viewport Pause)
+    const filterBar = document.getElementById('radar-sector-filter-bar');
+    const marqueeTrack = document.getElementById('radar-sector-marquee-track');
+    const primaryGroup = document.getElementById('sector-chip-group-primary');
+    const marqueeToggleBtn = document.getElementById('sector-marquee-toggle-btn');
+    const iconPause = document.getElementById('sector-marquee-icon-pause');
+    const iconPlay = document.getElementById('sector-marquee-icon-play');
+
+    function calibrateMarqueeSpeed() {
+      if (!primaryGroup || !marqueeTrack) return;
+      const groupWidth = primaryGroup.getBoundingClientRect().width;
+      if (groupWidth > 100) {
+        const durationSec = Math.max(40, Math.min(60, Math.round(groupWidth / 30)));
+        marqueeTrack.style.setProperty('--marquee-duration', `${durationSec}s`);
+      }
+    }
+
+    function syncMarqueeToggleUI(isPaused) {
+      if (!marqueeToggleBtn) return;
+      marqueeToggleBtn.setAttribute('aria-pressed', isPaused ? 'true' : 'false');
+      marqueeToggleBtn.setAttribute(
+        'aria-label',
+        isPaused ? 'Resume sector filter auto-scroll' : 'Pause sector filter auto-scroll'
+      );
+      if (isPaused) {
+        iconPause?.classList.add('hidden');
+        iconPlay?.classList.remove('hidden');
+      } else {
+        iconPause?.classList.remove('hidden');
+        iconPlay?.classList.add('hidden');
+      }
+    }
+
+    function stopForManualScrollSession() {
+      if (!filterBar) return;
+      if (filterBar.getAttribute('data-manual-scroll') === 'true') return;
+      filterBar.setAttribute('data-manual-scroll', 'true');
+      try {
+        sessionStorage.setItem('sos-sector-manual-scroll', 'true');
+      } catch {
+        // Ignore storage restrictions
+      }
+      syncMarqueeToggleUI(true);
+    }
+
+    calibrateMarqueeSpeed();
+    if ('ResizeObserver' in window && primaryGroup) {
+      const ro = new ResizeObserver(calibrateMarqueeSpeed);
+      ro.observe(primaryGroup);
+    }
+
+    // Restore persisted pause preference or session manual scroll state
+    let userPaused = false;
+    try {
+      userPaused = localStorage.getItem('sos-sector-marquee-paused') === 'true';
+      const sessionManual = sessionStorage.getItem('sos-sector-manual-scroll') === 'true';
+      if (sessionManual && filterBar) {
+        filterBar.setAttribute('data-manual-scroll', 'true');
+      }
+    } catch {
+      // Ignore storage restrictions
+    }
+    if (filterBar) {
+      filterBar.setAttribute('data-user-paused', userPaused ? 'true' : 'false');
+    }
+    syncMarqueeToggleUI(userPaused || (filterBar?.getAttribute('data-manual-scroll') === 'true'));
+
+    marqueeToggleBtn?.addEventListener('click', () => {
+      if (!filterBar) return;
+      const currentlyPaused =
+        filterBar.getAttribute('data-user-paused') === 'true' ||
+        filterBar.getAttribute('data-manual-scroll') === 'true';
+      const nextPaused = !currentlyPaused;
+      filterBar.setAttribute('data-user-paused', nextPaused ? 'true' : 'false');
+      if (!nextPaused) {
+        filterBar.setAttribute('data-manual-scroll', 'false');
+        try {
+          sessionStorage.removeItem('sos-sector-manual-scroll');
+        } catch {}
+      }
+      try {
+        localStorage.setItem('sos-sector-marquee-paused', nextPaused ? 'true' : 'false');
+      } catch {}
+      syncMarqueeToggleUI(nextPaused);
+    });
+
+    // Stop auto-scroll on manual user scroll/drag (wheel, touchmove, scrollbar interaction)
+    filterBar?.addEventListener(
+      'wheel',
+      (e) => {
+        if (Math.abs(e.deltaX) > 1 || e.shiftKey) {
+          stopForManualScrollSession();
+        }
+      },
+      { passive: true }
+    );
+    filterBar?.addEventListener('touchmove', stopForManualScrollSession, { passive: true });
+    filterBar?.addEventListener('pointerdown', (e) => {
+      if (e.target === filterBar) {
+        stopForManualScrollSession();
+      }
+    });
+
+    // Pause when section is off-viewport (IntersectionObserver -> zero cost when unseen)
+    if ('IntersectionObserver' in window && filterBar) {
+      const viewportObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            filterBar.setAttribute('data-offscreen', entry.isIntersecting ? 'false' : 'true');
+          });
+        },
+        { threshold: 0 }
+      );
+      viewportObserver.observe(filterBar);
+    }
 
     // "Show flagged only" Toggle
     toggleFlaggedBtn?.addEventListener('click', () => {
