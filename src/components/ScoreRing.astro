@@ -17,9 +17,9 @@ const strokeColorVar =
       : 'var(--risky)';
 
 const dimensions = {
-  sm: { size: 64, strokeWidth: 5, fontSize: 'text-base', labelSize: 'text-[9px]' },
-  md: { size: 96, strokeWidth: 7, fontSize: 'text-2xl', labelSize: 'text-[11px]' },
-  lg: { size: 128, strokeWidth: 9, fontSize: 'text-4xl', labelSize: 'text-xs' }
+  sm: { size: 64, strokeWidth: 6, fontSize: 'text-base', labelSize: 'text-[9px]' },
+  md: { size: 96, strokeWidth: 8, fontSize: 'text-2xl', labelSize: 'text-[11px]' },
+  lg: { size: 128, strokeWidth: 10, fontSize: 'text-[32px]', labelSize: 'text-xs' }
 }[size];
 
 const radius = (dimensions.size - dimensions.strokeWidth * 2) / 2;
@@ -36,6 +36,7 @@ const dashoffset = circumference - (score / 100) * circumference;
   aria-label={`Safety score ${score} out of 100`}
   data-score-ring={animate ? 'true' : 'false'}
   data-dashoffset={dashoffset}
+  data-circumference={circumference}
   data-score={score}
 >
   <svg
@@ -45,7 +46,7 @@ const dashoffset = circumference - (score / 100) * circumference;
     class="rotate-[-90deg] transform"
     aria-hidden="true"
   >
-    <!-- Background track -->
+    <!-- Background track (--surface-2) -->
     <circle
       cx={dimensions.size / 2}
       cy={dimensions.size / 2}
@@ -54,23 +55,23 @@ const dashoffset = circumference - (score / 100) * circumference;
       stroke="var(--surface-2)"
       stroke-width={dimensions.strokeWidth}
     />
-    <!-- Foreground score arc -->
+    <!-- Foreground score arc (static SVG fallback rendered at dashoffset for no-JS & reduced motion) -->
     <circle
       cx={dimensions.size / 2}
       cy={dimensions.size / 2}
       r={radius}
-      class="score-arc fill-none transition-[stroke-dashoffset] duration-700 ease-out"
+      class="score-arc fill-none"
       stroke={strokeColorVar}
       stroke-width={dimensions.strokeWidth}
       stroke-dasharray={circumference}
-      stroke-dashoffset={animate ? circumference : dashoffset}
+      stroke-dashoffset={dashoffset}
       stroke-linecap="round"
     />
   </svg>
 
   <div class="absolute inset-0 flex flex-col items-center justify-center text-center select-none">
     <span
-      class={`score-value font-bold font-mono tracking-tight leading-none text-app-text ${dimensions.fontSize}`}
+      class={`score-value font-semibold font-mono tracking-tight leading-none text-app-text ${dimensions.fontSize}`}
     >
       {score % 1 !== 0 ? score.toFixed(1) : score}
     </span>
@@ -84,42 +85,59 @@ const dashoffset = circumference - (score / 100) * circumference;
   function initScoreRings() {
     const rings = document.querySelectorAll<HTMLElement>('[data-score-ring="true"]');
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) return;
 
-    rings.forEach((container) => {
+    const animateRing = (container: HTMLElement) => {
+      if (container.getAttribute('data-animated') === 'true') return;
+      container.setAttribute('data-animated', 'true');
+
       const targetScore = parseFloat(container.getAttribute('data-score') || '0');
       const isDecimal = targetScore % 1 !== 0;
       const targetOffset = parseFloat(container.getAttribute('data-dashoffset') || '0');
+      const circumference = parseFloat(container.getAttribute('data-circumference') || '0');
       const arc = container.querySelector<SVGCircleElement>('.score-arc');
       const valueEl = container.querySelector<HTMLElement>('.score-value');
-
       if (!arc || !valueEl) return;
-      const displayEl = valueEl;
 
-      if (prefersReducedMotion) {
-        arc.style.strokeDashoffset = targetOffset.toString();
-        displayEl.textContent = isDecimal ? targetScore.toFixed(1) : targetScore.toString();
-        return;
-      }
-
+      arc.style.transition = 'none';
+      arc.style.strokeDashoffset = circumference.toString();
       requestAnimationFrame(() => {
+        arc.style.transition = 'stroke-dashoffset 150ms ease-out';
         arc.style.strokeDashoffset = targetOffset.toString();
       });
 
       let start: number | null = null;
-      const duration = 600;
+      const duration = 150;
       function step(timestamp: number) {
         if (!start) start = timestamp;
         const progress = Math.min((timestamp - start) / duration, 1);
         const current = progress * targetScore;
-        displayEl.textContent = isDecimal ? current.toFixed(1) : Math.round(current).toString();
+        valueEl!.textContent = isDecimal ? current.toFixed(1) : Math.round(current).toString();
         if (progress < 1) {
           requestAnimationFrame(step);
         } else {
-          displayEl.textContent = isDecimal ? targetScore.toFixed(1) : targetScore.toString();
+          valueEl!.textContent = isDecimal ? targetScore.toFixed(1) : targetScore.toString();
         }
       }
       requestAnimationFrame(step);
-    });
+    };
+
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              animateRing(entry.target as HTMLElement);
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        { threshold: 0.2 }
+      );
+      rings.forEach((r) => observer.observe(r));
+    } else {
+      rings.forEach(animateRing);
+    }
   }
 
   if (document.readyState === 'loading') {
