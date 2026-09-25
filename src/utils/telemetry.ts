@@ -9,13 +9,15 @@ export interface RadarBlip {
   score: number;
   verdict: Verdict;
   category: string;
-  angle: number;   // 0 - 360 deg
-  radius: number;  // Distance from center (0 to 150)
-  bearing: string; // e.g. "BRG 214°"
-  rangeVal: string;// e.g. "RNG 0.62"
+  angle: number;        // 0 - 360 deg (bearing encodes category)
+  radius: number;       // Radial distance (0 to 156, mapped to SCORE 0..100)
+  bearing: string;      // e.g. "BRG 214°"
+  rangeVal: string;     // e.g. "SCORE 42"
   lastScanned: string;
   isFlagged: boolean;
   color: string;
+  labelSide: 'left' | 'right';
+  labelDy: number;
 }
 
 export interface TelemetryStats {
@@ -40,41 +42,72 @@ export function getTelemetryStats(): TelemetryStats {
   const riskyCount = tools.filter((t) => t.verdict === 'risky').length;
   const flaggedCount = cautionCount + riskyCount;
 
-  const nominalPercentage = totalWatched > 0
-    ? Number(((healthyCount / totalWatched) * 100).toFixed(1))
-    : 0;
+  const nominalPercentage =
+    totalWatched > 0
+      ? Number(((healthyCount / totalWatched) * 100).toFixed(1))
+      : 0;
 
-  const averageScore = totalWatched > 0
-    ? Number((tools.reduce((acc, t) => acc + t.safety_score, 0) / totalWatched).toFixed(1))
-    : 0;
+  const averageScore =
+    totalWatched > 0
+      ? Number(
+          (
+            tools.reduce((acc, t) => acc + t.safety_score, 0) / totalWatched
+          ).toFixed(1)
+        )
+      : 0;
 
   const scoredTools = tools.filter((t) => t.scorecard !== null);
-  const averageScorecard = scoredTools.length > 0
-    ? Number((scoredTools.reduce((acc, t) => acc + (t.scorecard || 0), 0) / scoredTools.length).toFixed(1))
-    : 0;
+  const averageScorecard =
+    scoredTools.length > 0
+      ? Number(
+          (
+            scoredTools.reduce((acc, t) => acc + (t.scorecard || 0), 0) /
+            scoredTools.length
+          ).toFixed(1)
+        )
+      : 0;
 
-  // Generate deterministic radar blips from actual monitored tools
-  // Radius: 100 - score scaled (higher score = closer to center, risky = outer ring)
-  // Angle: distributed across categories and tools
+  // Group tools by category to distribute bearings cleanly without overlap
+  const categoryCounts = new Map<string, number>();
+  let flaggedIndex = 0;
+
   const radarBlips: RadarBlip[] = tools.map((t, idx) => {
     const catIdx = categories.findIndex((c) => c.slug === t.category);
-    const baseAngle = catIdx >= 0 ? (catIdx / categories.length) * 360 : (idx / tools.length) * 360;
-    // Add deterministic jitter based on string hash of tool slug
-    let hash = 0;
-    for (let i = 0; i < t.slug.length; i++) {
-      hash = (hash << 5) - hash + t.slug.charCodeAt(i);
-      hash |= 0;
-    }
-    const jitterAngle = (Math.abs(hash) % 24) - 12;
-    const angle = Math.round((baseAngle + jitterAngle + 360) % 360);
+    const seenInCat = categoryCounts.get(t.category) || 0;
+    categoryCounts.set(t.category, seenInCat + 1);
 
-    // Invert score so safest tools are closer to center (R=35 to 80), risky are farther out (R=120 to 155)
-    // Range normalized from 0.20 to 0.95
-    const normalizedDist = Math.max(0.2, Math.min(0.95, (105 - t.safety_score) / 80));
-    const radius = Math.round(normalizedDist * 160);
+    const sectorWidth = 360 / categories.length;
+    const baseAngle =
+      catIdx >= 0
+        ? catIdx * sectorWidth + (seenInCat + 0.5) * (sectorWidth / 3.2)
+        : (idx / tools.length) * 360;
+
+    const angle = Math.round((baseAngle + 360) % 360);
+
+    // Radial axis IS the safety score (0-100, center=0, rim=100, gridlines at 25/50/75/100 -> r=40/80/120/160)
+    const clampedScore = Math.max(15, Math.min(98, t.safety_score));
+    const radius = Math.round((clampedScore / 100) * 156);
 
     const isFlagged = t.verdict === 'risky' || t.verdict === 'caution';
-    const color = t.verdict === 'healthy' ? 'var(--healthy)' : t.verdict === 'caution' ? 'var(--caution)' : 'var(--risky)';
+    const color =
+      t.verdict === 'healthy'
+        ? 'var(--healthy)'
+        : t.verdict === 'caution'
+          ? 'var(--caution)'
+          : 'var(--risky)';
+
+    // Collision-resolved label placement: alternate left/right and stagger vertical offset
+    let labelSide: 'left' | 'right' = angle > 180 ? 'left' : 'right';
+    let labelDy = 3;
+    if (isFlagged) {
+      labelSide = flaggedIndex % 2 === 0 ? 'right' : 'left';
+      const verticalSteps = [-10, 4, 14, -14, 10, -6];
+      labelDy = verticalSteps[flaggedIndex % verticalSteps.length];
+      flaggedIndex++;
+    } else {
+      labelSide = seenInCat % 2 === 0 ? 'right' : 'left';
+      labelDy = seenInCat === 0 ? -7 : seenInCat === 1 ? 5 : 13;
+    }
 
     return {
       name: t.name,
@@ -86,10 +119,12 @@ export function getTelemetryStats(): TelemetryStats {
       angle,
       radius,
       bearing: `BRG ${String(angle).padStart(3, '0')}°`,
-      rangeVal: `RNG ${normalizedDist.toFixed(2)}`,
+      rangeVal: `SCORE ${Math.round(t.safety_score)}`,
       lastScanned: t.scanned_at,
       isFlagged,
-      color
+      color,
+      labelSide,
+      labelDy
     };
   });
 

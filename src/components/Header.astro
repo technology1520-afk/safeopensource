@@ -58,15 +58,60 @@ const allTools = getAllTools();
         Methodology
       </a>
 
-      <a
-        href="/scan"
-        class="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-blue-600/20 text-blue-400 hover:bg-blue-600 border border-blue-500/30 transition-colors font-mono font-bold text-xs"
-      >
-        <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-        </svg>
-        <span>Scan Repo</span>
-      </a>
+      <!-- Unmistakable "Scan Repo" Solid CTA Button + Dropdown Caret Menu -->
+      <div class="relative inline-flex items-center" id="scan-repo-cta-group">
+        <div class="inline-flex items-stretch rounded-lg shadow-xs">
+          <a
+            href="/scan"
+            id="scan-repo-primary-btn"
+            class="scan-repo-cta-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-l-lg font-mono font-semibold text-xs cursor-pointer select-none"
+          >
+            <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+            <span>Scan Repo</span>
+          </a>
+          <button
+            type="button"
+            id="scan-repo-caret-btn"
+            aria-label="More scan actions"
+            aria-haspopup="menu"
+            aria-expanded="false"
+            aria-controls="scan-repo-dropdown-menu"
+            class="scan-repo-cta-caret inline-flex items-center justify-center px-2 py-1.5 rounded-r-lg border-l border-white/25 cursor-pointer select-none"
+          >
+            <svg class="w-3.5 h-3.5 transition-transform duration-150" id="scan-repo-caret-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Dropdown Menu ("Scan a repo…" / "Paste URL") -->
+        <div
+          id="scan-repo-dropdown-menu"
+          role="menu"
+          aria-label="Scan repository actions"
+          class="hidden absolute right-0 top-full mt-2 w-48 rounded-xl border border-app-border bg-app-surface p-1.5 z-50 font-mono text-xs shadow-lg"
+        >
+          <a
+            href="/scan"
+            role="menuitem"
+            class="flex items-center justify-between px-3 py-2 rounded-lg text-app-text hover:bg-app-surface-2 transition-colors"
+          >
+            <span>Scan a repo&hellip;</span>
+            <span class="text-[10px] text-app-muted">&rarr;</span>
+          </a>
+          <button
+            type="button"
+            id="scan-repo-paste-action"
+            role="menuitem"
+            class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-app-text hover:bg-app-surface-2 transition-colors text-left cursor-pointer"
+          >
+            <span>Paste URL</span>
+            <span class="text-[10px] text-app-accent">⌘V</span>
+          </button>
+        </div>
+      </div>
 
       <!-- Dual Personality Theme Toggle (Lavender Lab <-> Cosmic Void) -->
       <button
@@ -128,10 +173,66 @@ const allTools = getAllTools();
     toggle?.addEventListener('click', () => {
       const current = resolveTheme();
       const next = current === 'lavender-lab' ? 'cosmic-void' : 'lavender-lab';
+      localStorage.setItem('sos-lavender-v1', next);
       localStorage.setItem('sos-primary-theme', next);
       localStorage.setItem('sos-theme', next);
       localStorage.setItem('theme', next);
       applyTheme(next);
+    });
+
+    // Scan Repo Dropdown Caret Menu
+    const caretBtn = document.getElementById('scan-repo-caret-btn');
+    const caretIcon = document.getElementById('scan-repo-caret-icon');
+    const dropdownMenu = document.getElementById('scan-repo-dropdown-menu');
+    const pasteAction = document.getElementById('scan-repo-paste-action');
+    const ctaGroup = document.getElementById('scan-repo-cta-group');
+
+    function closeDropdown() {
+      dropdownMenu?.classList.add('hidden');
+      caretBtn?.setAttribute('aria-expanded', 'false');
+      caretIcon?.classList.remove('rotate-180');
+    }
+
+    caretBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isHidden = dropdownMenu?.classList.contains('hidden');
+      if (isHidden) {
+        dropdownMenu?.classList.remove('hidden');
+        caretBtn?.setAttribute('aria-expanded', 'true');
+        caretIcon?.classList.add('rotate-180');
+      } else {
+        closeDropdown();
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (ctaGroup && !ctaGroup.contains(e.target)) {
+        closeDropdown();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeDropdown();
+    });
+
+    pasteAction?.addEventListener('click', async () => {
+      closeDropdown();
+      let pastedText = '';
+      try {
+        if (navigator.clipboard && navigator.clipboard.readText) {
+          pastedText = (await navigator.clipboard.readText()).trim();
+        }
+      } catch {
+        // Fallback if clipboard permission denied
+      }
+      const scanInput = document.getElementById('scan-url-input') || document.querySelector('input[name="url"]');
+      if (scanInput && 'value' in scanInput) {
+        if (pastedText) scanInput.value = pastedText;
+        scanInput.focus();
+      } else {
+        const dest = pastedText ? `/scan?url=${encodeURIComponent(pastedText)}` : '/scan?paste=1';
+        window.location.href = dest;
+      }
     });
   })();
 </script>

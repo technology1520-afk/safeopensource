@@ -1,5 +1,6 @@
 ---
 import { getTelemetryStats } from '../utils/telemetry';
+import { categories } from '../data/categories';
 
 interface Props {
   class?: string;
@@ -7,56 +8,162 @@ interface Props {
 
 const { class: className = '' } = Astro.props;
 const telemetry = getTelemetryStats();
-const blips = telemetry.radarBlips.slice(0, 12); // Display top 12 representative blips
-const defaultBlip = blips.find((b) => b.isFlagged) || blips[0];
+const blips = telemetry.radarBlips; // All 39 cataloged repositories across 14 sectors
+
+// 3d. Flag-First Default View: auto-select the most recently scanned flagged repo on load
+const sortedFlagged = [...blips]
+  .filter((b) => b.isFlagged)
+  .sort((a, b) => new Date(b.lastScanned).getTime() - new Date(a.lastScanned).getTime());
+
+const defaultBlip = sortedFlagged[0] || blips[0];
 ---
 
-<div class={`w-full max-w-4xl mx-auto ${className}`} id="detection-radar-scope">
-  <div class="rounded-xl border border-app-border bg-app-surface p-6 sm:p-8 relative">
-    
-    <!-- Top Telemetry Header (Instrument Bar, zero mockup flavor text) -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-app-border text-xs font-mono">
-      <div class="flex items-center gap-2.5">
-        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
-        <span class="text-app-text font-bold uppercase tracking-wider text-xs">
+<div
+  class={`w-full max-w-5xl mx-auto ${className}`}
+  id="detection-radar-scope"
+  data-active-sector="all"
+  data-flagged-only="false"
+  data-latest-sweep={telemetry.latestSweepTimestamp}
+>
+  <div class="rounded-xl border border-app-border bg-app-surface p-5 sm:p-7 relative">
+    <!-- 2. Top Telemetry Header (Scan-State Sync: NOMINAL unless real /api/scan job is active) -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-app-border text-xs font-mono">
+      <div class="flex items-center gap-2.5 flex-wrap">
+        <span
+          id="scope-status-led"
+          class="w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0"
+          aria-hidden="true"
+        ></span>
+        <span class="text-app-text font-semibold uppercase tracking-wider text-xs">
           CONTINUOUS DEFENSE RADAR SCOPE
         </span>
+        <span
+          id="scope-scan-state-badge"
+          data-scan-state="NOMINAL"
+          class="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold border verdict-badge-healthy"
+        >
+          STATE: NOMINAL
+        </span>
       </div>
-      <div class="flex items-center gap-3 text-app-subtle text-[11px]">
-        <span>WATCHLIST: <strong class="text-app-text">{telemetry.totalWatched} REPOS</strong></span>
-        <span>·</span>
-        <span>SECTOR DOMAINS: <strong class="text-app-text">14 TAXONOMIES</strong></span>
-        <span>·</span>
-        <span>LAST SWEEP: <strong class="text-emerald-400">{telemetry.latestSweepTimestamp}</strong></span>
+
+      <div class="flex items-center gap-3 text-app-muted text-[11px] flex-wrap">
+        <span>WATCHLIST: <strong class="text-app-text" id="scope-watchlist-count">{telemetry.totalWatched} REPOS</strong></span>
+        <span>&middot;</span>
+        <span>LAST SWEEP: <strong class="text-emerald-400" id="scope-last-sweep-label">{telemetry.latestSweepTimestamp}</strong></span>
+        <span>&middot;</span>
+        <button
+          type="button"
+          id="toggle-radar-table-view"
+          aria-expanded="false"
+          aria-controls="radar-accessible-table-container"
+          class="px-2.5 py-1 rounded-md border border-app-border bg-app-surface-2 hover:bg-app-surface text-app-accent font-mono text-[11px] font-semibold cursor-pointer transition-colors"
+        >
+          Table view
+        </button>
       </div>
     </div>
 
-    <!-- Scope Grid & Layout: Radar Scope (Left) + Telemetry Readout (Right) -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 my-6 items-center">
-      
+    <!-- 3g. Empty / Degraded Telemetry Banner (Shown only when pipeline is unreachable/stale) -->
+    <div
+      id="scope-stale-banner"
+      role="status"
+      aria-live="polite"
+      class="hidden mt-4 px-4 py-2.5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-400 font-mono text-xs flex items-center justify-between gap-3"
+    >
+      <span>
+        Telemetry stale since <strong id="scope-stale-timestamp">{telemetry.latestSweepTimestamp}</strong> &mdash; showing last known sweep (40% retention opacity).
+      </span>
+      <span class="text-[10px] uppercase tracking-wider font-semibold">DEGRADED FEED</span>
+    </div>
+
+    <!-- 3b & 3d. Interactive Sector Taxonomy Filters + "Show flagged only" Toggle -->
+    <div class="mt-4 pb-4 border-b border-app-border flex flex-col gap-2.5">
+      <div class="flex items-center justify-between gap-2 flex-wrap">
+        <span class="text-micro">SECTOR FILTER (14 TAXONOMIES)</span>
+        <button
+          type="button"
+          id="toggle-flagged-only"
+          aria-pressed="false"
+          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-app-border bg-app-surface-2 hover:bg-app-surface text-xs font-mono text-app-text cursor-pointer transition-colors"
+        >
+          <span class="w-2 h-2 rounded-full bg-rose-500" aria-hidden="true"></span>
+          <span>Show flagged only</span>
+        </button>
+      </div>
+
+      <div
+        class="flex items-center gap-1.5 overflow-x-auto pb-1"
+        role="toolbar"
+        aria-label="Filter radar blips by sector category"
+        id="radar-sector-filter-bar"
+      >
+        <button
+          type="button"
+          data-sector="all"
+          aria-pressed="true"
+          class="sector-filter-chip active-sector-chip shrink-0 px-2.5 py-1 rounded-md font-mono text-[11px] font-semibold border cursor-pointer transition-colors"
+        >
+          SECTOR: ALL ({blips.length})
+        </button>
+        {categories.map((cat) => {
+          const count = blips.filter((b) => b.category === cat.slug).length;
+          return (
+            <button
+              type="button"
+              data-sector={cat.slug}
+              aria-pressed="false"
+              class="sector-filter-chip shrink-0 px-2.5 py-1 rounded-md font-mono text-[11px] border border-app-border bg-app-surface-2 text-app-muted hover:text-app-text cursor-pointer transition-colors"
+            >
+              {cat.slug.toUpperCase()} ({count})
+            </button>
+          );
+        })}
+      </div>
+    </div>
+
+    <!-- Scope Grid & Layout: Radar Scope (Left 7 cols) + Target Telemetry Inspector (Right 5 cols) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 my-6 items-center" id="radar-visual-grid">
       <!-- RADAR SCOPE SCREEN (7 cols) -->
-      <div class="lg:col-span-7 flex flex-col items-center">
-        <div class="relative w-[320px] h-[320px] sm:w-[360px] sm:h-[360px] flex items-center justify-center select-none">
-          <!-- Static Conic Sweep Trail (Violet 25%->0% in Lavender Lab / Starlight Lavender in Cosmic Void) -->
+      <div class="lg:col-span-7 flex flex-col items-center relative">
+        <div
+          class="relative w-[320px] h-[320px] sm:w-[380px] sm:h-[380px] flex items-center justify-center select-none"
+          id="radar-viewport-box"
+        >
+          <!-- 2. Continuous Rotating Conic Sweep Wedge (60s/rev pure CSS, pauses on prefers-reduced-motion) -->
           <div
-            class="radar-sky-trail absolute w-[88%] h-[88%] rounded-full pointer-events-none"
+            class="radar-sky-trail radar-continuous-beam absolute w-[88.8%] h-[88.8%] rounded-full pointer-events-none"
             aria-hidden="true"
           ></div>
+
+          <!-- 3e. Floating Mini Hover Card Tooltip (Name, Score, Verdict, Last Scanned) -->
+          <div
+            id="radar-hover-tooltip"
+            role="tooltip"
+            class="hidden pointer-events-none absolute z-30 px-3 py-2 rounded-lg border border-app-border bg-app-surface text-app-text font-mono text-[11px] shadow-md min-w-[170px]"
+          >
+            <div class="flex items-center justify-between gap-2 mb-0.5">
+              <strong id="tooltip-name" class="text-xs font-semibold truncate">Jellyfin</strong>
+              <span id="tooltip-score" class="font-semibold text-xs">91.8</span>
+            </div>
+            <div class="flex items-center justify-between gap-2 text-[10px] text-app-muted">
+              <span id="tooltip-verdict" class="uppercase font-semibold">HEALTHY</span>
+              <span id="tooltip-scanned">2026-09-21</span>
+            </div>
+          </div>
 
           <!-- Base SVG Scope -->
           <svg
             viewBox="0 0 360 360"
             class="w-full h-full relative z-10"
-            aria-label="Radar Scope Display"
+            aria-label="Interactive Safety Score Radar Scope (Radial axis: Score 0 at center to Score 100 at outer rim)"
           >
             <defs>
-              <!-- Bezel Clip to ensure crosshairs never overshoot bezel -->
               <clipPath id="bezel-clip">
                 <circle cx="180" cy="180" r="160" />
               </clipPath>
             </defs>
 
-            <!-- Thin Starfield Bezel Ring (Observatory celestial degree ring) -->
+            <!-- Outer Degree Tick Bezel Ring (in --border) -->
             <circle
               cx="180"
               cy="180"
@@ -68,10 +175,18 @@ const defaultBlip = blips.find((b) => b.isFlagged) || blips[0];
               class="radar-starfield-bezel"
             />
 
-            <!-- Outer Bezel Ring -->
-            <circle cx="180" cy="180" r="160" fill="var(--radar-bg)" fill-opacity="0.82" stroke="var(--radar-stroke)" stroke-width="2" />
+            <!-- Outer Scope Rim (SCORE 100) -->
+            <circle
+              cx="180"
+              cy="180"
+              r="160"
+              fill="var(--radar-bg)"
+              fill-opacity="0.88"
+              stroke="var(--radar-stroke)"
+              stroke-width="1.75"
+            />
 
-            <!-- Inner Starfield Ring -->
+            <!-- Inner Bezel Tick Ring -->
             <circle
               cx="180"
               cy="180"
@@ -82,63 +197,67 @@ const defaultBlip = blips.find((b) => b.isFlagged) || blips[0];
               stroke-dasharray="0.8 11"
             />
 
-            <!-- Range Rings (Clipped at Bezel) -->
+            <!-- 3c. Score Rings (Clipped at Bezel: SCORE 25 at r=40, SCORE 50 at r=80, SCORE 75 at r=120, SCORE 100 at r=160) -->
             <g clip-path="url(#bezel-clip)">
               <circle cx="180" cy="180" r="120" fill="var(--radar-sector-fill)" stroke="var(--radar-stroke)" stroke-width="1" stroke-dasharray="3 3" />
               <circle cx="180" cy="180" r="80" fill="none" stroke="var(--radar-stroke)" stroke-width="1" stroke-dasharray="2 2" />
               <circle cx="180" cy="180" r="40" fill="var(--radar-sector-fill)" stroke="var(--radar-stroke)" stroke-width="1" />
 
-              <!-- Crosshairs strictly trimmed at the 160 radius bezel -->
-              <line x1="180" y1="20" x2="180" y2="340" stroke="var(--radar-sector-line)" stroke-width="1.5" />
-              <line x1="20" y1="180" x2="340" y2="180" stroke="var(--radar-sector-line)" stroke-width="1.5" />
+              <!-- Crosshairs trimmed at r=160 -->
+              <line x1="180" y1="20" x2="180" y2="340" stroke="var(--radar-sector-line)" stroke-width="1.25" />
+              <line x1="20" y1="180" x2="340" y2="180" stroke="var(--radar-sector-line)" stroke-width="1.25" />
 
-              <!-- 45-degree angle guide dashes -->
+              <!-- Diagonal Bearing Guides -->
               <line x1="67" y1="67" x2="293" y2="293" stroke="var(--radar-sector-line)" stroke-width="1" stroke-dasharray="2 4" />
               <line x1="67" y1="293" x2="293" y2="67" stroke="var(--radar-sector-line)" stroke-width="1" stroke-dasharray="2 4" />
             </g>
 
-            <!-- Cardinal Bearing Ticks & Labels -->
-            <!-- 000° (N) -->
-            <line x1="180" y1="16" x2="180" y2="24" stroke="var(--accent)" stroke-width="2" />
-            <text x="180" y="12" fill="var(--text-2)" font-family="monospace" font-size="9" text-anchor="middle" font-weight="bold">000°</text>
+            <!-- Cardinal Bearing Ticks (in --border) & Labels -->
+            <line x1="180" y1="16" x2="180" y2="24" stroke="var(--border)" stroke-width="2" />
+            <text x="180" y="12" fill="var(--text-2)" font-family="monospace" font-size="9" text-anchor="middle" font-weight="600">000°</text>
 
-            <!-- 090° (E) -->
-            <line x1="336" y1="180" x2="344" y2="180" stroke="var(--accent)" stroke-width="2" />
-            <text x="354" y="183" fill="var(--text-2)" font-family="monospace" font-size="9" text-anchor="start" font-weight="bold">090°</text>
+            <line x1="336" y1="180" x2="344" y2="180" stroke="var(--border)" stroke-width="2" />
+            <text x="354" y="183" fill="var(--text-2)" font-family="monospace" font-size="9" text-anchor="start" font-weight="600">090°</text>
 
-            <!-- 180° (S) -->
-            <line x1="180" y1="336" x2="180" y2="344" stroke="var(--accent)" stroke-width="2" />
-            <text x="180" y="356" fill="var(--text-2)" font-family="monospace" font-size="9" text-anchor="middle" font-weight="bold">180°</text>
+            <line x1="180" y1="336" x2="180" y2="344" stroke="var(--border)" stroke-width="2" />
+            <text x="180" y="356" fill="var(--text-2)" font-family="monospace" font-size="9" text-anchor="middle" font-weight="600">180°</text>
 
-            <!-- 270° (W) -->
-            <line x1="16" y1="180" x2="24" y2="180" stroke="var(--accent)" stroke-width="2" />
-            <text x="6" y="183" fill="var(--text-2)" font-family="monospace" font-size="9" text-anchor="end" font-weight="bold">270°</text>
+            <line x1="16" y1="180" x2="24" y2="180" stroke="var(--border)" stroke-width="2" />
+            <text x="6" y="183" fill="var(--text-2)" font-family="monospace" font-size="9" text-anchor="end" font-weight="600">270°</text>
 
-            <!-- Range-Ring Distance Labels -->
-            <text x="184" y="145" fill="var(--text-2)" font-family="monospace" font-size="7">RNG 0.25</text>
-            <text x="184" y="105" fill="var(--text-2)" font-family="monospace" font-size="7">RNG 0.50</text>
-            <text x="184" y="65" fill="var(--text-2)" font-family="monospace" font-size="7">RNG 0.75</text>
-            <text x="184" y="27" fill="var(--text-2)" font-family="monospace" font-size="7">RNG 1.00</text>
+            <!-- 3c. RANGE = SCORE Gridline Labels ("SCORE 25", "SCORE 50", "SCORE 75", "SCORE 100") -->
+            <text x="184" y="144" fill="var(--text-2)" font-family="monospace" font-size="7.5" font-weight="600">SCORE 25</text>
+            <text x="184" y="104" fill="var(--text-2)" font-family="monospace" font-size="7.5" font-weight="600">SCORE 50</text>
+            <text x="184" y="64" fill="var(--text-2)" font-family="monospace" font-size="7.5" font-weight="600">SCORE 75</text>
+            <text x="184" y="28" fill="var(--text-2)" font-family="monospace" font-size="7.5" font-weight="600">SCORE 100</text>
 
-            <!-- Leading-Edge Azimuth Vector -->
-            <g class="radar-leading-edge origin-[180px_180px]">
+            <!-- Continuous Rotating Leading-Edge Vector (60s/rev synced with conic trail) -->
+            <g class="radar-leading-edge radar-continuous-beam origin-[180px_180px]">
               <line x1="180" y1="180" x2="180" y2="20" stroke="var(--accent)" stroke-width="1.5" opacity="0.85" />
             </g>
 
-            <!-- Center Origin Hub -->
-            <circle cx="180" cy="180" r="4" fill="var(--accent)" />
-            <circle cx="180" cy="180" r="1.5" fill="var(--surface)" />
+            <!-- Center Origin Hub (Pulses sub-second ONLY when real scan is active) -->
+            <circle id="scope-center-dot" cx="180" cy="180" r="4.5" fill="var(--accent)" />
+            <circle cx="180" cy="180" r="1.75" fill="var(--surface)" />
 
-            <!-- Dynamically Plotted Repos (Glow like celestial observations in Cosmic Void) -->
+            <!-- Dynamically Plotted Repository Blips (All 39 catalog tools) -->
             {blips.map((t) => {
               const rad = ((t.angle - 90) * Math.PI) / 180;
               const bx = Math.round(180 + t.radius * Math.cos(rad));
               const by = Math.round(180 + t.radius * Math.sin(rad));
+              const isSelected = t.slug === defaultBlip.slug;
+              const phosphorDelay = -(((360 - t.angle) / 360) * 60).toFixed(2);
+
+              // Collision-resolved label anchor & leader line coordinates
+              const labelOffsetX = t.labelSide === 'right' ? 12 : -12;
+              const lx = Math.max(28, Math.min(332, bx + labelOffsetX));
+              const ly = Math.max(24, Math.min(340, by + t.labelDy));
+              const textAnchor = t.labelSide === 'right' ? 'start' : 'end';
 
               return (
                 <g
-                  class="radar-blip-target cursor-pointer transition-transform hover:scale-125"
-                  style={`color: ${t.color};`}
+                  class="radar-blip-target cursor-pointer"
+                  style={`color: ${t.color}; --phosphor-delay: ${phosphorDelay}s;`}
                   data-name={t.name}
                   data-slug={t.slug}
                   data-repo={t.repo}
@@ -149,36 +268,50 @@ const defaultBlip = blips.find((b) => b.isFlagged) || blips[0];
                   data-range={t.rangeVal}
                   data-scanned={t.lastScanned.split('T')[0]}
                   data-color={t.color}
+                  data-flagged={t.isFlagged ? 'true' : 'false'}
+                  data-selected={isSelected ? 'true' : 'false'}
+                  data-hovered="false"
+                  data-inspected="false"
                   data-x={bx}
                   data-y={by}
                   tabindex="0"
                   role="button"
-                  aria-label={`${t.name}: Safety Score ${t.score}, ${t.verdict}`}
+                  aria-label={`${t.name} (${t.category}): Safety Score ${t.score}, Verdict ${t.verdict}`}
                 >
-                  <!-- Reticle for active blip -->
-                  <circle
-                    cx={bx}
-                    cy={by}
-                    r="10"
-                    fill="none"
-                    stroke={t.color}
-                    stroke-width="1"
-                    stroke-dasharray="2 2"
-                    class="blip-reticle opacity-0 transition-opacity"
-                  />
+                  <!-- Active Selection Reticle + Outer Ring -->
+                  <g class={`blip-reticle transition-opacity duration-150 ${isSelected ? 'opacity-100' : 'opacity-0'}`}>
+                    <circle
+                      cx={bx}
+                      cy={by}
+                      r="11"
+                      fill="none"
+                      stroke="var(--accent)"
+                      stroke-width="1.5"
+                      stroke-dasharray="3 2"
+                    />
+                    <circle
+                      cx={bx}
+                      cy={by}
+                      r="14.5"
+                      fill="none"
+                      stroke={t.color}
+                      stroke-width="1"
+                      opacity="0.55"
+                    />
+                  </g>
 
-                  <!-- Observation Blip Circle (Glows like star in Cosmic Void) -->
+                  <!-- Observation Blip Circle (Phosphor-decays 100% -> 40% over 60s sweep) -->
                   <circle
                     cx={bx}
                     cy={by}
-                    r="4.5"
+                    r={t.isFlagged ? '5' : '4.2'}
                     fill={t.color}
-                    stroke="var(--bg)"
+                    stroke="var(--surface)"
                     stroke-width="1.5"
-                    class={`blip-dot ${t.isFlagged ? 'blip-flagged-pulse' : ''}`}
+                    class={`blip-dot blip-phosphor-node ${t.isFlagged ? 'blip-flagged-pulse' : ''}`}
                   />
 
-                  <!-- Flagged Opacity Pulse Ring (Strictly opacity-only) -->
+                  <!-- Persistent Flagged Pulse Ring (Holds pulse until inspected) -->
                   {t.isFlagged && (
                     <circle
                       cx={bx}
@@ -187,30 +320,43 @@ const defaultBlip = blips.find((b) => b.isFlagged) || blips[0];
                       fill="none"
                       stroke="var(--risky)"
                       stroke-width="1.2"
-                      class="blip-flagged-pulse"
+                      class="blip-flagged-pulse blip-uninspected-ring"
                     />
                   )}
 
-                  <!-- Mini Tag Label -->
-                  <text
-                    x={bx + 7}
-                    y={by + 3}
-                    fill={t.color}
-                    font-family="monospace"
-                    font-size="8"
-                    font-weight="bold"
-                    class="pointer-events-none select-none"
-                  >
-                    {t.name.toUpperCase()}
-                  </text>
+                  <!-- 3f. Collision-Resolved Leader Line + Label (Only visible for selected, hovered, or flagged blips by default) -->
+                  <g class="blip-label-group pointer-events-none select-none">
+                    <line
+                      x1={bx}
+                      y1={by}
+                      x2={lx}
+                      y2={ly - 2}
+                      stroke={t.color}
+                      stroke-width="0.85"
+                      opacity="0.65"
+                      class="blip-leader-line"
+                    />
+                    <text
+                      x={lx}
+                      y={ly}
+                      text-anchor={textAnchor}
+                      fill="var(--text)"
+                      font-family="monospace"
+                      font-size="8"
+                      font-weight="600"
+                      class="blip-svg-label"
+                    >
+                      {t.name.toUpperCase()}
+                    </text>
+                  </g>
                 </g>
               );
             })}
           </svg>
         </div>
 
-        <!-- Scope Legend -->
-        <div class="flex items-center justify-center gap-6 mt-3 font-mono text-[11px] text-app-subtle">
+        <!-- Scope Legend + Keyboard Navigation Hint -->
+        <div class="flex flex-wrap items-center justify-center gap-5 mt-3 font-mono text-[11px] text-app-muted">
           <div class="flex items-center gap-1.5">
             <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
             <span>Healthy (&ge;80)</span>
@@ -221,8 +367,9 @@ const defaultBlip = blips.find((b) => b.isFlagged) || blips[0];
           </div>
           <div class="flex items-center gap-1.5">
             <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
-            <span>Flagged (&lt;50)</span>
+            <span>Risky (&lt;50)</span>
           </div>
+          <span class="text-[10px] text-app-accent">&larr;/&rarr; cycle blips &middot; Enter selects</span>
         </div>
       </div>
 
@@ -230,76 +377,167 @@ const defaultBlip = blips.find((b) => b.isFlagged) || blips[0];
       <div class="lg:col-span-5 space-y-4 font-mono">
         <div class="p-5 rounded-xl bg-app-surface-2 border border-app-border space-y-4">
           <div class="flex items-center justify-between border-b border-app-border pb-3">
-            <span class="text-micro text-blue-400 font-bold">TARGET TELEMETRY INSPECTOR</span>
-            <span class="text-[10px] text-app-subtle uppercase" id="inspector-coords">{defaultBlip.bearing} // {defaultBlip.rangeVal}</span>
+            <span class="text-micro font-semibold">TARGET TELEMETRY INSPECTOR</span>
+            <span class="text-[10px] text-app-muted uppercase" id="inspector-coords">
+              {defaultBlip.bearing} // {defaultBlip.rangeVal}
+            </span>
           </div>
 
-          <!-- Active Target Card -->
+          <!-- Active Target Card (Flag-First Default on Load) -->
           <div>
             <div class="flex items-start justify-between gap-3 mb-1">
               <div>
-                <h4 class="text-base font-bold text-app-text font-sans" id="inspector-name">{defaultBlip.name}</h4>
-                <span class="text-xs text-app-subtle block" id="inspector-repo">{defaultBlip.repo}</span>
+                <h3 class="text-base font-semibold text-app-text font-sans" id="inspector-name">
+                  {defaultBlip.name}
+                </h3>
+                <span class="text-xs text-app-muted block" id="inspector-repo">
+                  {defaultBlip.repo}
+                </span>
               </div>
               <div class="text-right">
-                <span class="text-xl font-extrabold text-app-text" id="inspector-score">{defaultBlip.score}</span>
-                <span class="text-[10px] text-app-subtle block">/ 100</span>
+                <span class="text-[28px] leading-none font-semibold text-app-text font-mono" id="inspector-score">
+                  {defaultBlip.score}
+                </span>
+                <span class="text-[10px] text-app-muted block mt-0.5">/ 100</span>
               </div>
             </div>
-            <div class="flex items-center gap-2 mt-2">
-              <span class="text-[10px] px-2 py-0.5 rounded bg-app-bg border border-app-border text-app-text uppercase" id="inspector-category">{defaultBlip.category}</span>
-              <span class="text-[10px] px-2 py-0.5 rounded uppercase font-bold verdict-badge-risky border" id="inspector-verdict">{defaultBlip.verdict.toUpperCase()}</span>
+            <div class="flex items-center gap-2 mt-2.5">
+              <span
+                class="text-[10px] px-2.5 py-0.5 rounded-full bg-app-surface border border-app-border text-app-text uppercase font-semibold"
+                id="inspector-category"
+              >
+                {defaultBlip.category}
+              </span>
+              <span
+                class={`text-[10px] px-2.5 py-0.5 rounded-full uppercase font-semibold border ${
+                  defaultBlip.verdict === 'healthy'
+                    ? 'verdict-badge-healthy'
+                    : defaultBlip.verdict === 'caution'
+                      ? 'verdict-badge-caution'
+                      : 'verdict-badge-risky'
+                }`}
+                id="inspector-verdict"
+              >
+                {defaultBlip.verdict.toUpperCase()}
+              </span>
             </div>
           </div>
 
           <!-- Target Scan Metrics -->
           <div class="grid grid-cols-2 gap-2 text-[11px] pt-3 border-t border-app-border text-app-muted">
-            <div class="p-2 rounded bg-app-bg border border-app-border/70">
-              <span class="text-[9px] text-app-subtle block">LAST AUDIT PASS</span>
-              <span class="text-app-text font-semibold" id="inspector-date">{defaultBlip.lastScanned.split('T')[0]}</span>
+            <div class="p-2.5 rounded-lg bg-app-surface border border-app-border">
+              <span class="text-[9px] text-app-muted block uppercase">LAST AUDIT PASS</span>
+              <span class="text-app-text font-semibold" id="inspector-date">
+                {defaultBlip.lastScanned.split('T')[0]}
+              </span>
             </div>
-            <div class="p-2 rounded bg-app-bg border border-app-border/70">
-              <span class="text-[9px] text-app-subtle block">SWEEP STATUS</span>
-              <span class="text-emerald-400 font-semibold" id="inspector-sweep">PAINTED &middot; NOMINAL</span>
+            <div class="p-2.5 rounded-lg bg-app-surface border border-app-border">
+              <span class="text-[9px] text-app-muted block uppercase">RADIAL AXIS</span>
+              <span class="text-emerald-400 font-semibold" id="inspector-sweep">
+                {defaultBlip.rangeVal}
+              </span>
             </div>
           </div>
 
           <a
             id="inspector-link"
             href={`/tools/${defaultBlip.slug}`}
-            class="w-full py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
+            class="btn-primary w-full py-2.5 px-4 rounded-lg font-mono font-semibold text-xs flex items-center justify-center gap-1.5 transition-all"
           >
             <span>Inspect Full Dossier</span>
-            <span>&rarr;</span>
+            <span aria-hidden="true">&rarr;</span>
           </a>
         </div>
 
-        <!-- Global Monitor Metrics (Derived strictly from dataset) -->
-        <div class="grid grid-cols-3 gap-2 text-center text-xs">
+        <!-- 3b. Sector-Computed Monitor Metrics (Derived strictly from filtered dataset) -->
+        <div class="grid grid-cols-3 gap-2 text-center text-xs" id="radar-sector-stats">
           <div class="p-3 rounded-lg bg-app-surface-2 border border-app-border">
-            <span class="text-[10px] text-app-subtle block mb-1">HEALTHY RATIO</span>
-            <span class="text-emerald-400 font-extrabold text-sm">{telemetry.nominalPercentage}%</span>
+            <span class="text-[10px] text-app-muted block mb-1">HEALTHY RATIO</span>
+            <span class="text-emerald-400 font-semibold text-sm font-mono" id="stat-healthy-ratio">
+              {telemetry.nominalPercentage}%
+            </span>
           </div>
           <div class="p-3 rounded-lg bg-app-surface-2 border border-app-border">
-            <span class="text-[10px] text-app-subtle block mb-1">FLAGGED</span>
-            <span class="text-rose-400 font-extrabold text-sm">{telemetry.flaggedCount} REPOS</span>
+            <span class="text-[10px] text-app-muted block mb-1">FLAGGED</span>
+            <span class="text-rose-400 font-semibold text-sm font-mono" id="stat-flagged-count">
+              {telemetry.flaggedCount} REPOS
+            </span>
           </div>
           <div class="p-3 rounded-lg bg-app-surface-2 border border-app-border">
-            <span class="text-[10px] text-app-subtle block mb-1">AVG SCORE</span>
-            <span class="text-app-text font-extrabold text-sm">{telemetry.averageScore}</span>
+            <span class="text-[10px] text-app-muted block mb-1">AVG SCORE</span>
+            <span class="text-app-text font-semibold text-sm font-mono" id="stat-avg-score">
+              {telemetry.averageScore}
+            </span>
           </div>
         </div>
       </div>
     </div>
 
+    <!-- 3h. Accessible Equivalent Table View (Zero axe/WAVE critical issues) -->
+    <div id="radar-accessible-table-container" class="hidden my-6 overflow-x-auto rounded-xl border border-app-border bg-app-surface">
+      <table class="w-full text-left border-collapse font-mono text-xs" id="radar-accessible-table">
+        <caption class="sr-only">
+          SafeOpenSource Monitored Repositories Safety Scores and Verdicts
+        </caption>
+        <thead class="bg-app-surface-2 text-app-muted border-b border-app-border uppercase text-[11px]">
+          <tr>
+            <th scope="col" class="py-3 px-4 font-semibold">Repository</th>
+            <th scope="col" class="py-3 px-4 font-semibold">Sector</th>
+            <th scope="col" class="py-3 px-4 font-semibold">Safety Score</th>
+            <th scope="col" class="py-3 px-4 font-semibold">Verdict</th>
+            <th scope="col" class="py-3 px-4 font-semibold">Last Scanned</th>
+            <th scope="col" class="py-3 px-4 font-semibold text-right">Action</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-app-border text-app-text">
+          {blips.map((b) => (
+            <tr
+              class="radar-table-row hover:bg-app-surface-2 transition-colors"
+              data-sector={b.category}
+              data-flagged={b.isFlagged ? 'true' : 'false'}
+            >
+              <td class="py-2.5 px-4 font-semibold">
+                <span class="block text-app-text font-sans">{b.name}</span>
+                <span class="text-[11px] text-app-muted font-mono">{b.repo}</span>
+              </td>
+              <td class="py-2.5 px-4 text-app-muted uppercase">{b.category}</td>
+              <td class="py-2.5 px-4 font-semibold tabular-nums">{b.score} / 100</td>
+              <td class="py-2.5 px-4">
+                <span
+                  class={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase border ${
+                    b.verdict === 'healthy'
+                      ? 'verdict-badge-healthy'
+                      : b.verdict === 'caution'
+                        ? 'verdict-badge-caution'
+                        : 'verdict-badge-risky'
+                  }`}
+                >
+                  {b.verdict}
+                </span>
+              </td>
+              <td class="py-2.5 px-4 text-app-muted">{b.lastScanned.split('T')[0]}</td>
+              <td class="py-2.5 px-4 text-right">
+                <a
+                  href={`/tools/${b.slug}`}
+                  class="text-app-accent hover:underline font-semibold"
+                >
+                  Inspect Dossier &rarr;
+                </a>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
     <!-- Bottom Status Strip -->
-    <div class="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-app-border font-mono text-[11px] text-app-subtle">
+    <div class="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-app-border font-mono text-[11px] text-app-muted">
       <div class="flex items-center gap-2">
-        <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-        <span>INSTRUMENT STATUS: STATIC POLAR TELEMETRY SCOPE</span>
+        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+        <span>RADIAL AXIS: SAFETY SCORE (0–100) &middot; BEARING: SECTOR TAXONOMY</span>
       </div>
       <div>
-        <span>COORDINATES DERIVED MATHEMATICALLY FROM OPENSSF SCORECARD V4</span>
+        <span>60S/REV CONTINUOUS SWEEP &middot; ZERO JS FRAME LOOPS</span>
       </div>
     </div>
   </div>
@@ -317,56 +555,278 @@ const defaultBlip = blips.find((b) => b.isFlagged) || blips[0];
     const inspectorVerdict = document.getElementById('inspector-verdict');
     const inspectorDate = document.getElementById('inspector-date');
     const inspectorCoords = document.getElementById('inspector-coords');
+    const inspectorSweep = document.getElementById('inspector-sweep');
     const inspectorLink = document.getElementById('inspector-link');
 
-    const blips = scope.querySelectorAll('.radar-blip-target');
+    const statHealthyRatio = document.getElementById('stat-healthy-ratio');
+    const statFlaggedCount = document.getElementById('stat-flagged-count');
+    const statAvgScore = document.getElementById('stat-avg-score');
 
-    blips.forEach((blip) => {
-      function activate() {
-        blips.forEach((b) => {
-          const reticle = b.querySelector('.blip-reticle');
-          if (reticle) reticle.classList.add('opacity-0');
-        });
+    const hoverTooltip = document.getElementById('radar-hover-tooltip');
+    const tooltipName = document.getElementById('tooltip-name');
+    const tooltipScore = document.getElementById('tooltip-score');
+    const tooltipVerdict = document.getElementById('tooltip-verdict');
+    const tooltipScanned = document.getElementById('tooltip-scanned');
 
-        const activeReticle = blip.querySelector('.blip-reticle');
-        if (activeReticle) activeReticle.classList.remove('opacity-0');
+    const toggleFlaggedBtn = document.getElementById('toggle-flagged-only');
+    const toggleTableBtn = document.getElementById('toggle-radar-table-view');
+    const tableContainer = document.getElementById('radar-accessible-table-container');
+    const sectorChips = Array.from(scope.querySelectorAll('.sector-filter-chip'));
+    const blips = Array.from(scope.querySelectorAll('.radar-blip-target'));
+    const tableRows = Array.from(scope.querySelectorAll('.radar-table-row'));
 
-        const name = blip.getAttribute('data-name');
-        const slug = blip.getAttribute('data-slug');
-        const repo = blip.getAttribute('data-repo');
-        const score = blip.getAttribute('data-score');
-        const verdict = blip.getAttribute('data-verdict') || 'healthy';
-        const category = blip.getAttribute('data-category');
-        const bearing = blip.getAttribute('data-bearing');
-        const range = blip.getAttribute('data-range');
-        const scanned = blip.getAttribute('data-scanned');
-        const color = blip.getAttribute('data-color') || 'var(--healthy)';
+    let currentSector = 'all';
+    let flaggedOnly = false;
 
-        if (inspectorName) inspectorName.textContent = name;
-        if (inspectorRepo) inspectorRepo.textContent = repo;
-        if (inspectorScore) {
-          inspectorScore.textContent = score;
-          inspectorScore.style.color = color;
+    function selectBlip(blip) {
+      if (!blip) return;
+      blips.forEach((b) => {
+        b.setAttribute('data-selected', 'false');
+        const reticle = b.querySelector('.blip-reticle');
+        if (reticle) {
+          reticle.classList.remove('opacity-100');
+          reticle.classList.add('opacity-0');
         }
-        if (inspectorCategory) inspectorCategory.textContent = category;
-        if (inspectorVerdict) {
-          inspectorVerdict.textContent = verdict.toUpperCase();
-          if (verdict === 'healthy') {
-            inspectorVerdict.className = 'text-[10px] px-2 py-0.5 rounded uppercase font-bold border verdict-badge-healthy';
-          } else if (verdict === 'caution') {
-            inspectorVerdict.className = 'text-[10px] px-2 py-0.5 rounded uppercase font-bold border verdict-badge-caution';
-          } else {
-            inspectorVerdict.className = 'text-[10px] px-2 py-0.5 rounded uppercase font-bold border verdict-badge-risky';
-          }
-        }
-        if (inspectorDate) inspectorDate.textContent = scanned;
-        if (inspectorCoords) inspectorCoords.textContent = `${bearing} // ${range}`;
-        if (inspectorLink) inspectorLink.setAttribute('href', `/tools/${slug}`);
+      });
+
+      blip.setAttribute('data-selected', 'true');
+      blip.setAttribute('data-inspected', 'true');
+      const activeReticle = blip.querySelector('.blip-reticle');
+      if (activeReticle) {
+        activeReticle.classList.remove('opacity-0');
+        activeReticle.classList.add('opacity-100');
       }
 
-      blip.addEventListener('mouseenter', activate);
-      blip.addEventListener('focus', activate);
-      blip.addEventListener('click', activate);
+      const name = blip.getAttribute('data-name') || '';
+      const slug = blip.getAttribute('data-slug') || '';
+      const repo = blip.getAttribute('data-repo') || '';
+      const score = blip.getAttribute('data-score') || '0';
+      const verdict = blip.getAttribute('data-verdict') || 'healthy';
+      const category = blip.getAttribute('data-category') || '';
+      const bearing = blip.getAttribute('data-bearing') || '';
+      const range = blip.getAttribute('data-range') || '';
+      const scanned = blip.getAttribute('data-scanned') || '';
+      const color = blip.getAttribute('data-color') || 'var(--healthy)';
+
+      if (inspectorName) inspectorName.textContent = name;
+      if (inspectorRepo) inspectorRepo.textContent = repo;
+      if (inspectorScore) {
+        inspectorScore.textContent = score;
+        inspectorScore.style.color = color;
+      }
+      if (inspectorCategory) inspectorCategory.textContent = category;
+      if (inspectorVerdict) {
+        inspectorVerdict.textContent = verdict.toUpperCase();
+        inspectorVerdict.className =
+          'text-[10px] px-2.5 py-0.5 rounded-full uppercase font-semibold border ' +
+          (verdict === 'healthy'
+            ? 'verdict-badge-healthy'
+            : verdict === 'caution'
+              ? 'verdict-badge-caution'
+              : 'verdict-badge-risky');
+      }
+      if (inspectorDate) inspectorDate.textContent = scanned;
+      if (inspectorCoords) inspectorCoords.textContent = `${bearing} // ${range}`;
+      if (inspectorSweep) inspectorSweep.textContent = range;
+      if (inspectorLink) inspectorLink.setAttribute('href', `/tools/${slug}`);
+    }
+
+    function applyFiltersAndRecomputeStats() {
+      scope.setAttribute('data-active-sector', currentSector);
+      scope.setAttribute('data-flagged-only', flaggedOnly ? 'true' : 'false');
+
+      const matchingBlips = [];
+
+      blips.forEach((b) => {
+        const cat = b.getAttribute('data-category');
+        const isFlagged = b.getAttribute('data-flagged') === 'true';
+        const sectorMatch = currentSector === 'all' || cat === currentSector;
+        const flagMatch = !flaggedOnly || isFlagged;
+
+        if (sectorMatch && flagMatch) {
+          b.setAttribute('data-filtered-out', 'false');
+          matchingBlips.push(b);
+        } else {
+          b.setAttribute('data-filtered-out', 'true');
+        }
+      });
+
+      tableRows.forEach((row) => {
+        const cat = row.getAttribute('data-sector');
+        const isFlagged = row.getAttribute('data-flagged') === 'true';
+        const visible = (currentSector === 'all' || cat === currentSector) && (!flaggedOnly || isFlagged);
+        row.style.display = visible ? '' : 'none';
+      });
+
+      // Recompute HEALTHY RATIO, FLAGGED, AVG SCORE strictly from filtered dataset
+      const total = matchingBlips.length;
+      if (total > 0) {
+        let healthy = 0;
+        let flagged = 0;
+        let sumScore = 0;
+
+        matchingBlips.forEach((b) => {
+          const v = b.getAttribute('data-verdict');
+          const s = parseFloat(b.getAttribute('data-score') || '0');
+          if (v === 'healthy') healthy++;
+          if (v === 'caution' || v === 'risky') flagged++;
+          sumScore += s;
+        });
+
+        const ratio = ((healthy / total) * 100).toFixed(1);
+        const avg = (sumScore / total).toFixed(1);
+
+        if (statHealthyRatio) statHealthyRatio.textContent = `${ratio}%`;
+        if (statFlaggedCount) statFlaggedCount.textContent = `${flagged} REPOS`;
+        if (statAvgScore) statAvgScore.textContent = avg;
+
+        // If currently selected blip is filtered out, select first matching blip (flag-first)
+        const currentSelected = matchingBlips.find((b) => b.getAttribute('data-selected') === 'true');
+        if (!currentSelected) {
+          const nextTarget = matchingBlips.find((b) => b.getAttribute('data-flagged') === 'true') || matchingBlips[0];
+          selectBlip(nextTarget);
+        }
+      } else {
+        if (statHealthyRatio) statHealthyRatio.textContent = '0.0%';
+        if (statFlaggedCount) statFlaggedCount.textContent = '0 REPOS';
+        if (statAvgScore) statAvgScore.textContent = '0.0';
+      }
+    }
+
+    // Interactive Blip Events (Click, Hover Card, Keyboard Arrow Cycling + Enter)
+    blips.forEach((blip) => {
+      blip.addEventListener('click', () => {
+        selectBlip(blip);
+      });
+
+      blip.addEventListener('mouseenter', () => {
+        blip.setAttribute('data-hovered', 'true');
+        if (hoverTooltip) {
+          const name = blip.getAttribute('data-name') || '';
+          const score = blip.getAttribute('data-score') || '';
+          const verdict = blip.getAttribute('data-verdict') || '';
+          const scanned = blip.getAttribute('data-scanned') || '';
+          const bx = parseFloat(blip.getAttribute('data-x') || '180');
+          const by = parseFloat(blip.getAttribute('data-y') || '180');
+
+          if (tooltipName) tooltipName.textContent = name;
+          if (tooltipScore) tooltipScore.textContent = `${score}/100`;
+          if (tooltipVerdict) tooltipVerdict.textContent = verdict.toUpperCase();
+          if (tooltipScanned) tooltipScanned.textContent = scanned;
+
+          hoverTooltip.style.left = `${Math.min(Math.max((bx / 360) * 100, 12), 68)}%`;
+          hoverTooltip.style.top = `${Math.max((by / 360) * 100 - 14, 4)}%`;
+          hoverTooltip.classList.remove('hidden');
+        }
+      });
+
+      blip.addEventListener('mouseleave', () => {
+        blip.setAttribute('data-hovered', 'false');
+        hoverTooltip?.classList.add('hidden');
+      });
+
+      blip.addEventListener('keydown', (e) => {
+        const visibleBlips = blips.filter((b) => b.getAttribute('data-filtered-out') !== 'true');
+        const idx = visibleBlips.indexOf(blip);
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          selectBlip(blip);
+        } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+          e.preventDefault();
+          const next = visibleBlips[(idx + 1) % visibleBlips.length];
+          if (next) {
+            next.focus();
+            selectBlip(next);
+          }
+        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          const prev = visibleBlips[(idx - 1 + visibleBlips.length) % visibleBlips.length];
+          if (prev) {
+            prev.focus();
+            selectBlip(prev);
+          }
+        }
+      });
     });
+
+    // Sector Filter Chip Click Handlers
+    sectorChips.forEach((chip) => {
+      chip.addEventListener('click', () => {
+        currentSector = chip.getAttribute('data-sector') || 'all';
+        sectorChips.forEach((c) => {
+          const isActive = c.getAttribute('data-sector') === currentSector;
+          c.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+          c.classList.toggle('active-sector-chip', isActive);
+        });
+        applyFiltersAndRecomputeStats();
+      });
+    });
+
+    // "Show flagged only" Toggle
+    toggleFlaggedBtn?.addEventListener('click', () => {
+      flaggedOnly = !flaggedOnly;
+      toggleFlaggedBtn.setAttribute('aria-pressed', flaggedOnly ? 'true' : 'false');
+      toggleFlaggedBtn.classList.toggle('active-sector-chip', flaggedOnly);
+      applyFiltersAndRecomputeStats();
+    });
+
+    // Accessible Table View Toggle
+    toggleTableBtn?.addEventListener('click', () => {
+      const isHidden = tableContainer?.classList.contains('hidden');
+      if (isHidden) {
+        tableContainer?.classList.remove('hidden');
+        toggleTableBtn.setAttribute('aria-expanded', 'true');
+        toggleTableBtn.textContent = 'Hide table view';
+      } else {
+        tableContainer?.classList.add('hidden');
+        toggleTableBtn.setAttribute('aria-expanded', 'false');
+        toggleTableBtn.textContent = 'Table view';
+      }
+    });
+
+    // 2. Scan-State Sync & 3g. Degraded State Check via /api/scan-status
+    async function syncScanState() {
+      const badge = document.getElementById('scope-scan-state-badge');
+      const centerDot = document.getElementById('scope-center-dot');
+      const staleBanner = document.getElementById('scope-stale-banner');
+      const urlParams = new URLSearchParams(window.location.search);
+
+      if (urlParams.get('stale') === '1') {
+        scope.setAttribute('data-degraded', 'true');
+        staleBanner?.classList.remove('hidden');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/scan-status', { headers: { Accept: 'application/json' } });
+        if (!res.ok) throw new Error('Pipeline status unreachable');
+        const data = await res.json();
+
+        scope.removeAttribute('data-degraded');
+        staleBanner?.classList.add('hidden');
+
+        if (data.isScanning) {
+          if (badge) {
+            badge.textContent = 'STATE: SCANNING';
+            badge.setAttribute('data-scan-state', 'SCANNING');
+            badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold border verdict-badge-caution';
+          }
+          centerDot?.classList.add('scope-center-scanning-pulse');
+        } else {
+          if (badge) {
+            badge.textContent = 'STATE: NOMINAL';
+            badge.setAttribute('data-scan-state', 'NOMINAL');
+            badge.className = 'px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold border verdict-badge-healthy';
+          }
+          centerDot?.classList.remove('scope-center-scanning-pulse');
+        }
+      } catch {
+        // 3g. Pipeline unreachable -> blips hold last values at 40% opacity + stale banner
+        scope.setAttribute('data-degraded', 'true');
+        staleBanner?.classList.remove('hidden');
+      }
+    }
+
+    syncScanState();
   })();
 </script>

@@ -340,7 +340,7 @@ button[type="submit"],
   background-color: var(--accent) !important;
   color: #FFFFFF !important;
   border-radius: 8px;
-  transition: transform 150ms ease-out, background-color 150ms ease-out;
+  transition: transform 150ms ease-out, background-color 150ms ease-out, box-shadow 150ms ease-out;
 }
 
 button[type="submit"]:hover,
@@ -352,6 +352,39 @@ button[type="submit"]:hover,
 button[type="submit"]:active,
 .btn-primary:active {
   transform: scale(0.98);
+}
+
+/* 1. "Scan Repo" Unmistakable Button Affordance Stack (FILL, HOVER lift, ACTIVE .97, FOCUS 2px offset) */
+.scan-repo-cta-btn,
+.scan-repo-cta-caret {
+  background-color: var(--accent) !important;
+  color: #FFFFFF !important;
+  transition: transform 150ms ease-out, background-color 150ms ease-out, box-shadow 150ms ease-out;
+}
+
+.scan-repo-cta-btn:hover,
+.scan-repo-cta-caret:hover {
+  background-color: var(--accent-hover) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(124, 92, 252, 0.28);
+}
+
+.scan-repo-cta-btn:active,
+.scan-repo-cta-caret:active {
+  transform: scale(0.97) !important;
+}
+
+.scan-repo-cta-btn:focus-visible,
+.scan-repo-cta-caret:focus-visible {
+  outline: 2px solid var(--accent) !important;
+  outline-offset: 2px !important;
+}
+
+/* Active Sector Filter Chip */
+.active-sector-chip {
+  background-color: var(--accent-soft) !important;
+  color: var(--accent-text) !important;
+  border-color: var(--accent) !important;
 }
 
 /* Verdict badges: pill, soft variant background (--healthy-soft / --caution-soft / --risky-soft), status-color text */
@@ -394,7 +427,7 @@ button[type="submit"]:active,
 }
 
 /* ==========================================================================
-   RADAR SCOPE & CONSTELLATION TREATMENTS
+   2 & 3. CONTINUOUS DEFENSE RADAR SCOPE (60s/rev CSS beam + Phosphor decay)
    ========================================================================== */
 .radar-scope-surface {
   background-color: var(--radar-bg);
@@ -420,6 +453,58 @@ button[type="submit"]:active,
   background: var(--radar-sweep);
 }
 
+@keyframes scope-beam-rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes blip-phosphor-decay {
+  0% {
+    opacity: 1;
+  }
+  8% {
+    opacity: 0.92;
+  }
+  100% {
+    opacity: 0.40;
+  }
+}
+
+@keyframes center-dot-subsecond-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
+.radar-continuous-beam {
+  animation: scope-beam-rotate 60s linear infinite;
+}
+
+.blip-phosphor-node {
+  animation: blip-phosphor-decay 60s linear infinite;
+  animation-delay: var(--phosphor-delay, 0s);
+}
+
+.scope-center-scanning-pulse {
+  animation: center-dot-subsecond-pulse 0.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .radar-continuous-beam,
+  .blip-phosphor-node,
+  .scope-center-scanning-pulse {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+}
+
 .blip-dot {
   filter: var(--blip-glow);
 }
@@ -435,6 +520,68 @@ button[type="submit"]:active,
 
 .blip-flagged-pulse {
   animation: flagged-blip-opacity 2s ease-in-out infinite;
+}
+
+/* Sweep History: Flagged blips hold a persistent pulse until inspected */
+.radar-blip-target[data-inspected="true"] .blip-uninspected-ring,
+.radar-blip-target[data-inspected="true"] .blip-flagged-pulse {
+  animation: none !important;
+  opacity: 1 !important;
+}
+
+.radar-blip-target[data-inspected="true"] .blip-uninspected-ring {
+  opacity: 0 !important;
+}
+
+/* 3f. Label Legibility: Render labels ONLY for selected, hovered, or flagged blips (or when a single sector is focused) */
+.radar-blip-target .blip-label-group {
+  opacity: 0;
+  transition: opacity 150ms ease-out;
+}
+
+.radar-blip-target[data-selected="true"] .blip-label-group,
+.radar-blip-target[data-hovered="true"] .blip-label-group,
+.radar-blip-target[data-flagged="true"] .blip-label-group,
+#detection-radar-scope:not([data-active-sector="all"]) .radar-blip-target:not([data-filtered-out="true"]) .blip-label-group {
+  opacity: 1;
+}
+
+/* Dim/hide blips outside active sector filter */
+.radar-blip-target[data-filtered-out="true"] {
+  opacity: 0.12 !important;
+  pointer-events: none;
+}
+
+.radar-blip-target[data-filtered-out="true"] .blip-label-group {
+  opacity: 0 !important;
+}
+
+/* 3g. Empty/Degraded Telemetry State: blips hold last values at 40% opacity */
+#detection-radar-scope[data-degraded="true"] .radar-blip-target {
+  opacity: 0.40 !important;
+}
+
+/* Lavender Lab Light Surface Overrides for any legacy dark utility classes */
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) .bg-black\/40,
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) .bg-black\/60,
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) .bg-zinc-800,
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) .bg-zinc-800\/80,
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) .bg-zinc-900 {
+  background-color: var(--surface-2) !important;
+}
+
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) h1.text-white,
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) h2.text-white,
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) h3.text-white,
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) span.text-white:not(.btn-primary *):not(button *),
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) strong.text-white,
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) td.text-white {
+  color: var(--text) !important;
+}
+
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) .bg-blue-600 {
+  background-color: var(--accent) !important;
+  color: #FFFFFF !important;
 }
 
 /* ==========================================================================
