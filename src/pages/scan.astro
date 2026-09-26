@@ -89,10 +89,10 @@ const queueDepth = getActiveScanQueueDepth();
         <!-- Optional Email for Higher Limits -->
         <div class="pt-2 border-t border-app-border/40 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-mono text-app-subtle">
           <div class="flex items-center gap-2">
-            <span class="text-zinc-400">Rate Limit:</span>
-            <span class="text-white">3 scans/hr (anonymous)</span>
+            <span class="text-app-muted">Rate Limit:</span>
+            <span class="text-app-text font-semibold">3 scans/hr (anonymous)</span>
             <span>·</span>
-            <span class="text-blue-400">20/hr with free email</span>
+            <span class="text-blue-500 dark:text-blue-400">20/hr with free email</span>
           </div>
 
           <div class="flex items-center gap-2">
@@ -100,7 +100,7 @@ const queueDepth = getActiveScanQueueDepth();
               type="email"
               id="email-input"
               placeholder="Optional: operator@example.com (20/hr)"
-              class="px-3 py-1 rounded bg-black/40 border border-app-border text-xs text-white placeholder-zinc-600 font-mono focus:outline-none focus:border-blue-500"
+              class="px-3 py-1 rounded bg-app-surface-2 border border-app-border text-xs text-app-text placeholder:text-app-muted font-mono focus:outline-none focus:border-blue-500"
             />
           </div>
         </div>
@@ -123,20 +123,20 @@ const queueDepth = getActiveScanQueueDepth();
       <!-- Instant Cached Result Callout -->
       <div
         id="cached-banner"
-        class="hidden mt-6 p-4 rounded-xl border border-amber-500/30 bg-amber-950/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+        class="hidden mt-6 p-4 rounded-xl border border-caution-border bg-caution-soft text-app-text shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4"
       >
         <div class="flex items-center gap-3">
-          <div class="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+          <div class="w-8 h-8 rounded-lg bg-caution/15 border border-caution-border flex items-center justify-center text-caution shrink-0">
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="10" />
               <polyline points="12 6 12 12 16 14" />
             </svg>
           </div>
           <div>
-            <span class="font-mono text-xs font-bold text-amber-300 block" id="cached-title">
+            <span class="font-mono text-xs font-bold text-caution block" id="cached-title">
               RECENTLY AUDITED REPOSITORY
             </span>
-            <span class="text-xs text-zinc-300 font-sans" id="cached-desc">
+            <span class="text-xs text-app-text font-sans" id="cached-desc">
               Scanned 2 days ago. The verified report is ready immediately.
             </span>
           </div>
@@ -146,14 +146,14 @@ const queueDepth = getActiveScanQueueDepth();
           <a
             href="#"
             id="cached-view-link"
-            class="px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold transition-colors"
+            class="px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold transition-colors shadow-xs"
           >
             View Existing Report &rarr;
           </a>
           <button
             type="button"
             id="force-rescan-btn"
-            class="px-3 py-2 rounded-lg border border-app-border bg-app-surface hover:bg-zinc-700 text-zinc-300 hover:text-white transition-colors cursor-pointer"
+            class="px-3 py-2 rounded-lg border border-app-border bg-app-surface hover:bg-app-surface-hover text-app-text transition-colors cursor-pointer font-semibold shadow-2xs"
           >
             Rescan Anyway
           </button>
@@ -172,101 +172,101 @@ const queueDepth = getActiveScanQueueDepth();
               LIVE TELEMETRY EXECUTION
             </span>
           </div>
-          <h2 class="text-lg font-bold text-white font-mono" id="instrument-target-name">
+          <h2 class="text-lg font-bold text-app-text font-mono" id="instrument-target-name">
             Scanning repository...
           </h2>
         </div>
 
         <div class="flex items-center gap-2 font-mono text-xs">
           <span class="px-2.5 py-1 rounded bg-app-surface-2 border border-app-border text-app-subtle">
-            ELAPSED: <strong class="text-white" id="live-elapsed-timer">0.0s</strong>
+            ELAPSED: <strong class="text-app-text font-bold" id="live-elapsed-timer">0.0s</strong>
           </span>
           <span class="px-2.5 py-1 rounded bg-app-surface-2 border border-app-border text-app-subtle">
-            STATUS: <strong class="text-blue-400" id="live-job-status">RUNNING</strong>
+            STATUS: <strong class="text-blue-500 dark:text-blue-400 font-bold" id="live-job-status">RUNNING</strong>
           </span>
         </div>
       </div>
 
       <!-- Progressive Partial Data Reveal Card (Reveals at Stage 1 before score exists) -->
-      <div id="partial-data-card" class="hidden mb-6 p-4 rounded-xl border border-app-border bg-app-surface-2 grid grid-cols-2 sm:grid-cols-4 gap-3 font-mono text-xs">
+      <div id="partial-data-card" class="hidden mb-6 p-4 rounded-xl border border-app-border bg-app-surface-2 grid grid-cols-2 sm:grid-cols-4 gap-3 font-mono text-xs shadow-2xs">
         <div>
           <span class="text-micro text-app-subtle block">STARS</span>
-          <span class="font-bold text-white text-sm" id="partial-stars">--</span>
+          <span class="font-bold text-app-text text-sm" id="partial-stars">--</span>
         </div>
         <div>
           <span class="text-micro text-app-subtle block">LICENSE</span>
-          <span class="font-bold text-emerald-400 text-sm" id="partial-license">--</span>
+          <span class="font-bold text-healthy text-sm" id="partial-license">--</span>
         </div>
         <div>
           <span class="text-micro text-app-subtle block">LANGUAGE</span>
-          <span class="font-bold text-blue-400 text-sm" id="partial-language">--</span>
+          <span class="font-bold text-blue-500 dark:text-blue-400 text-sm" id="partial-language">--</span>
         </div>
         <div>
           <span class="text-micro text-app-subtle block">REPO NAME</span>
-          <span class="font-bold text-white text-sm truncate block" id="partial-name">--</span>
+          <span class="font-bold text-app-text text-sm truncate block" id="partial-name">--</span>
         </div>
       </div>
 
       <!-- 5-Stage Progress List -->
       <div class="space-y-3 font-mono text-xs" id="stages-list">
         <!-- Stage 1 -->
-        <div class="stage-row flex items-center justify-between gap-3 p-3 rounded-xl border border-app-border/40 bg-app-surface-2/50" data-stage="1">
+        <div class="stage-row flex items-center justify-between gap-3 p-3 rounded-xl border border-app-border bg-app-surface shadow-2xs" data-stage="1">
           <div class="flex items-center gap-3 min-w-0">
-            <span class="stage-icon w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-zinc-800 text-zinc-400 border border-zinc-700">1</span>
+            <span class="stage-icon w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-app-surface-2 text-app-muted border border-app-border">1</span>
             <div>
-              <span class="stage-label text-zinc-300 font-medium block">[1/5] Fetching repository metadata</span>
+              <span class="stage-label text-app-text font-medium block">[1/5] Fetching repository metadata</span>
               <span class="stage-detail text-[11px] text-app-subtle hidden"></span>
             </div>
           </div>
-          <span class="stage-timer text-[11px] text-zinc-500">pending</span>
+          <span class="stage-timer text-[11px] text-app-muted">pending</span>
         </div>
 
         <!-- Stage 2 -->
-        <div class="stage-row flex items-center justify-between gap-3 p-3 rounded-xl border border-app-border/40 bg-app-surface-2/50" data-stage="2">
+        <div class="stage-row flex items-center justify-between gap-3 p-3 rounded-xl border border-app-border bg-app-surface shadow-2xs" data-stage="2">
           <div class="flex items-center gap-3 min-w-0">
-            <span class="stage-icon w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-zinc-800 text-zinc-400 border border-zinc-700">2</span>
+            <span class="stage-icon w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-app-surface-2 text-app-muted border border-app-border">2</span>
             <div>
-              <span class="stage-label text-zinc-300 font-medium block">[2/5] Running security checks (OpenSSF Scorecard)</span>
+              <span class="stage-label text-app-text font-medium block">[2/5] Running security checks (OpenSSF Scorecard)</span>
               <span class="stage-detail text-[11px] text-app-subtle hidden"></span>
             </div>
           </div>
-          <span class="stage-timer text-[11px] text-zinc-500">pending</span>
+          <span class="stage-timer text-[11px] text-app-muted">pending</span>
         </div>
 
         <!-- Stage 3 -->
-        <div class="stage-row flex items-center justify-between gap-3 p-3 rounded-xl border border-app-border/40 bg-app-surface-2/50" data-stage="3">
+        <div class="stage-row flex items-center justify-between gap-3 p-3 rounded-xl border border-app-border bg-app-surface shadow-2xs" data-stage="3">
           <div class="flex items-center gap-3 min-w-0">
-            <span class="stage-icon w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-zinc-800 text-zinc-400 border border-zinc-700">3</span>
+            <span class="stage-icon w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-app-surface-2 text-app-muted border border-app-border">3</span>
             <div>
-              <span class="stage-label text-zinc-300 font-medium block">[3/5] Checking advisories &amp; license</span>
+              <span class="stage-label text-app-text font-medium block">[3/5] Checking advisories &amp; license</span>
               <span class="stage-detail text-[11px] text-app-subtle hidden"></span>
             </div>
           </div>
-          <span class="stage-timer text-[11px] text-zinc-500">pending</span>
+          <span class="stage-timer text-[11px] text-app-muted">pending</span>
         </div>
 
         <!-- Stage 4 -->
-        <div class="stage-row flex items-center justify-between gap-3 p-3 rounded-xl border border-app-border/40 bg-app-surface-2/50" data-stage="4">
+        <div class="stage-row flex items-center justify-between gap-3 p-3 rounded-xl border border-app-border bg-app-surface shadow-2xs" data-stage="4">
           <div class="flex items-center gap-3 min-w-0">
-            <span class="stage-icon w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-zinc-800 text-zinc-400 border border-zinc-700">4</span>
+            <span class="stage-icon w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-app-surface-2 text-app-muted border border-app-border">4</span>
             <div>
-              <span class="stage-label text-zinc-300 font-medium block">[4/5] Computing Safety Score</span>
+              <span class="stage-label text-app-text font-medium block">[4/5] Computing Safety Score</span>
               <span class="stage-detail text-[11px] text-app-subtle hidden"></span>
             </div>
           </div>
-          <span class="stage-timer text-[11px] text-zinc-500">pending</span>
+          <span class="stage-timer text-[11px] text-app-muted">pending</span>
         </div>
 
         <!-- Stage 5 -->
-        <div class="stage-row flex items-center justify-between gap-3 p-3 rounded-xl border border-app-border/40 bg-app-surface-2/50" data-stage="5">
+        <div class="stage-row flex items-center justify-between gap-3 p-3 rounded-xl border border-app-border bg-app-surface shadow-2xs" data-stage="5">
           <div class="flex items-center gap-3 min-w-0">
-            <span class="stage-icon w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-zinc-800 text-zinc-400 border border-zinc-700">5</span>
+            <span class="stage-icon w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-app-surface-2 text-app-muted border border-app-border">5</span>
             <div>
-              <span class="stage-label text-zinc-300 font-medium block">[5/5] Generating plain-language report</span>
+              <span class="stage-label text-app-text font-medium block">[5/5] Generating plain-language report</span>
               <span class="stage-detail text-[11px] text-app-subtle hidden"></span>
             </div>
           </div>
-          <span class="stage-timer text-[11px] text-zinc-500">pending</span>
+          <span class="stage-timer text-[11px] text-app-muted">pending</span>
         </div>
       </div>
 
@@ -423,13 +423,13 @@ const queueDepth = getActiveScanQueueDepth();
           const detail = row.querySelector('.stage-detail');
           const label = row.querySelector('.stage-label');
 
-          icon.className = 'stage-icon w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-zinc-800 text-zinc-400 border border-zinc-700';
+          icon.className = 'stage-icon w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-app-surface-2 text-app-muted border border-app-border';
           icon.textContent = String(idx + 1);
-          timer.className = 'stage-timer text-[11px] text-zinc-500';
+          timer.className = 'stage-timer text-[11px] text-app-muted';
           timer.textContent = 'pending';
           detail.textContent = '';
           detail.classList.add('hidden');
-          label.className = 'stage-label text-zinc-300 font-medium block';
+          label.className = 'stage-label text-app-text font-medium block';
         });
 
         failureBox.classList.add('hidden');
@@ -447,27 +447,27 @@ const queueDepth = getActiveScanQueueDepth();
         const label = row.querySelector('.stage-label');
 
         if (status === 'running') {
-          icon.className = 'stage-icon w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-blue-500/20 text-blue-400 border border-blue-500/40 animate-pulse';
+          icon.className = 'stage-icon w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-blue-500/20 text-blue-500 dark:text-blue-400 border border-blue-500/40 animate-pulse';
           icon.textContent = '⏳';
-          timer.className = 'stage-timer text-[11px] text-blue-400 font-bold';
+          timer.className = 'stage-timer text-[11px] text-blue-500 dark:text-blue-400 font-bold';
           timer.textContent = 'running...';
-          label.className = 'stage-label text-white font-bold block';
+          label.className = 'stage-label text-app-text font-bold block';
         } else if (status === 'completed') {
-          icon.className = 'stage-icon w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40';
+          icon.className = 'stage-icon w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-emerald-500/20 text-healthy border border-emerald-500/40';
           icon.textContent = '✓';
-          timer.className = 'stage-timer text-[11px] text-emerald-400 font-bold';
+          timer.className = 'stage-timer text-[11px] text-healthy font-bold';
           timer.textContent = duration ? `${duration}s` : '✓';
           if (detail) {
             detailEl.textContent = detail;
             detailEl.classList.remove('hidden');
           }
-          label.className = 'stage-label text-zinc-300 font-medium block';
+          label.className = 'stage-label text-app-text font-medium block';
         } else if (status === 'failed') {
-          icon.className = 'stage-icon w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-rose-500/20 text-rose-400 border border-rose-500/40';
+          icon.className = 'stage-icon w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold bg-rose-500/20 text-risky border border-rose-500/40';
           icon.textContent = '✕';
-          timer.className = 'stage-timer text-[11px] text-rose-400 font-bold';
+          timer.className = 'stage-timer text-[11px] text-risky font-bold';
           timer.textContent = 'failed';
-          label.className = 'stage-label text-rose-300 font-bold block';
+          label.className = 'stage-label text-risky font-bold block';
         }
       }
 

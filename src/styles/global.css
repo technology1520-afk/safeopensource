@@ -646,13 +646,69 @@ button[type="submit"]:active,
   background-color: var(--surface-2) !important;
 }
 
+/* Day Mode (Lavender Lab) Text Contrast & Legibility Guarantees */
 :root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) h1.text-white,
 :root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) h2.text-white,
 :root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) h3.text-white,
-:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) span.text-white:not(.btn-primary *):not(button *),
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) p.text-white,
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) div.text-white:not(button *):not(.btn-primary *),
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) span.text-white:not(.btn-primary *):not(button *):not([class*="bg-blue-"]):not([class*="bg-emerald-"]):not([class*="bg-rose-"]):not([class*="bg-red-"]):not([class*="bg-amber-"]):not([class*="bg-purple-"]),
 :root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) strong.text-white,
 :root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) td.text-white {
   color: var(--text) !important;
+}
+
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) .text-zinc-100,
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) .text-zinc-200,
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) .text-zinc-300,
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) .text-gray-100,
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) .text-gray-200,
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) .text-gray-300 {
+  color: var(--text) !important;
+}
+
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) .text-zinc-400,
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) .text-zinc-500,
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) .text-gray-400,
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) .text-gray-500 {
+  color: var(--text-2) !important;
+}
+
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) .text-zinc-600,
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) .text-gray-600 {
+  color: var(--text-3-aa) !important;
+}
+
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) .text-amber-200 {
+  color: var(--text) !important;
+}
+
+/* Day Mode Code Blocks: ensure syntax & text is bold and crisp (11.8:1 contrast on surface-2) */
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) code:not([class*="text-"]):not([class*="bg-"]),
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) pre:not([class*="text-"]),
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) .bg-black\/60 code,
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) .bg-black\/40 code,
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) .bg-app-surface-2 code {
+  color: var(--text) !important;
+}
+
+/* Day Mode Alerts & Callouts: convert dark background gradients into calm, clean, readable pastel panels */
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) .from-amber-950\/30,
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) .from-amber-950\/20,
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) .bg-amber-950\/30,
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) .bg-amber-950\/20 {
+  background-color: var(--caution-soft) !important;
+  background-image: none !important;
+}
+
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) .bg-red-950\/10,
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) .bg-red-950\/20 {
+  background-color: var(--risky-soft) !important;
+}
+
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) .bg-emerald-950\/10,
+:root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) .bg-emerald-950\/20 {
+  background-color: var(--healthy-soft) !important;
 }
 
 :root:not([data-theme="cosmic-void"]):not([data-theme="dark"]) .bg-blue-600 {
@@ -775,4 +831,41 @@ button[type="submit"]:active,
 
 .tabular-nums {
   font-variant-numeric: tabular-nums;
+}
+
+/* Explicit Status Semantic Utilities */
+.bg-caution-soft {
+  background-color: var(--caution-soft) !important;
+}
+
+.border-caution-border {
+  border-color: var(--caution-border) !important;
+}
+
+.bg-healthy-soft {
+  background-color: var(--healthy-soft) !important;
+}
+
+.border-healthy-border {
+  border-color: var(--healthy-border) !important;
+}
+
+.bg-risky-soft {
+  background-color: var(--risky-soft) !important;
+}
+
+.border-risky-border {
+  border-color: var(--risky-border) !important;
+}
+
+.text-caution {
+  color: var(--caution) !important;
+}
+
+.text-healthy {
+  color: var(--healthy) !important;
+}
+
+.text-risky {
+  color: var(--risky) !important;
 }

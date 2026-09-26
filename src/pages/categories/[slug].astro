@@ -75,24 +75,24 @@ const avgScore = tools.length > 0
 
   <!-- Special AI Agents Sector Safety Advisory & Guide Callout -->
   {category.slug === 'ai-agents' && (
-    <div class="mb-8 p-5 rounded-2xl border border-amber-500/40 bg-gradient-to-r from-amber-950/30 to-app-surface text-amber-200">
+    <div class="mb-8 p-5 rounded-2xl border border-caution-border bg-caution-soft text-app-text shadow-xs">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div class="space-y-1">
           <div class="flex items-center gap-2">
-            <span class="inline-block w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
-            <span class="font-mono text-xs font-bold uppercase tracking-wider text-amber-300">
+            <span class="inline-block w-2 h-2 rounded-full bg-caution animate-ping"></span>
+            <span class="font-mono text-xs font-bold uppercase tracking-wider text-caution">
               HIGH-PRIVILEGE SECTOR NOTICE
             </span>
           </div>
-          <p class="text-xs sm:text-sm text-zinc-300 font-sans leading-relaxed max-w-2xl">
-            Autonomous AI agents execute shell commands with local operator credentials. To reflect this host-level risk, SafeOpenSource weights <strong>Security Health at 55%</strong> for all tools in this category.
+          <p class="text-xs sm:text-sm text-app-text font-sans leading-relaxed max-w-2xl">
+            Autonomous AI agents execute shell commands with local operator credentials. To reflect this host-level risk, SafeOpenSource weights <strong class="text-app-text font-bold">Security Health at 55%</strong> for all tools in this category.
           </p>
         </div>
 
         <div class="flex items-center gap-3 shrink-0 font-mono text-xs">
           <a
             href="/how-we-score"
-            class="text-amber-400 hover:text-white underline"
+            class="text-caution hover:underline font-semibold"
           >
             Why 55% Weight?
           </a>

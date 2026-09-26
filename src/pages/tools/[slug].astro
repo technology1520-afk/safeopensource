@@ -349,13 +349,13 @@ const jsonLd = {
       </div>
 
       <div class="md:col-span-7">
-        <div class="relative rounded-lg bg-black/60 border border-app-border p-3 font-mono text-xs text-zinc-300 flex items-center justify-between gap-2 overflow-x-auto">
-          <code class="text-[11px] whitespace-nowrap text-zinc-400">
+        <div class="relative rounded-lg bg-app-surface-2 border border-app-border p-3 font-mono text-xs text-app-text flex items-center justify-between gap-2 overflow-x-auto shadow-2xs">
+          <code class="text-[11px] whitespace-nowrap text-app-text font-medium">
             {`[![SafeOpenSource Score](https://safeopensource.org/badge/${tool.repo}.svg)](https://safeopensource.org/tools/${tool.slug})`}
           </code>
           <button
             type="button"
-            class="px-2.5 py-1 rounded bg-app-surface hover:bg-zinc-700 text-[10px] font-mono text-white shrink-0 border border-app-border copy-badge-btn cursor-pointer"
+            class="px-2.5 py-1 rounded bg-app-surface hover:bg-app-surface-hover text-[10px] font-mono text-app-text shrink-0 border border-app-border copy-badge-btn cursor-pointer font-semibold shadow-2xs"
             data-snippet={`[![SafeOpenSource Score](https://safeopensource.org/badge/${tool.repo}.svg)](https://safeopensource.org/tools/${tool.slug})`}
           >
             Copy Markdown

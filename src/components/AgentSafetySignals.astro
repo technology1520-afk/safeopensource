@@ -36,11 +36,11 @@ const scanDate = formatDate(tool.scanned_at);
 <div class={`space-y-6 ${className}`}>
   <!-- 1. MANDATORY "RUNS WITH YOUR CREDENTIALS" WARNING CHIP -->
   <aside
-    class="p-4 rounded-xl border border-amber-500/40 bg-gradient-to-r from-amber-950/30 to-amber-900/10 text-amber-200"
+    class="p-4 rounded-xl border border-caution-border bg-caution-soft text-app-text shadow-xs"
     role="alert"
   >
     <div class="flex items-start gap-3">
-      <div class="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center shrink-0 text-amber-400 mt-0.5">
+      <div class="w-8 h-8 rounded-lg bg-caution/15 border border-caution-border flex items-center justify-center shrink-0 text-caution mt-0.5">
         <svg class="w-4 h-4 animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
           <line x1="12" y1="9" x2="12" y2="13"/>
@@ -50,24 +50,24 @@ const scanDate = formatDate(tool.scanned_at);
 
       <div class="flex-1">
         <div class="flex items-center gap-2 mb-1 flex-wrap">
-          <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 tracking-wider uppercase">
-            <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>
+          <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-caution/15 text-caution border border-caution-border tracking-wider uppercase">
+            <span class="w-1.5 h-1.5 rounded-full bg-caution animate-ping"></span>
             RUNS WITH YOUR CREDENTIALS
           </span>
-          <span class="font-mono text-xs text-amber-400/80">THREAT MODEL NOTICE</span>
+          <span class="font-mono text-xs text-caution font-semibold">THREAT MODEL NOTICE</span>
         </div>
 
-        <p class="text-xs sm:text-sm text-zinc-300 leading-relaxed font-sans">
+        <p class="text-xs sm:text-sm text-app-text leading-relaxed font-sans">
           This autonomous AI agent executes shell scripts, filesystem reads/writes, and browser actions with the
-          <strong>active operator's host credentials</strong> by design. A malicious prompt injection or unvetted tool call
+          <strong class="text-app-text font-bold">active operator's host credentials</strong> by design. A malicious prompt injection or unvetted tool call
           can compromise local SSH keys, cloud tokens, and environmental secrets.
         </p>
 
-        <div class="mt-3 pt-2.5 border-t border-amber-500/20 flex flex-wrap items-center justify-between gap-2 text-xs font-mono text-amber-400/90">
-          <span>Enforce: Rootless container or dedicated disposable API keys</span>
+        <div class="mt-3 pt-2.5 border-t border-caution-border flex flex-wrap items-center justify-between gap-2 text-xs font-mono text-caution">
+          <span class="font-medium">Enforce: Rootless container or dedicated disposable API keys</span>
           <a
             href="/how-to-run-an-ai-agent-safely"
-            class="text-amber-300 hover:text-white underline font-semibold inline-flex items-center gap-1"
+            class="text-caution hover:underline font-semibold inline-flex items-center gap-1"
           >
             Read Safety Guide →
           </a>
@@ -86,10 +86,10 @@ const scanDate = formatDate(tool.scanned_at);
         </h2>
       </div>
 
-      <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-black/40 border border-app-border font-mono text-xs">
-        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-        <span class="text-zinc-400">HUMAN AUDIT:</span>
-        <span class="text-emerald-400 font-bold uppercase">{perm.review_status}</span>
+      <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-app-surface-2 border border-app-border font-mono text-xs shadow-2xs">
+        <span class="w-2 h-2 rounded-full bg-healthy"></span>
+        <span class="text-app-muted">HUMAN AUDIT:</span>
+        <span class="text-healthy font-bold uppercase">{perm.review_status}</span>
       </div>
     </div>
 
@@ -169,8 +169,8 @@ const scanDate = formatDate(tool.scanned_at);
     </div>
 
     <!-- Human Written Verdict Callout -->
-    <div class="p-3.5 rounded-lg bg-black/40 border border-app-border flex items-start gap-3">
-      <span class="text-blue-400 mt-0.5 shrink-0">
+    <div class="p-3.5 rounded-lg bg-app-surface-2 border border-app-border flex items-start gap-3 shadow-2xs">
+      <span class="text-blue-500 dark:text-blue-400 mt-0.5 shrink-0">
         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"></circle>
           <path d="M12 16v-4"></path>
@@ -178,8 +178,8 @@ const scanDate = formatDate(tool.scanned_at);
         </svg>
       </span>
       <div class="text-xs leading-relaxed">
-        <strong class="text-white font-mono uppercase tracking-wider">OPERATOR VERDICT:</strong>
-        <span class="text-zinc-300 font-sans ml-1">{perm.verdict}</span>
+        <strong class="text-app-text font-mono uppercase tracking-wider font-bold">OPERATOR VERDICT:</strong>
+        <span class="text-app-text font-sans ml-1">{perm.verdict}</span>
       </div>
     </div>
   </section>
@@ -246,7 +246,7 @@ const scanDate = formatDate(tool.scanned_at);
                   </span>
                 </div>
 
-                <p class="text-xs text-zinc-300 font-sans leading-relaxed">{cve.summary}</p>
+                <p class="text-xs text-app-text font-sans leading-relaxed">{cve.summary}</p>
 
                 {cve.url && (
                   <div class="pt-1.5 border-t border-app-border/40 text-[11px] font-mono">
@@ -305,13 +305,13 @@ const scanDate = formatDate(tool.scanned_at);
             {incidents.map((inc) => (
               <div class="p-3.5 rounded-xl border border-app-border bg-app-bg space-y-2">
                 <div class="flex items-center justify-between gap-2 flex-wrap">
-                  <span class="font-mono text-xs font-bold text-white">{inc.title}</span>
-                  <span class="font-mono text-[10px] text-zinc-500">{inc.date}</span>
+                  <span class="font-mono text-xs font-bold text-app-text">{inc.title}</span>
+                  <span class="font-mono text-[10px] text-app-subtle">{inc.date}</span>
                 </div>
 
-                <p class="text-xs text-zinc-300 font-sans leading-relaxed">{inc.description}</p>
+                <p class="text-xs text-app-text font-sans leading-relaxed">{inc.description}</p>
 
-                <div class="p-2 rounded bg-amber-950/20 border border-amber-500/20 text-[11px] font-mono text-amber-300">
+                <div class="p-2 rounded bg-caution/10 border border-caution-border text-[11px] font-mono text-caution">
                   <span class="font-bold">Mitigation:</span> {inc.mitigation}
                 </div>
 
