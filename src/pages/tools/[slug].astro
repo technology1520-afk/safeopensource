@@ -18,6 +18,7 @@ import { getToolBySlug, getAlternatives } from '../../utils/tools';
 import { getCategoryBySlug } from '../../data/categories';
 import { getTool } from '../../lib/admin/tools-service';
 import type { ToolData } from '../../types/tool';
+import { formatProvenanceLine } from '../../lib/scanner/scoring';
 
 export const prerender = false;
 
@@ -49,6 +50,7 @@ const tool = toolRecord;
 const category = getCategoryBySlug(tool.category);
 const alternatives = getAlternatives(tool, 3);
 const isAiAgent = tool.category === 'ai-agents';
+const provenanceLine = tool.provenance || formatProvenanceLine(tool.safety_score, tool.components);
 
 // Format stats
 function formatStars(count: number): string {
@@ -248,12 +250,28 @@ const jsonLd = {
         description="Predictable semantic versioning, cryptographically signed artifacts, and container provenance."
       />
     </div>
+
+    {tool.safety_score > 75 && (
+      <div class="mt-6 p-4 rounded-xl border border-app-border bg-app-surface-2 font-mono text-xs shadow-2xs">
+        <div class="flex items-center gap-2 mb-1.5 flex-wrap">
+          <span class="px-2 py-0.5 rounded bg-app-accent/20 border border-app-accent/40 text-app-accent font-bold text-[10px] uppercase tracking-wider">
+            Score Provenance
+          </span>
+          <span class="text-micro text-app-subtle">
+            Algorithmic derivation breakdown (required for &gt;75)
+          </span>
+        </div>
+        <div class="text-app-text font-semibold text-xs sm:text-sm break-words">
+          {provenanceLine}
+        </div>
+      </div>
+    )}
   </section>
 
   <!-- 4. Risk Reasons List & 5. License Explainer Grid -->
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
     <!-- Risk List -->
-    <RiskList risks={tool.risk_reasons} verdict={tool.verdict} />
+    <RiskList risks={tool.risk_reasons} verdict={tool.verdict} advisoriesSource={tool.advisories_source} />
 
     <!-- License Explainer Card -->
     <LicenseExplainer spdx={tool.license_spdx} />

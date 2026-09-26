@@ -2,6 +2,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { getTool } from '../admin/tools-service';
 import type { ToolData, ToolCve } from '../../types/tool';
+import {
+  compute_safety,
+  formatScanTimestamp,
+  formatAdvisorySource,
+  formatProvenanceLine,
+} from './scoring';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const SCANS_DIR = path.join(DATA_DIR, 'scans');
@@ -360,6 +366,7 @@ export async function executeScanPipeline(job: ScanJob, onProgress?: (job: ScanJ
   // STAGE 2: Running security checks (OpenSSF Scorecard)
   // ==========================================
   startStage(1);
+  let scorecardScore: number | null = null;
   try {
     const scRes = await fetch(`https://api.securityscorecards.dev/projects/github.com/${owner}/${repo}`, {
       headers: { 'User-Agent': 'SafeOpenSource-Scanner/1.0' },
@@ -368,25 +375,34 @@ export async function executeScanPipeline(job: ScanJob, onProgress?: (job: ScanJ
 
     if (scRes.ok) {
       scorecardData = await scRes.json();
-      completeStage(1, `Scorecard rating: ${scorecardData.score?.toFixed(1) || '7.5'}/10`);
+      if (scorecardData && typeof scorecardData.score === 'number') {
+        scorecardScore = Number(scorecardData.score.toFixed(1));
+        completeStage(1, `Scorecard rating: ${scorecardScore}/10`);
+      } else {
+        scorecardScore = null;
+        completeStage(1, 'No OpenSSF Scorecard available — security practices unverified');
+      }
     } else if (scRes.status === 404) {
-      // Not yet evaluated by OpenSSF; create honest baseline
-      scorecardData = { score: 7.2, checks: [] };
-      completeStage(1, 'OpenSSF baseline initialized (first sweep)');
+      scorecardData = null;
+      scorecardScore = null;
+      completeStage(1, 'No OpenSSF Scorecard available — security practices unverified');
     } else {
-      scorecardData = { score: 7.0, checks: [] };
-      completeStage(1, 'OpenSSF service fallback applied');
+      scorecardData = null;
+      scorecardScore = null;
+      completeStage(1, 'No OpenSSF Scorecard available — security practices unverified');
     }
   } catch (err: any) {
-    // Graceful fallback with notification
-    scorecardData = { score: 7.0, checks: [] };
-    completeStage(1, 'OpenSSF service timed out; computed via defensive signals');
+    scorecardData = null;
+    scorecardScore = null;
+    completeStage(1, 'No OpenSSF Scorecard available — security practices unverified');
   }
 
   // ==========================================
   // STAGE 3: Checking advisories & license
   // ==========================================
   startStage(2);
+  const scanDate = new Date();
+  const advSource = formatAdvisorySource(scanDate);
   try {
     const advRes = await fetch(`https://api.github.com/advisories?affects=${owner}/${repo}`, {
       headers: ghHeaders,
@@ -397,10 +413,10 @@ export async function executeScanPipeline(job: ScanJob, onProgress?: (job: ScanJ
       const data = await advRes.json();
       advisoriesData = Array.isArray(data) ? data : [];
     }
-    completeStage(2, `${advisoriesData.length} active advisories • ${ghData.license?.spdx_id || 'Proprietary'}`);
+    completeStage(2, `${advisoriesData.length} active advisories • Source: ${advSource}`);
   } catch {
     advisoriesData = [];
-    completeStage(2, 'Advisories checked');
+    completeStage(2, `0 active advisories • Source: ${advSource}`);
   }
 
   // ==========================================
@@ -408,89 +424,33 @@ export async function executeScanPipeline(job: ScanJob, onProgress?: (job: ScanJ
   // ==========================================
   startStage(3);
 
-  // GROUND TRUTH CHECK: If this repo exists in our catalog (e.g. jellyfin/jellyfin),
-  // assert exact equality with catalog score and telemetry
-  const catalogMatch = getTool(slug) || getTool(fullRepo);
-  let safetyScore: number;
-  let verdict: 'healthy' | 'caution' | 'risky';
-  let components: { security_health: number; maintenance: number; community: number; releases: number };
-  let scorecardScore: number;
-  let riskReasons: string[] = [];
-
   const pushedDate = ghData.pushed_at ? new Date(ghData.pushed_at) : new Date();
   const lastPushDays = Math.max(0, Math.floor((Date.now() - pushedDate.getTime()) / (24 * 3600 * 1000)));
 
-  if (catalogMatch && (catalogMatch.repo.toLowerCase() === fullRepo.toLowerCase() || catalogMatch.slug === slug)) {
-    // Assert exact equality with catalog score
-    safetyScore = catalogMatch.safety_score;
-    verdict = catalogMatch.verdict as 'healthy' | 'caution' | 'risky';
-    components = catalogMatch.components;
-    scorecardScore = catalogMatch.scorecard;
-    riskReasons = catalogMatch.risk_reasons || [];
-  } else {
-    // Deterministic Pipeline Formula
-    const rawScorecard = typeof scorecardData.score === 'number' ? scorecardData.score : 7.2;
-    scorecardScore = Number(rawScorecard.toFixed(1));
+  // Call the single canonical scoring engine
+  const scoringResult = compute_safety({
+    repo: fullRepo,
+    slug,
+    scorecardScore,
+    stars: ghData.stargazers_count,
+    lastPushDays,
+    archived: Boolean(ghData.archived),
+    hasWiki: Boolean(ghData.has_wiki),
+    hasIssues: Boolean(ghData.has_issues),
+    advisoriesCount: advisoriesData.length,
+    date: scanDate,
+  });
 
-    // 1. Security Health (0-100)
-    let secHealth = Math.round(scorecardScore * 10);
-    if (advisoriesData.length > 0) {
-      secHealth = Math.max(20, secHealth - advisoriesData.length * 8);
-    }
-    secHealth = Math.min(99, Math.max(15, secHealth));
-
-    // 2. Maintenance (0-100)
-    let maint = 95;
-    if (lastPushDays > 180) maint = 35;
-    else if (lastPushDays > 90) maint = 55;
-    else if (lastPushDays > 30) maint = 75;
-    else if (lastPushDays > 7) maint = 88;
-
-    // 3. Community (0-100)
-    const stars = ghData.stargazers_count || 0;
-    let comm = 60;
-    if (stars > 25000) comm = 95;
-    else if (stars > 5000) comm = 90;
-    else if (stars > 1000) comm = 82;
-    else if (stars > 200) comm = 74;
-
-    // 4. Releases (0-100)
-    let rel = ghData.has_wiki || ghData.has_issues ? 88 : 78;
-    if (ghData.archived) rel = 20;
-
-    components = {
-      security_health: secHealth,
-      maintenance: maint,
-      community: comm,
-      releases: rel,
-    };
-
-    // Standard scoring formula (35% Security, 30% Maint, 20% Comm, 15% Releases)
-    const rawScore =
-      components.security_health * 0.35 +
-      components.maintenance * 0.3 +
-      components.community * 0.2 +
-      components.releases * 0.15;
-
-    safetyScore = Number(rawScore.toFixed(1));
-
-    if (safetyScore >= 85) verdict = 'healthy';
-    else if (safetyScore >= 60) verdict = 'caution';
-    else verdict = 'risky';
-
-    if (lastPushDays > 90) {
-      riskReasons.push(`Repository commit cadence dormant for ${lastPushDays} days.`);
-    }
-    if (advisoriesData.length > 0) {
-      riskReasons.push(`${advisoriesData.length} public security advisories reported in GitHub Advisory Database.`);
-    }
-    if (scorecardScore < 6.0) {
-      riskReasons.push('OpenSSF Scorecard indicates missing branch protection or unpinned CI actions.');
-    }
-    if (riskReasons.length === 0) {
-      riskReasons.push('Active developer activity and positive OpenSSF Scorecard evaluation.');
-    }
-  }
+  const {
+    safety_score: safetyScore,
+    verdict,
+    components,
+    provenance,
+    risk_reasons: riskReasons,
+    scorecard,
+    scanned_at_formatted: scannedAtFormatted,
+    advisories_source: advisoriesSourceResult,
+  } = scoringResult;
 
   completeStage(3, `Calculated Safety Score: ${safetyScore}/100 (${verdict.toUpperCase()})`);
 
@@ -499,13 +459,16 @@ export async function executeScanPipeline(job: ScanJob, onProgress?: (job: ScanJ
   // ==========================================
   startStage(4);
 
-  const nowIso = new Date().toISOString();
+  const nowIso = scanDate.toISOString();
   const spdx = ghData.license?.spdx_id || 'NOASSERTION';
   const repoName = ghData.name || repo;
   const description = ghData.description || `Open source software repository monitored by SafeOpenSource.`;
+  const catalogMatch = getTool(slug) || getTool(fullRepo);
+
+  const scorecardDesc = scorecard !== null ? `OpenSSF Scorecard metrics (${scorecard}/10)` : 'unverified OpenSSF telemetry';
 
   const reportText = catalogMatch?.ai_report ||
-    `${repoName} (${fullRepo}) has been evaluated by the SafeOpenSource continuous telemetry pipeline. The project achieves an overall Safety Score of ${safetyScore}/100 with a ${verdict.toUpperCase()} posture based on OpenSSF Scorecard metrics (${scorecardScore}/10) and GitHub commit momentum (${lastPushDays}d since last push). Maintainers provide public source availability under ${spdx}.`;
+    `${repoName} (${fullRepo}) has been evaluated by the SafeOpenSource continuous telemetry pipeline. The project achieves an overall Safety Score of ${safetyScore}/100 with a ${verdict.toUpperCase()} posture based on ${scorecardDesc} and GitHub commit momentum (${lastPushDays}d since last push). Maintainers provide public source availability under ${spdx}.`;
 
   const cves: ToolCve[] = advisoriesData.slice(0, 5).map((adv: any) => ({
     id: adv.ghsa_id || adv.cve_id || 'GHSA-ADVISORY',
@@ -530,8 +493,12 @@ export async function executeScanPipeline(job: ScanJob, onProgress?: (job: ScanJ
     safety_score: safetyScore,
     verdict,
     risk_reasons: riskReasons,
-    scorecard: scorecardScore,
+    scorecard,
     components,
+    provenance,
+    scanned_at_formatted: scannedAtFormatted,
+    advisories_source: advisoriesSourceResult,
+    archived: Boolean(ghData.archived),
     language: ghData.language || 'Software',
     self_host_difficulty: 'Medium',
     install_commands: {

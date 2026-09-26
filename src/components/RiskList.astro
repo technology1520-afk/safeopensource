@@ -4,10 +4,16 @@ import type { Verdict } from '../types/tool';
 interface Props {
   risks: string[];
   verdict: Verdict;
+  advisoriesSource?: string;
   class?: string;
 }
 
-const { risks, verdict, class: className = '' } = Astro.props;
+const {
+  risks,
+  verdict,
+  advisoriesSource = `GitHub Advisory DB, checked ${new Date().toISOString().split('T')[0]}`,
+  class: className = '',
+} = Astro.props;
 
 const isClean = risks.length === 0;
 ---
@@ -61,5 +67,10 @@ const isClean = risks.length === 0;
       ))}
     </ul>
   )}
+
+  <div class="mt-4 pt-3 border-t border-app-border/40 flex items-center justify-between text-[11px] font-mono text-app-subtle">
+    <span>Vulnerability Source:</span>
+    <span class="text-app-text font-medium">{advisoriesSource}</span>
+  </div>
 </div>
 

@@ -7,6 +7,11 @@ import {
   getRecentPublicScans,
 } from '../../../lib/scanner/pipeline';
 import {
+  formatScanTimestamp,
+  formatAdvisorySource,
+  formatProvenanceLine,
+} from '../../../lib/scanner/scoring';
+import {
   checkScanRateLimit,
   incrementActiveScans,
   decrementActiveScans,
@@ -67,11 +72,20 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     if (!force) {
       const { tool: cachedTool, daysAgo } = checkRecentScan(normalized.fullRepo, normalized.slug);
       if (cachedTool) {
+        if (!cachedTool.scanned_at_formatted && cachedTool.scanned_at) {
+          cachedTool.scanned_at_formatted = formatScanTimestamp(cachedTool.scanned_at);
+        }
+        if (!cachedTool.advisories_source && cachedTool.scanned_at) {
+          cachedTool.advisories_source = formatAdvisorySource(cachedTool.scanned_at);
+        }
+        if (!cachedTool.provenance && cachedTool.components) {
+          cachedTool.provenance = formatProvenanceLine(cachedTool.safety_score, cachedTool.components);
+        }
         return new Response(
           JSON.stringify({
             cached: true,
             daysAgo,
-            message: daysAgo === 0 ? 'Scanned today' : `Rescanned ${daysAgo} day${daysAgo === 1 ? '' : 's'} ago`,
+            message: cachedTool.scanned_at_formatted || (daysAgo === 0 ? 'Scanned today' : `Rescanned ${daysAgo} day${daysAgo === 1 ? '' : 's'} ago`),
             tool: cachedTool,
           }),
           {

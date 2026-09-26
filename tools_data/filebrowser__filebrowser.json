@@ -1,0 +1,33 @@
+{
+  "slug": "filebrowser",
+  "repo": "filebrowser/filebrowser",
+  "name": "filebrowser",
+  "tagline": "Web File Browser which can be used as a middleware or standalone app.",
+  "category": "developer-tools",
+  "license_spdx": "Apache-2.0",
+  "stars": 35938,
+  "contributors": 120,
+  "last_push_days": 57,
+  "latest_release": "v2.32.0",
+  "safety_score": 42.5,
+  "verdict": "risky",
+  "risk_reasons": [
+    "ARCHIVED — FLAGGED: Repository is marked as archived by maintainers. No active security patches or dependency updates.",
+    "OpenSSF Scorecard indicates critical supply chain and branch protection vulnerabilities."
+  ],
+  "scorecard": 3.9,
+  "components": {
+    "security_health": 39,
+    "maintenance": 45,
+    "community": 75,
+    "releases": 20
+  },
+  "language": "Go",
+  "self_host_difficulty": "Easy",
+  "install_commands": {
+    "docker": "docker run -v /path/to/files:/srv -v /path/to/config.json:/etc/config.json -p 8080:80 filebrowser/filebrowser"
+  },
+  "website_url": "https://filebrowser.org",
+  "ai_report": "Filebrowser provides a clean, web-based file management interface for home servers and cloud instances. However, the repository has been officially archived by maintainers, indicating no further security patches, vulnerability remediations, or dependency upgrades will be released. With an OpenSSF Scorecard of 3.9 and an unmaintained release status, self-hosting this application on public-facing networks carries substantial supply-chain and remote exploit risks. The project receives a Risky verdict with an archived flag.",
+  "scanned_at": "2026-09-26T10:00:00.000Z"
+}

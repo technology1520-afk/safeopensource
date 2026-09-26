@@ -2,22 +2,26 @@
 interface Props {
   label: string;
   weight: number;
-  score: number;
+  score: number | null;
   description?: string;
   class?: string;
 }
 
 const { label, weight, score, description, class: className = '' } = Astro.props;
 
-const barColor =
-  score >= 80
+const isUnverified = score === null || score === undefined;
+
+const barColor = isUnverified
+  ? 'bg-zinc-600'
+  : score >= 80
     ? 'bg-emerald-500'
     : score >= 50
       ? 'bg-amber-500'
       : 'bg-rose-500';
 
-const textColor =
-  score >= 80
+const textColor = isUnverified
+  ? 'text-app-muted'
+  : score >= 80
     ? 'text-emerald-400'
     : score >= 50
       ? 'text-amber-400'
@@ -29,32 +33,38 @@ const textColor =
     <div class="flex items-center gap-2">
       <span class="font-medium text-app-text">{label}</span>
       <span class="font-mono text-[11px] text-app-accent">
-        (&times;{(weight / 100).toFixed(2)})
+        {isUnverified ? '(weight redistributed)' : `(×${(weight / 100).toFixed(2)})`}
       </span>
     </div>
     <div class="font-mono font-semibold">
-      <span class={textColor}>{score}</span>
-      <span class="text-app-muted text-[11px]">/100</span>
+      {isUnverified ? (
+        <span class="text-caution text-[11px] font-bold">UNVERIFIED</span>
+      ) : (
+        <>
+          <span class={textColor}>{score}</span>
+          <span class="text-app-muted text-[11px]">/100</span>
+        </>
+      )}
     </div>
   </div>
 
   <div
     class="h-2.5 w-full overflow-hidden rounded-full bg-app-surface-2 border border-app-border"
     role="progressbar"
-    aria-valuenow={score}
+    aria-valuenow={isUnverified ? 0 : (score ?? 0)}
     aria-valuemin="0"
     aria-valuemax="100"
-    aria-label={`${label} score: ${score} out of 100`}
+    aria-label={`${label} score: ${isUnverified ? 'Unverified' : `${score} out of 100`}`}
   >
     <div
       class={`h-full ${barColor} rounded-full transition-all duration-150 ease-out`}
-      style={`width: ${Math.min(Math.max(score, 0), 100)}%`}
+      style={`width: ${isUnverified ? 0 : Math.min(Math.max(score ?? 0, 0), 100)}%`}
     />
   </div>
 
   {description && (
     <p class="text-[11px] text-app-muted leading-relaxed">
-      {description}
+      {isUnverified ? 'No OpenSSF Scorecard available — security practices unverified. Weight redistributed to other components.' : description}
     </p>
   )}
 </div>

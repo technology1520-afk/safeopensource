@@ -1,10 +1,10 @@
 export type Verdict = "healthy" | "caution" | "risky";
 
 export interface ScoreComponents {
-  security_health: number; // 0-100 (35% weight)
-  maintenance: number;     // 0-100 (30% weight)
-  community: number;       // 0-100 (20% weight)
-  releases: number;        // 0-100 (15% weight)
+  security_health: number | null; // 0-100 (35% weight, null if Scorecard 404)
+  maintenance: number;            // 0-100 (30% weight)
+  community: number;              // 0-100 (20% weight)
+  releases: number;               // 0-100 (15% weight)
 }
 
 export interface InstallCommands {
@@ -114,6 +114,10 @@ export interface ToolData {
   // Scanner & Admin Workflow
   unlisted?: boolean;
   ai_report_status?: 'draft' | 'approved';
+  provenance?: string;
+  scanned_at_formatted?: string;
+  advisories_source?: string;
+  archived?: boolean;
 }
 
 export interface CategoryData {

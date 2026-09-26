@@ -197,7 +197,7 @@ const scanDate = formatDate(tool.scanned_at);
             GitHub Advisory Database CVEs
           </h3>
         </div>
-        <span class="text-[10px] font-mono text-app-subtle">AUDITED: {scanDate}</span>
+        <span class="text-[10px] font-mono text-app-subtle">Source: GitHub Advisory DB, checked {scanDate}</span>
       </div>
 
       <div class="flex-1 flex flex-col justify-center">
@@ -210,7 +210,7 @@ const scanDate = formatDate(tool.scanned_at);
             </div>
             <p class="text-xs text-emerald-400 font-bold mb-1">NO KNOWN CVEs DETECTED</p>
             <p class="text-xs text-app-muted font-sans">
-              Zero public vulnerabilities recorded in GitHub Advisory Database as of {scanDate}.
+              Zero public vulnerabilities recorded (Source: GitHub Advisory DB, checked {scanDate}).
             </p>
           </div>
         )}

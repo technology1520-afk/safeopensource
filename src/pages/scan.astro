@@ -310,6 +310,16 @@ const queueDepth = getActiveScanQueueDepth();
           <h3 class="text-base font-bold text-white font-mono" id="success-summary-title">
             Safety Score: Calculated
           </h3>
+          <div class="text-xs font-mono text-emerald-400 font-semibold" id="success-scanned-timestamp">
+            Scanned
+          </div>
+          <div id="success-provenance-box" class="hidden mt-2 p-2.5 rounded-lg bg-black/40 border border-app-border font-mono text-xs text-app-muted">
+            <span class="text-app-accent font-bold">PROVENANCE:</span>
+            <span id="success-provenance-text" class="text-app-text ml-1"></span>
+          </div>
+          <div class="text-[11px] font-mono text-app-subtle mt-1" id="success-advisories-source">
+            Source: GitHub Advisory DB
+          </div>
           <p class="text-xs text-app-muted font-sans" id="success-summary-desc">
             Report cataloged as unlisted. Shareable permalink is active.
           </p>
@@ -571,6 +581,28 @@ const queueDepth = getActiveScanQueueDepth();
             const tool = job.result;
             if (tool) {
               successTitle.textContent = `${tool.name}: Safety Score ${tool.safety_score}/100 (${tool.verdict.toUpperCase()})`;
+
+              const timeEl = document.getElementById('success-scanned-timestamp');
+              if (timeEl && tool.scanned_at_formatted) {
+                timeEl.textContent = tool.scanned_at_formatted;
+              }
+
+              const provBox = document.getElementById('success-provenance-box');
+              const provText = document.getElementById('success-provenance-text');
+              if (provBox && provText) {
+                if (tool.safety_score > 75 && tool.provenance) {
+                  provText.textContent = tool.provenance;
+                  provBox.classList.remove('hidden');
+                } else {
+                  provBox.classList.add('hidden');
+                }
+              }
+
+              const advEl = document.getElementById('success-advisories-source');
+              if (advEl && tool.advisories_source) {
+                advEl.textContent = `Source: ${tool.advisories_source}`;
+              }
+
               viewReportBtn.href = `/tools/${tool.slug}`;
               successBox.classList.remove('hidden');
             }

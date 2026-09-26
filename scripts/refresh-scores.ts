@@ -34,30 +34,7 @@ interface ToolJson {
   website_url?: string;
 }
 
-/**
- * Calculates composite 0-100 Safety Score from components:
- * Security (35%), Maintenance (30%), Community (20%), Releases (15%)
- */
-function calculateCompositeScore(components: ToolJson['components']): {
-  score: number;
-  verdict: 'healthy' | 'caution' | 'risky';
-} {
-  const score = Math.round(
-    components.security_health * 0.35 +
-    components.maintenance * 0.30 +
-    components.community * 0.20 +
-    components.releases * 0.15
-  );
-
-  let verdict: 'healthy' | 'caution' | 'risky' = 'healthy';
-  if (score < 50) {
-    verdict = 'risky';
-  } else if (score < 80) {
-    verdict = 'caution';
-  }
-
-  return { score, verdict };
-}
+import { compute_safety } from '../src/lib/scanner/scoring.ts';
 
 async function refreshTool(filePath: string): Promise<void> {
   const content = fs.readFileSync(filePath, 'utf-8');
@@ -100,10 +77,20 @@ async function refreshTool(filePath: string): Promise<void> {
     console.warn(`[WARN] Network telemetry lookup skipped for ${tool.slug}: ${(err as Error).message}`);
   }
 
-  // Update composite score & scanned timestamp
-  const { score, verdict } = calculateCompositeScore(tool.components);
-  tool.safety_score = score;
-  tool.verdict = verdict;
+  // Update composite score & scanned timestamp using canonical compute_safety
+  const scoringResult = compute_safety({
+    repo: tool.repo,
+    slug: tool.slug,
+    scorecardScore: tool.scorecard,
+    stars: tool.stars,
+    lastPushDays: tool.last_push_days,
+    customComponents: tool.components,
+  });
+
+  tool.safety_score = scoringResult.safety_score;
+  tool.verdict = scoringResult.verdict;
+  tool.components = scoringResult.components;
+  tool.scorecard = scoringResult.scorecard;
   tool.scanned_at = new Date().toISOString();
 
   fs.writeFileSync(filePath, JSON.stringify(tool, null, 2), 'utf-8');

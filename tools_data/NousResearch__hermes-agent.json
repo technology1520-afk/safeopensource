@@ -1,0 +1,33 @@
+{
+  "slug": "hermes-agent",
+  "repo": "NousResearch/hermes-agent",
+  "name": "hermes-agent",
+  "tagline": "The agent that grows with you.",
+  "category": "developer-tools",
+  "license_spdx": "MIT",
+  "stars": 249082,
+  "contributors": 958,
+  "last_push_days": 0,
+  "latest_release": "main",
+  "safety_score": 71.8,
+  "verdict": "caution",
+  "risk_reasons": [
+    "No OpenSSF Scorecard available — security practices unverified.",
+    "Active community repository with unverified CI branch protections and actions pinning."
+  ],
+  "scorecard": null,
+  "components": {
+    "security_health": null,
+    "maintenance": 92,
+    "community": 70,
+    "releases": 34
+  },
+  "language": "Python",
+  "self_host_difficulty": "Medium",
+  "install_commands": {
+    "clone": "git clone https://github.com/NousResearch/hermes-agent.git"
+  },
+  "website_url": "https://hermes-agent.nousresearch.com",
+  "ai_report": "NousResearch/hermes-agent is an open-source autonomous agent framework designed to execute tasks in local and remote environments. The repository exhibits high community engagement with over 240k stars and frequent commits. However, our security audit notes that the project has not established an OpenSSF Scorecard evaluation, leaving supply-chain practices and action pinning unverified. Because security practices remain unverified, the repository is capped at a Caution verdict with a 71.8/100 Safety Score under redistributed component weights.",
+  "scanned_at": "2026-09-26T10:00:00.000Z"
+}

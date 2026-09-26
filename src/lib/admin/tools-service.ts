@@ -18,9 +18,9 @@ export interface ToolRecord {
   safety_score: number;
   verdict: 'healthy' | 'caution' | 'risky';
   risk_reasons: string[];
-  scorecard: number;
+  scorecard: number | null;
   components: {
-    security_health: number;
+    security_health: number | null;
     maintenance: number;
     community: number;
     releases: number;

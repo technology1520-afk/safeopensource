@@ -1,4 +1,6 @@
 ---
+import { formatScanTimestamp } from '../lib/scanner/scoring';
+
 interface Props {
   scannedAt: string;
   repo: string;
@@ -8,27 +10,19 @@ interface Props {
 
 const { scannedAt, repo, slug, class: className = '' } = Astro.props;
 
-// Compute relative time string
-const scanDate = new Date(scannedAt);
-const diffDays = Math.max(1, Math.floor((Date.now() - scanDate.getTime()) / (1000 * 60 * 60 * 24)));
-const relativeTime = diffDays === 1 ? '1d ago' : `${diffDays}d ago`;
-const formattedDate = scanDate.toLocaleDateString('en-US', {
-  year: 'numeric',
-  month: 'short',
-  day: 'numeric'
-});
+const timestampUtc = formatScanTimestamp(scannedAt);
 ---
 
 <div class={`inline-flex items-center flex-wrap gap-2 text-xs text-app-muted ${className}`}>
   <span
     class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/40 border border-emerald-500/30 font-mono text-[11px] text-emerald-400"
-    title={`Scanned on ${formattedDate}`}
+    title={timestampUtc}
   >
     <span class="relative flex h-2 w-2">
       <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
       <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
     </span>
-    <span>Last scanned {relativeTime}</span>
+    <span>{timestampUtc}</span>
   </span>
 
   <a
