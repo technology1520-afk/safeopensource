@@ -28,7 +28,7 @@ export const POST: APIRoute = async ({ locals }) => {
     : 'npm run build';
 
   try {
-    exec(cmd, (err, stdout, stderr) => {
+    exec(cmd, (err, stdout, _stderr) => {
       if (err) {
         // Fallback to fast simulated completion if bash is not available on some environments
         updateJob(job.id, {

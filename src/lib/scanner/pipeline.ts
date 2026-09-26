@@ -4,9 +4,7 @@ import { getTool } from '../admin/tools-service';
 import type { ToolData, ToolCve } from '../../types/tool';
 import {
   compute_safety,
-  formatScanTimestamp,
   formatAdvisorySource,
-  formatProvenanceLine,
 } from './scoring';
 
 const DATA_DIR = path.join(process.cwd(), 'data');

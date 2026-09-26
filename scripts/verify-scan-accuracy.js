@@ -68,7 +68,7 @@ async function runTests() {
     assert(fs.existsSync(refFile), 'tools_data/jellyfin__jellyfin.json exists');
     const refData = JSON.parse(fs.readFileSync(refFile, 'utf-8'));
 
-    const { tool, job } = await performScan('https://github.com/jellyfin/jellyfin', true);
+    const { tool } = await performScan('https://github.com/jellyfin/jellyfin', true);
     assert(tool.safety_score === refData.safety_score, `Scan returns byte-identical safety_score: ${tool.safety_score} === ${refData.safety_score}`);
     assert(tool.safety_score === 91.8, 'Jellyfin score is exactly 91.8');
     assert(tool.verdict === 'healthy', `Jellyfin verdict is healthy (got ${tool.verdict})`);
@@ -153,7 +153,7 @@ async function runTests() {
   // ==========================================
   console.log('\n3. Testing Archived Repo Flag & Risky Verdict (filebrowser/filebrowser)...');
   try {
-    const { tool, job } = await performScan('https://github.com/filebrowser/filebrowser', true);
+    const { tool } = await performScan('https://github.com/filebrowser/filebrowser', true);
 
     assert(tool.archived === true, 'Repo flagged with archived: true');
     assert(tool.verdict === 'risky', `Verdict is risky for archived repo (got ${tool.verdict})`);

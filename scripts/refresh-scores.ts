@@ -20,12 +20,7 @@ interface ToolJson {
   verdict: 'healthy' | 'caution' | 'risky';
   risk_reasons: string[];
   scorecard: number | null;
-  components: {
-    security_health: number;
-    maintenance: number;
-    community: number;
-    releases: number;
-  };
+  components: ScoreComponents;
   ai_report: string;
   scanned_at: string;
   language: string;
@@ -34,7 +29,8 @@ interface ToolJson {
   website_url?: string;
 }
 
-import { compute_safety } from '../src/lib/scanner/scoring.ts';
+import type { ScoreComponents } from '../src/types/tool';
+import { compute_safety } from '../src/lib/scanner/scoring';
 
 async function refreshTool(filePath: string): Promise<void> {
   const content = fs.readFileSync(filePath, 'utf-8');

@@ -27,10 +27,10 @@ const rankOne = sortedTools[0];
 const ranksTwoToFive = sortedTools.slice(1, 5);
 
 function getDecidingFactor(t: ToolData): string {
-  if (t.components.security_health >= 95 && t.components.maintenance >= 95) {
+  if (t.components.security_health !== null && t.components.security_health >= 95 && t.components.maintenance >= 95) {
     return `Security ${t.components.security_health} · Maintenance ${t.components.maintenance}`;
   }
-  if (t.components.security_health >= 94) {
+  if (t.components.security_health !== null && t.components.security_health >= 94) {
     return `Security Health ${t.components.security_health} · OpenSSF ${t.scorecard || 8.5}/10`;
   }
   return `Maintenance ${t.components.maintenance} · Community ${t.components.community}`;

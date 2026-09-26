@@ -16,7 +16,6 @@ const csrfToken = session?.csrfToken || '';
 
 let notification = '';
 let notificationType: 'success' | 'error' = 'success';
-let scanResult: any = null;
 
 if (Astro.request.method === 'POST') {
   try {
@@ -68,7 +67,6 @@ if (Astro.request.method === 'POST') {
       },
     });
 
-    scanResult = tool;
     notification = `Scan completed for ${repo}. Result scored at ${tool.safety_score}/100 (${tool.verdict.toUpperCase()}) and landed in Approval Queue as unlisted.`;
   } catch (err: any) {
     notification = err.message || 'On-demand scan failed';
