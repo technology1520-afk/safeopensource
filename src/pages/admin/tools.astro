@@ -1,0 +1,234 @@
+---
+import AdminLayout from '../../components/admin/AdminLayout.astro';
+import { listToolsSummary, getTool, patchToolContent } from '../../lib/admin/tools-service';
+
+export const prerender = false;
+
+const auth = Astro.locals.auth;
+if (!auth || auth.principal !== 'owner') {
+  return new Response('', { status: 404 });
+}
+
+const session = auth.session;
+const csrfToken = session?.csrfToken || '';
+
+let notification = '';
+let notificationType: 'success' | 'error' = 'success';
+
+// Handle POST actions (Inline edits or status toggles from form submissions)
+if (Astro.request.method === 'POST') {
+  try {
+    const formData = await Astro.request.formData();
+    const action = formData.get('_action') as string;
+    const repo = (formData.get('repo') as string || '').trim();
+
+    if (action === 'edit_human_fields') {
+      const tagline = (formData.get('tagline') as string || '').trim();
+      const category = (formData.get('category') as string || '').trim();
+      const website_url = (formData.get('website_url') as string || '').trim();
+
+      patchToolContent(
+        repo,
+        {
+          tagline,
+          category,
+          website_url,
+        },
+        'owner',
+        auth.ip
+      );
+      notification = `Successfully updated human-written fields for ${repo}. Scores remained untouched.`;
+    } else if (action === 'toggle_unlist') {
+      const currentUnlisted = formData.get('current_unlisted') === 'true';
+      patchToolContent(
+        repo,
+        {
+          unlisted: !currentUnlisted,
+        },
+        'owner',
+        auth.ip
+      );
+      notification = `Updated visibility for ${repo}: now ${!currentUnlisted ? 'UNLISTED' : 'LISTED'}.`;
+    }
+  } catch (err: any) {
+    notification = err.message || 'Action failed';
+    notificationType = 'error';
+  }
+}
+
+const tools = listToolsSummary();
+---
+
+<AdminLayout title="Tools Catalog" activeTab="tools" csrfToken={csrfToken} userEmail={session?.email}>
+  <!-- Header Bar -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[var(--border)]">
+    <div>
+      <h1 class="text-xl font-bold font-mono tracking-tight text-[var(--text)]">Cataloged Repositories</h1>
+      <p class="text-xs text-[var(--text-2)] mt-0.5">
+        Continuous security scores are pipeline-owned. Only human narrative fields (taglines, categories, guides) can be edited.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <span class="font-mono text-xs text-[var(--text-3)]">
+        Total: <strong class="text-[var(--text)]">{tools.length}</strong> repositories
+      </span>
+    </div>
+  </div>
+
+  {notification && (
+    <div
+      class={`p-3 rounded font-mono text-xs border ${
+        notificationType === 'success'
+          ? 'bg-[var(--healthy-soft)] text-[var(--healthy)] border-[var(--healthy)]/30'
+          : 'bg-[var(--risky-soft)] text-[var(--risky)] border-[var(--risky)]/30'
+      }`}
+    >
+      {notification}
+    </div>
+  )}
+
+  <!-- Tools Table -->
+  <div class="border border-[var(--border)] rounded-lg bg-[var(--surface)] shadow-[var(--shadow)] overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs font-mono">
+        <thead class="bg-[var(--surface-2)] text-[var(--text-2)] border-b border-[var(--border)] uppercase text-[10px] tracking-wider">
+          <tr>
+            <th class="py-3 px-4">Tool / Repo</th>
+            <th class="py-3 px-3">Category</th>
+            <th class="py-3 px-3">Safety Score</th>
+            <th class="py-3 px-3">Verdict</th>
+            <th class="py-3 px-3">Status</th>
+            <th class="py-3 px-3">Last Scanned</th>
+            <th class="py-3 px-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-[var(--border)] text-[var(--text)]">
+          {tools.map((tool) => {
+            // Defensive render override: high severity advisories prevent Healthy verdict
+            const hasHighAdvisories = (tool.advisories_count || 0) > 0 && tool.verdict === 'healthy';
+            const displayVerdict = hasHighAdvisories ? 'caution' : tool.verdict;
+            const scorecardUnverified = tool.scorecard === null || tool.security_health === null;
+
+            return (
+              <tr class="hover:bg-[var(--surface-2)]/50 transition-colors">
+                <!-- Tool & Repo -->
+                <td class="py-3 px-4">
+                  <div class="font-semibold text-sm text-[var(--text)]">{tool.name}</div>
+                  <div class="text-[11px] text-[var(--text-3)]">{tool.repo}</div>
+                  {tool.provenance && (
+                    <div class="text-[10px] text-[var(--text-3)] mt-0.5 max-w-xs truncate" title={tool.provenance}>
+                      {tool.provenance}
+                    </div>
+                  )}
+                </td>
+
+                <!-- Category -->
+                <td class="py-3 px-3">
+                  <span class="px-2 py-0.5 rounded bg-[var(--surface-2)] border border-[var(--border)] text-[var(--text-2)] text-[11px]">
+                    {tool.category}
+                  </span>
+                </td>
+
+                <!-- Score -->
+                <td class="py-3 px-3">
+                  <span class="font-bold text-sm text-[var(--text)]">{tool.safety_score}</span>
+                  <span class="text-[var(--text-3)] text-[10px]"> / 100</span>
+                </td>
+
+                <!-- Verdict & Overrides -->
+                <td class="py-3 px-3">
+                  <div class="flex flex-col gap-1 items-start">
+                    <span
+                      class={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                        displayVerdict === 'healthy'
+                          ? 'bg-[var(--healthy-soft)] text-[var(--healthy)] border border-[var(--healthy)]/30'
+                          : displayVerdict === 'caution'
+                          ? 'bg-[var(--caution-soft)] text-[var(--caution)] border border-[var(--caution)]/30'
+                          : 'bg-[var(--risky-soft)] text-[var(--risky)] border border-[var(--risky)]/30'
+                      }`}
+                    >
+                      {displayVerdict}
+                    </span>
+
+                    {scorecardUnverified && (
+                      <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-[var(--caution-soft)] text-[var(--caution)] border border-[var(--caution)]/20" title="No OpenSSF Scorecard available">
+                        UNVERIFIED
+                      </span>
+                    )}
+
+                    {hasHighAdvisories && (
+                      <span class="text-[9px] text-[var(--caution)] font-bold">
+                        ⚠️ High CVE Override
+                      </span>
+                    )}
+                  </div>
+                </td>
+
+                <!-- Status (Listed / Unlisted) -->
+                <td class="py-3 px-3">
+                  <span
+                    class={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                      tool.status === 'listed'
+                        ? 'bg-[var(--healthy-soft)] text-[var(--healthy)]'
+                        : 'bg-[var(--caution-soft)] text-[var(--caution)]'
+                    }`}
+                  >
+                    {tool.status.toUpperCase()}
+                  </span>
+                </td>
+
+                <!-- Last Scanned -->
+                <td class="py-3 px-3 text-[11px] text-[var(--text-3)]">
+                  {tool.last_scanned ? new Date(tool.last_scanned).toISOString().slice(0, 10) : 'Never'}
+                </td>
+
+                <!-- Actions -->
+                <td class="py-3 px-4 text-right">
+                  <div class="inline-flex items-center gap-1.5">
+                    {/* Toggle unlist/list */}
+                    <form method="POST" class="inline">
+                      <input type="hidden" name="csrf" value={csrfToken} />
+                      <input type="hidden" name="_action" value="toggle_unlist" />
+                      <input type="hidden" name="repo" value={tool.slug} />
+                      <input type="hidden" name="current_unlisted" value={String(tool.unlisted)} />
+                      <button
+                        type="submit"
+                        class="px-2 py-1 rounded bg-[var(--surface-2)] hover:bg-[var(--border)] text-[var(--text-2)] hover:text-[var(--text)] border border-[var(--border)] text-[10px] transition-colors cursor-pointer"
+                        title={tool.unlisted ? 'Publish to public catalog' : 'Hide from public catalog'}
+                      >
+                        {tool.unlisted ? 'Approve' : 'Unlist'}
+                      </button>
+                    </form>
+
+                    {/* Rescan Button */}
+                    <form action="/admin/api/rescan" method="POST" class="inline">
+                      <input type="hidden" name="csrf" value={csrfToken} />
+                      <input type="hidden" name="repo" value={tool.slug} />
+                      <button
+                        type="submit"
+                        class="px-2 py-1 rounded bg-[var(--accent-soft)] hover:bg-[var(--accent)] text-[var(--accent)] hover:text-white border border-[var(--accent)]/30 text-[10px] font-semibold transition-colors cursor-pointer"
+                        title="Trigger continuous security rescan now"
+                      >
+                        Rescan
+                      </button>
+                    </form>
+
+                    {/* Details modal trigger / view link */}
+                    <a
+                      href={`/tools/${tool.slug}`}
+                      target="_blank"
+                      class="px-2 py-1 rounded bg-[var(--surface-2)] hover:bg-[var(--border)] text-[var(--text-2)] text-[10px] border border-[var(--border)] transition-colors"
+                    >
+                      View
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</AdminLayout>

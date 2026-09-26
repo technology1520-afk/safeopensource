@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 /**
- * SafeOpenSource MCP Server
- * Exposes the /admin control plane API as Model Context Protocol tools
+ * SafeOpenSource Model Context Protocol (MCP) Server
+ * Exposes the /admin control plane API as standard MCP tools
  * for autonomous AI agent operation.
  */
 
@@ -49,16 +49,37 @@ async function callAdminApi(endpoint, method = 'GET', body = null) {
 
 const server = new McpServer({
   name: 'safeopensource-control-plane',
-  version: '1.0.0',
+  version: '2.0.0',
 });
 
-// Tool 1: sos_rescan
+// Tool 1: sos_status
+server.registerTool(
+  'sos_status',
+  {
+    description: 'Fetch real-time pipeline health, tool counts (listed/unlisted/flagged), last sweep timestamp, and pending approval queue.',
+  },
+  async () => {
+    try {
+      const res = await callAdminApi('/status', 'GET');
+      return {
+        content: [{ type: 'text', text: JSON.stringify(res, null, 2) }],
+      };
+    } catch (err) {
+      return {
+        isError: true,
+        content: [{ type: 'text', text: err.message || 'Failed to fetch status' }],
+      };
+    }
+  }
+);
+
+// Tool 2: sos_rescan
 server.registerTool(
   'sos_rescan',
   {
     description: 'Trigger security scorecard and telemetry sweep for one or all open-source repositories.',
     inputSchema: {
-      repos: z.array(z.string()).optional().describe('Array of tool slugs to rescan, or empty array to rescan all repositories.'),
+      repos: z.array(z.string()).optional().describe('Array of tool slugs/repos to rescan, or empty array to rescan all repositories.'),
     },
   },
   async ({ repos = [] }) => {
@@ -87,20 +108,21 @@ server.registerTool(
   }
 );
 
-// Tool 2: sos_add_tool
+// Tool 3: sos_add_tool
 server.registerTool(
   'sos_add_tool',
   {
-    description: 'Enroll a new open-source repository into continuous security monitoring, compute initial safety score, and generate a draft AI report.',
+    description: 'Enroll a new open-source repository into continuous security monitoring, compute initial safety score, and generate a draft report. Lands in queue as unlisted.',
     inputSchema: {
-      repo: z.string().describe('GitHub repository path (e.g. "owner/repo" or "https://github.com/owner/repo").'),
-      category: z.string().describe('Category slug (e.g. "monitoring-status", "cloud-storage", "password-auth").'),
+      repo_url: z.string().describe('GitHub repository path or URL (e.g. "owner/repo" or "https://github.com/owner/repo").'),
+      category: z.string().describe('Category slug (e.g. "monitoring-status", "cloud-storage", "password-auth", "ai-agents").'),
       name: z.string().optional().describe('Optional human display name.'),
+      tagline: z.string().optional().describe('Optional brief tagline description.'),
     },
   },
-  async ({ repo, category, name }) => {
+  async ({ repo_url, category, name, tagline }) => {
     try {
-      const res = await callAdminApi('/tools', 'POST', { repo, category, name });
+      const res = await callAdminApi('/tools', 'POST', { repo_url, category, name, tagline });
       return {
         content: [{ type: 'text', text: JSON.stringify(res, null, 2) }],
       };
@@ -113,11 +135,11 @@ server.registerTool(
   }
 );
 
-// Tool 3: sos_update_content
+// Tool 4: sos_edit_tool
 server.registerTool(
-  'sos_update_content',
+  'sos_edit_tool',
   {
-    description: 'Update human-written fields for a repository (tagline, use_cases, requirements, who_for, website_url). Scores remain strictly pipeline-owned.',
+    description: 'Update human-written fields for a repository (tagline, name, category, use_cases, requirements, who_for, website_url). Scores are pipeline-owned; attempts to alter scores are rejected with 422.',
     inputSchema: {
       repo: z.string().describe('Target repository slug or name (e.g. "uptime-kuma").'),
       fields: z.record(z.any()).describe('Dictionary of human-written fields to update.'),
@@ -138,22 +160,120 @@ server.registerTool(
   }
 );
 
-// Tool 4: sos_status
+// Tool 5: sos_approve
 server.registerTool(
-  'sos_status',
+  'sos_approve',
   {
-    description: 'Fetch real-time pipeline telemetry, last sweep timestamp, upstream API budgets, and flagged tools summary.',
+    description: 'Approve a tool in the review queue to make it public and listed in the catalog.',
+    inputSchema: {
+      tool_id: z.string().describe('Slug or repository name of the tool to approve.'),
+    },
   },
-  async () => {
+  async ({ tool_id }) => {
     try {
-      const health = await callAdminApi('/health', 'GET');
+      const res = await callAdminApi(`/queue/${tool_id}/approve`, 'POST');
       return {
-        content: [{ type: 'text', text: JSON.stringify(health, null, 2) }],
+        content: [{ type: 'text', text: JSON.stringify(res, null, 2) }],
       };
     } catch (err) {
       return {
         isError: true,
-        content: [{ type: 'text', text: err.message || 'Failed to fetch status' }],
+        content: [{ type: 'text', text: err.message || 'Approval failed' }],
+      };
+    }
+  }
+);
+
+// Tool 6: sos_reject
+server.registerTool(
+  'sos_reject',
+  {
+    description: 'Reject and delete a tool from the queue or catalog.',
+    inputSchema: {
+      tool_id: z.string().describe('Slug or repository name of the tool to reject.'),
+      reason: z.string().optional().describe('Optional explanation for audit log.'),
+    },
+  },
+  async ({ tool_id, reason }) => {
+    try {
+      const res = await callAdminApi(`/queue/${tool_id}/reject`, 'POST', { reason });
+      return {
+        content: [{ type: 'text', text: JSON.stringify(res, null, 2) }],
+      };
+    } catch (err) {
+      return {
+        isError: true,
+        content: [{ type: 'text', text: err.message || 'Rejection failed' }],
+      };
+    }
+  }
+);
+
+// Tool 7: sos_rebuild
+server.registerTool(
+  'sos_rebuild',
+  {
+    description: 'Trigger static site rebuild and deployment via deploy.sh.',
+  },
+  async () => {
+    try {
+      const res = await callAdminApi('/rebuild', 'POST');
+      return {
+        content: [{ type: 'text', text: JSON.stringify(res, null, 2) }],
+      };
+    } catch (err) {
+      return {
+        isError: true,
+        content: [{ type: 'text', text: err.message || 'Rebuild trigger failed' }],
+      };
+    }
+  }
+);
+
+// Tool 8: sos_audit
+server.registerTool(
+  'sos_audit',
+  {
+    description: 'Query the append-only audit log to review recent operator and agent actions.',
+    inputSchema: {
+      limit: z.number().optional().describe('Maximum number of entries to retrieve (default 20).'),
+    },
+  },
+  async ({ limit = 20 }) => {
+    try {
+      const res = await callAdminApi(`/audit?limit=${limit}`, 'GET');
+      return {
+        content: [{ type: 'text', text: JSON.stringify(res, null, 2) }],
+      };
+    } catch (err) {
+      return {
+        isError: true,
+        content: [{ type: 'text', text: err.message || 'Audit query failed' }],
+      };
+    }
+  }
+);
+
+// Backwards-compatible alias for sos_update_content
+server.registerTool(
+  'sos_update_content',
+  {
+    description: 'Alias for sos_edit_tool: Update human-written fields for a repository.',
+    inputSchema: {
+      repo: z.string().describe('Target repository slug or name.'),
+      fields: z.record(z.any()).describe('Dictionary of human-written fields to update.'),
+    },
+  },
+  async ({ repo, fields }) => {
+    try {
+      const res = await callAdminApi(`/tools/${repo}`, 'PATCH', fields);
+      return {
+        content: [{ type: 'text', text: JSON.stringify(res, null, 2) }],
+      };
+    } catch (err) {
+      return {
+        isError: true,
+        content: [{ type: 'text', text: err.message || 'Update failed' }],
       };
     }
   }
@@ -168,4 +288,3 @@ main().catch((err) => {
   console.error('[SafeOpenSource MCP] Fatal startup error:', err);
   process.exit(1);
 });
-

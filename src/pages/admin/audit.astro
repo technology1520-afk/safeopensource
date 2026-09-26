@@ -1,0 +1,185 @@
+---
+import AdminLayout from '../../components/admin/AdminLayout.astro';
+import { queryAuditEntries } from '../../lib/admin/audit';
+
+export const prerender = false;
+
+const auth = Astro.locals.auth;
+if (!auth || auth.principal !== 'owner') {
+  return new Response('', { status: 404 });
+}
+
+const session = auth.session;
+const csrfToken = session?.csrfToken || '';
+
+// Handle filtering params from URL
+const url = new URL(Astro.request.url);
+const who = url.searchParams.get('who') || 'all';
+const action = url.searchParams.get('action') || 'all';
+const target = url.searchParams.get('target') || '';
+
+const entries = queryAuditEntries({
+  limit: 100,
+  who: who !== 'all' ? who : undefined,
+  action: action !== 'all' ? action : undefined,
+  target: target || undefined,
+});
+---
+
+<AdminLayout title="Audit Log" activeTab="audit" csrfToken={csrfToken} userEmail={session?.email}>
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[var(--border)]">
+    <div>
+      <h1 class="text-xl font-bold font-mono tracking-tight text-[var(--text)]">Immutable Audit Trail</h1>
+      <p class="text-xs text-[var(--text-2)] mt-0.5">
+        Cryptographically anchored append-only log at data/audit.jsonl. Every mutation by owner or agent is permanently recorded.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <span class="font-mono text-xs text-[var(--text-3)]">
+        Showing: <strong class="text-[var(--text)]">{entries.length}</strong> entries
+      </span>
+    </div>
+  </div>
+
+  <!-- Filters Toolbar -->
+  <div class="p-4 rounded-lg border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow)]">
+    <form method="GET" class="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs font-mono">
+      <div>
+        <label for="filter-who" class="block text-[var(--text-3)] mb-1 uppercase text-[10px]">Principal (Who)</label>
+        <select
+          id="filter-who"
+          name="who"
+          class="w-full px-2.5 py-1.5 rounded bg-[var(--surface-2)] border border-[var(--border)] text-[var(--text)] focus:outline-none focus:border-[var(--accent)]"
+        >
+          <option value="all" selected={who === 'all'}>All Principals</option>
+          <option value="owner" selected={who === 'owner'}>Owner (Human)</option>
+          <option value="agent" selected={who === 'agent'}>Agent (AI / MCP)</option>
+          <option value="anonymous" selected={who === 'anonymous'}>Anonymous / Scanner</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="filter-action" class="block text-[var(--text-3)] mb-1 uppercase text-[10px]">Action</label>
+        <select
+          id="filter-action"
+          name="action"
+          class="w-full px-2.5 py-1.5 rounded bg-[var(--surface-2)] border border-[var(--border)] text-[var(--text)] focus:outline-none focus:border-[var(--accent)]"
+        >
+          <option value="all" selected={action === 'all'}>All Actions</option>
+          <option value="TOOL_RESCAN" selected={action === 'TOOL_RESCAN'}>TOOL_RESCAN</option>
+          <option value="TOOL_ADD" selected={action === 'TOOL_ADD'}>TOOL_ADD</option>
+          <option value="TOOL_PATCH" selected={action === 'TOOL_PATCH'}>TOOL_PATCH</option>
+          <option value="TOOL_APPROVE" selected={action === 'TOOL_APPROVE'}>TOOL_APPROVE</option>
+          <option value="TOOL_REJECT" selected={action === 'TOOL_REJECT'}>TOOL_REJECT</option>
+          <option value="SETTINGS_UPDATE" selected={action === 'SETTINGS_UPDATE'}>SETTINGS_UPDATE</option>
+          <option value="API_KEY_ROTATED" selected={action === 'API_KEY_ROTATED'}>API_KEY_ROTATED</option>
+          <option value="STATIC_REBUILD_TRIGGERED" selected={action === 'STATIC_REBUILD_TRIGGERED'}>STATIC_REBUILD_TRIGGERED</option>
+          <option value="AUTH_FAILURE" selected={action === 'AUTH_FAILURE'}>AUTH_FAILURE</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="filter-target" class="block text-[var(--text-3)] mb-1 uppercase text-[10px]">Target Repo / Slug</label>
+        <input
+          id="filter-target"
+          name="target"
+          type="text"
+          value={target}
+          placeholder="e.g. jellyfin"
+          class="w-full px-2.5 py-1.5 rounded bg-[var(--surface-2)] border border-[var(--border)] text-[var(--text)] focus:outline-none focus:border-[var(--accent)]"
+        />
+      </div>
+
+      <div class="flex items-end gap-2">
+        <button
+          type="submit"
+          class="w-full px-3 py-1.5 rounded bg-[var(--accent)] hover:opacity-90 text-white font-mono text-xs font-semibold transition-opacity cursor-pointer"
+        >
+          Filter
+        </button>
+        <a
+          href="/admin/audit"
+          class="px-3 py-1.5 rounded bg-[var(--surface-2)] hover:bg-[var(--border)] text-[var(--text-2)] font-mono text-xs transition-colors"
+        >
+          Reset
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Audit Table -->
+  <div class="border border-[var(--border)] rounded-lg bg-[var(--surface)] shadow-[var(--shadow)] overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs font-mono">
+        <thead class="bg-[var(--surface-2)] text-[var(--text-2)] border-b border-[var(--border)] uppercase text-[10px] tracking-wider">
+          <tr>
+            <th class="py-3 px-4">Timestamp (UTC)</th>
+            <th class="py-3 px-3">Principal</th>
+            <th class="py-3 px-3">Action</th>
+            <th class="py-3 px-3">Target</th>
+            <th class="py-3 px-3">IP</th>
+            <th class="py-3 px-4">Details / Diff</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-[var(--border)] text-[var(--text)]">
+          {entries.length === 0 ? (
+            <tr>
+              <td colspan="6" class="py-8 text-center text-[var(--text-3)]">
+                No audit entries matching filter criteria.
+              </td>
+            </tr>
+          ) : (
+            entries.map((entry) => (
+              <tr class="hover:bg-[var(--surface-2)]/50 transition-colors">
+                <td class="py-3 px-4 text-[11px] text-[var(--text-3)] whitespace-nowrap">
+                  {new Date(entry.at).toISOString().replace('T', ' ').slice(0, 19)}
+                </td>
+
+                <td class="py-3 px-3">
+                  <span
+                    class={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                      entry.who === 'owner'
+                        ? 'bg-[var(--accent-soft)] text-[var(--accent)] border border-[var(--accent)]/30'
+                        : entry.who === 'agent'
+                        ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                        : 'bg-[var(--caution-soft)] text-[var(--caution)] border border-[var(--caution)]/30'
+                    }`}
+                  >
+                    {entry.who}
+                  </span>
+                </td>
+
+                <td class="py-3 px-3 font-semibold text-[var(--text)]">
+                  {entry.action}
+                </td>
+
+                <td class="py-3 px-3 font-mono text-[var(--text-2)]">
+                  {entry.target || '—'}
+                </td>
+
+                <td class="py-3 px-3 text-[11px] text-[var(--text-3)]">
+                  {entry.ip}
+                </td>
+
+                <td class="py-3 px-4">
+                  {entry.diff ? (
+                    <div class="text-[10px] bg-[var(--surface-2)] p-1.5 rounded border border-[var(--border)] max-w-md overflow-x-auto">
+                      <span class="text-[var(--text-3)]">Diff: </span>
+                      {JSON.stringify(entry.diff)}
+                    </div>
+                  ) : (
+                    <div class="text-[10px] text-[var(--text-3)] max-w-md truncate" title={JSON.stringify(entry.details || {})}>
+                      {JSON.stringify(entry.details || {})}
+                    </div>
+                  )}
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</AdminLayout>

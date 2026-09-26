@@ -42,7 +42,7 @@ if (!toolRecord) {
   }
 }
 
-if (!toolRecord) {
+if (!toolRecord || toolRecord.unlisted || (toolRecord as any).status === 'unlisted') {
   return new Response('Tool not found', { status: 404 });
 }
 

@@ -1,0 +1,185 @@
+---
+import '../../styles/global.css';
+import { runAccuracySelfTest, getPendingQueueTools } from '../../lib/admin/tools-service';
+
+export interface Props {
+  title: string;
+  activeTab: 'overview' | 'tools' | 'queue' | 'scans' | 'audit' | 'settings';
+  csrfToken?: string;
+  userEmail?: string;
+  disableBlockingBanner?: boolean;
+}
+
+const { title, activeTab, csrfToken = '', userEmail = 'operator', disableBlockingBanner = false } = Astro.props;
+
+// Run automated accuracy regression self-test on load
+const selfTest = runAccuracySelfTest();
+const queueCount = getPendingQueueTools().length;
+---
+
+<!doctype html>
+<html lang="en" data-theme="lavender-lab" class="h-full bg-[var(--bg)] text-[var(--text)]">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>{title} — SafeOpenSource Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+  </head>
+  <body class="min-h-screen bg-[var(--bg)] text-[var(--text)] font-sans antialiased flex flex-col selection:bg-[var(--accent-soft)] selection:text-[var(--accent)]">
+    <!-- Top Instrument Navigation Bar -->
+    <header class="border-b border-[var(--border)] bg-[var(--surface)] sticky top-0 z-50 shadow-[var(--shadow)]">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6">
+        <div class="flex items-center justify-between h-14 border-b border-[var(--border)]/50">
+          <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2 px-2.5 py-1 rounded bg-[var(--surface-2)] border border-[var(--border)]">
+              <span class="w-2 h-2 rounded-full bg-[var(--healthy)] animate-pulse"></span>
+              <span class="font-mono text-xs font-bold tracking-wider text-[var(--text)]">SOC CONTROL PLANE</span>
+            </div>
+            <span class="font-mono text-[11px] text-[var(--text-3)] hidden sm:inline">LAVENDER LAB · 30M ROLLING SESSION</span>
+          </div>
+
+          <div class="flex items-center gap-4">
+            <div class="font-mono text-xs text-[var(--text-2)] flex items-center gap-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-[var(--accent)]"></span>
+              <span class="hidden md:inline">OPERATOR:</span>
+              <span class="font-semibold text-[var(--text)]">{userEmail}</span>
+            </div>
+
+            <form action="/admin/api/logout" method="POST" class="inline">
+              <input type="hidden" name="csrf" value={csrfToken} />
+              <button
+                type="submit"
+                class="px-2.5 py-1 rounded bg-[var(--surface-2)] hover:bg-[var(--risky-soft)] text-[var(--text-2)] hover:text-[var(--risky)] border border-[var(--border)] hover:border-[var(--risky)]/40 font-mono text-xs transition-colors cursor-pointer"
+              >
+                LOGOUT
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <nav class="flex items-center space-x-1 sm:space-x-4 h-11 overflow-x-auto" aria-label="Admin Navigation">
+          <a
+            href="/admin"
+            class={`px-3 py-1.5 rounded-md font-mono text-xs font-medium transition-colors whitespace-nowrap ${
+              activeTab === 'overview'
+                ? 'bg-[var(--accent-soft)] text-[var(--accent)] font-semibold'
+                : 'text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--surface-2)]'
+            }`}
+          >
+            Overview
+          </a>
+          <a
+            href="/admin/tools"
+            class={`px-3 py-1.5 rounded-md font-mono text-xs font-medium transition-colors whitespace-nowrap ${
+              activeTab === 'tools'
+                ? 'bg-[var(--accent-soft)] text-[var(--accent)] font-semibold'
+                : 'text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--surface-2)]'
+            }`}
+          >
+            Tools Catalog
+          </a>
+          <a
+            href="/admin/queue"
+            class={`px-3 py-1.5 rounded-md font-mono text-xs font-medium transition-colors whitespace-nowrap flex items-center gap-1.5 ${
+              activeTab === 'queue'
+                ? 'bg-[var(--accent-soft)] text-[var(--accent)] font-semibold'
+                : 'text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--surface-2)]'
+            }`}
+          >
+            <span>Approval Queue</span>
+            {queueCount > 0 && (
+              <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-[var(--caution-soft)] text-[var(--caution)] font-bold border border-[var(--caution)]/30">
+                {queueCount}
+              </span>
+            )}
+          </a>
+          <a
+            href="/admin/scans"
+            class={`px-3 py-1.5 rounded-md font-mono text-xs font-medium transition-colors whitespace-nowrap ${
+              activeTab === 'scans'
+                ? 'bg-[var(--accent-soft)] text-[var(--accent)] font-semibold'
+                : 'text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--surface-2)]'
+            }`}
+          >
+            On-Demand Scans
+          </a>
+          <a
+            href="/admin/audit"
+            class={`px-3 py-1.5 rounded-md font-mono text-xs font-medium transition-colors whitespace-nowrap ${
+              activeTab === 'audit'
+                ? 'bg-[var(--accent-soft)] text-[var(--accent)] font-semibold'
+                : 'text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--surface-2)]'
+            }`}
+          >
+            Audit Log
+          </a>
+          <a
+            href="/admin/settings"
+            class={`px-3 py-1.5 rounded-md font-mono text-xs font-medium transition-colors whitespace-nowrap ${
+              activeTab === 'settings'
+                ? 'bg-[var(--accent-soft)] text-[var(--accent)] font-semibold'
+                : 'text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--surface-2)]'
+            }`}
+          >
+            Settings & Keys
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Regression Gate Alert Banner (Mandatory if Self-Test Fails) -->
+    {!selfTest.passed && !disableBlockingBanner && (
+      <div id="regression-gate-banner" class="bg-[var(--risky-soft)] border-b-2 border-[var(--risky)] text-[var(--risky)] px-6 py-4">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div class="flex items-start gap-3">
+            <svg class="w-6 h-6 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+            <div>
+              <div class="font-mono text-sm font-bold uppercase tracking-wider">
+                CRITICAL ACCURACY REGRESSION: Catalog Self-Test Failed
+              </div>
+              <p class="font-sans text-xs mt-1 text-[var(--text)]">
+                The continuous regression gate failed against reference repos. Mutations blocked until resolved:
+              </p>
+              <ul class="list-disc list-inside font-mono text-xs mt-1 space-y-0.5 text-[var(--risky)]">
+                {selfTest.mismatches.map((m) => (
+                  <li>{m}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+          <a
+            href="/admin/tools"
+            class="px-4 py-2 bg-[var(--risky)] text-white rounded font-mono text-xs font-semibold hover:opacity-90 transition-opacity whitespace-nowrap"
+          >
+            Inspect Tools Catalog
+          </a>
+        </div>
+      </div>
+    )}
+
+    <!-- Main Workspace Content -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6">
+      <slot />
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-[var(--border)] bg-[var(--surface)] py-4 mt-auto">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs font-mono text-[var(--text-3)]">
+        <div>SafeOpenSource Continuous Security Console · Zero public /admin surface</div>
+        <div>All mutations recorded in append-only data/audit.jsonl</div>
+      </div>
+    </footer>
+  </body>
+</html>

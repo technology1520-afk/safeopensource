@@ -1,0 +1,267 @@
+---
+import AdminLayout from '../../components/admin/AdminLayout.astro';
+import { getSettings, updateSettings, rotateApiKey } from '../../lib/admin/settings';
+
+export const prerender = false;
+
+const auth = Astro.locals.auth;
+if (!auth || auth.principal !== 'owner') {
+  return new Response('', { status: 404 });
+}
+
+const session = auth.session;
+const csrfToken = session?.csrfToken || '';
+
+let notification = '';
+let notificationType: 'success' | 'error' = 'success';
+let generatedKey: string | null = null;
+let graceExpiresAt: string | null = null;
+
+if (Astro.request.method === 'POST') {
+  try {
+    const formData = await Astro.request.formData();
+    const action = formData.get('_action') as string;
+
+    if (action === 'save_site_settings') {
+      const bannerText = (formData.get('banner_text') as string || '').trim();
+      const bannerEnabled = formData.get('banner_enabled') === 'on';
+      const startDate = (formData.get('banner_start') as string || '').trim();
+      const endDate = (formData.get('banner_end') as string || '').trim();
+      const adSlotsEnabled = formData.get('ad_slots_enabled') === 'on';
+      const starterKitsVisible = formData.get('starter_kits_visible') === 'on';
+
+      updateSettings(
+        {
+          announcement: {
+            text: bannerText,
+            enabled: bannerEnabled,
+            startDate,
+            endDate,
+          },
+          adSlotsEnabled,
+          starterKitsVisible,
+        },
+        'owner',
+        auth.ip
+      );
+
+      notification = 'Site configuration and banner settings successfully saved.';
+    } else if (action === 'rotate_api_key') {
+      const currentKey = process.env.ADMIN_API_KEY || '';
+      const rotationResult = rotateApiKey(currentKey, 'admin', 'owner', auth.ip);
+
+      generatedKey = rotationResult.newKey;
+      graceExpiresAt = rotationResult.graceExpiresAt;
+      notification = 'New Admin API Key generated. Previous key remains valid for 24h grace window.';
+    }
+  } catch (err: any) {
+    notification = err.message || 'Settings update failed';
+    notificationType = 'error';
+  }
+}
+
+const settings = getSettings();
+---
+
+<AdminLayout title="Settings & Keys" activeTab="settings" csrfToken={csrfToken} userEmail={session?.email}>
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[var(--border)]">
+    <div>
+      <h1 class="text-xl font-bold font-mono tracking-tight text-[var(--text)]">Site Settings & Key Management</h1>
+      <p class="text-xs text-[var(--text-2)] mt-0.5">
+        Global public toggles, security banner controls, and agent API key rotation with rolling 24-hour grace periods.
+      </p>
+    </div>
+  </div>
+
+  {notification && (
+    <div
+      class={`p-3 rounded font-mono text-xs border ${
+        notificationType === 'success'
+          ? 'bg-[var(--healthy-soft)] text-[var(--healthy)] border-[var(--healthy)]/30'
+          : 'bg-[var(--risky-soft)] text-[var(--risky)] border-[var(--risky)]/30'
+      }`}
+    >
+      {notification}
+    </div>
+  )}
+
+  {generatedKey && (
+    <div class="p-4 rounded-lg bg-[var(--accent-soft)] border border-[var(--accent)] space-y-2">
+      <div class="flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-[var(--accent)] animate-pulse"></span>
+        <h3 class="font-mono text-xs font-bold text-[var(--accent)] uppercase tracking-wider">
+          New Admin API Key Generated (Write Access)
+        </h3>
+      </div>
+      <p class="text-xs text-[var(--text)]">
+        Copy this key immediately. Old key will remain valid until <strong class="font-mono">{new Date(graceExpiresAt!).toLocaleString()}</strong> (24h grace window).
+      </p>
+      <div class="p-2.5 rounded bg-[var(--surface)] border border-[var(--border)] font-mono text-xs text-[var(--text)] select-all break-all">
+        {generatedKey}
+      </div>
+    </div>
+  )}
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Announcement Banner Settings -->
+    <div class="p-5 rounded-lg border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow)] space-y-4">
+      <h2 class="font-mono text-sm font-bold uppercase tracking-wider text-[var(--text)] border-b border-[var(--border)] pb-2">
+        Announcement & Public Surface
+      </h2>
+
+      <form method="POST" class="space-y-4">
+        <input type="hidden" name="csrf" value={csrfToken} />
+        <input type="hidden" name="_action" value="save_site_settings" />
+
+        <!-- Banner Text -->
+        <div>
+          <label for="banner_text" class="block font-mono text-xs text-[var(--text-2)] mb-1">
+            Announcement Banner Text
+          </label>
+          <textarea
+            id="banner_text"
+            name="banner_text"
+            rows="3"
+            class="w-full px-3 py-2 rounded bg-[var(--surface-2)] border border-[var(--border)] font-mono text-xs text-[var(--text)] focus:outline-none focus:border-[var(--accent)]"
+          >{settings.announcement.text}</textarea>
+        </div>
+
+        <!-- Banner Date Limits -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 font-mono text-xs">
+          <div>
+            <label for="banner_start" class="block text-[var(--text-3)] mb-1 uppercase text-[10px]">Start Date</label>
+            <input
+              id="banner_start"
+              name="banner_start"
+              type="text"
+              value={settings.announcement.startDate || ''}
+              placeholder="YYYY-MM-DD"
+              class="w-full px-2.5 py-1.5 rounded bg-[var(--surface-2)] border border-[var(--border)] text-[var(--text)]"
+            />
+          </div>
+
+          <div>
+            <label for="banner_end" class="block text-[var(--text-3)] mb-1 uppercase text-[10px]">End Date</label>
+            <input
+              id="banner_end"
+              name="banner_end"
+              type="text"
+              value={settings.announcement.endDate || ''}
+              placeholder="YYYY-MM-DD (Optional)"
+              class="w-full px-2.5 py-1.5 rounded bg-[var(--surface-2)] border border-[var(--border)] text-[var(--text)]"
+            />
+          </div>
+        </div>
+
+        <!-- Feature Toggles -->
+        <div class="space-y-3 pt-2 border-t border-[var(--border)]">
+          <label class="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              name="banner_enabled"
+              checked={settings.announcement.enabled}
+              class="rounded border-[var(--border)] text-[var(--accent)] cursor-pointer"
+            />
+            <span class="text-xs font-mono text-[var(--text)]">Enable Announcement Banner on Public Header</span>
+          </label>
+
+          <label class="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              name="ad_slots_enabled"
+              checked={settings.adSlotsEnabled}
+              class="rounded border-[var(--border)] text-[var(--accent)] cursor-pointer"
+            />
+            <span class="text-xs font-mono text-[var(--text)]">Enable Ethical Sponsor & Ad Slots</span>
+          </label>
+
+          <label class="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              name="starter_kits_visible"
+              checked={settings.starterKitsVisible}
+              class="rounded border-[var(--border)] text-[var(--accent)] cursor-pointer"
+            />
+            <span class="text-xs font-mono text-[var(--text)]">Enable Starter Kits Section Visibility</span>
+          </label>
+        </div>
+
+        <button
+          type="submit"
+          class="px-4 py-2 rounded bg-[var(--accent)] hover:opacity-90 text-white font-mono text-xs font-semibold transition-opacity cursor-pointer"
+        >
+          Save Configuration
+        </button>
+      </form>
+    </div>
+
+    <!-- API Key Rotation Console -->
+    <div class="p-5 rounded-lg border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow)] space-y-4">
+      <h2 class="font-mono text-sm font-bold uppercase tracking-wider text-[var(--text)] border-b border-[var(--border)] pb-2">
+        Agent API Keys & Rotation
+      </h2>
+
+      <div class="space-y-3 text-xs font-mono">
+        <div class="p-3 rounded bg-[var(--surface-2)] border border-[var(--border)] space-y-1">
+          <div class="flex items-center justify-between">
+            <span class="text-[var(--text-3)] uppercase text-[10px]">Active Write API Key</span>
+            <span class="px-1.5 py-0.2 rounded text-[10px] bg-[var(--healthy-soft)] text-[var(--healthy)] font-bold">
+              ACTIVE
+            </span>
+          </div>
+          <div class="text-[var(--text)] font-mono">
+            {process.env.ADMIN_API_KEY ? `${process.env.ADMIN_API_KEY.slice(0, 8)}••••••••••••••••••••••••${process.env.ADMIN_API_KEY.slice(-6)}` : 'Loaded from environment'}
+          </div>
+        </div>
+
+        <div class="p-3 rounded bg-[var(--surface-2)] border border-[var(--border)] space-y-1">
+          <div class="flex items-center justify-between">
+            <span class="text-[var(--text-3)] uppercase text-[10px]">Active Read-Only API Key</span>
+            <span class="px-1.5 py-0.2 rounded text-[10px] bg-blue-100 text-blue-800 font-bold">
+              READ-ONLY
+            </span>
+          </div>
+          <div class="text-[var(--text)] font-mono">
+            {process.env.ADMIN_API_KEY_READONLY ? `${process.env.ADMIN_API_KEY_READONLY.slice(0, 8)}••••••••••••••••••••••••${process.env.ADMIN_API_KEY_READONLY.slice(-6)}` : 'Loaded from environment'}
+          </div>
+        </div>
+
+        <!-- 24h Grace Notice -->
+        <div class="p-3 rounded bg-[var(--surface-2)]/60 border border-[var(--border)] text-[11px] text-[var(--text-2)] space-y-1">
+          <div class="font-semibold text-[var(--text)]">Rolling 24-Hour Grace Period:</div>
+          <p>
+            When you rotate the write API key, the previous key remains valid for exactly 24 hours to give autonomous agents time to pick up the new configuration without service disruption.
+          </p>
+        </div>
+
+        {settings.rotatedKeys.length > 0 && (
+          <div class="space-y-1.5 pt-2">
+            <div class="text-[10px] uppercase text-[var(--text-3)] font-semibold">Active Grace Keys ({settings.rotatedKeys.length}):</div>
+            {settings.rotatedKeys.map((rk) => (
+              <div class="p-2 rounded bg-[var(--surface-2)] border border-[var(--border)] flex items-center justify-between text-[11px]">
+                <span class="text-[var(--text-2)] font-mono">{rk.key.slice(0, 8)}...</span>
+                <span class="text-[var(--text-3)]">Valid until: {new Date(rk.rotatedAt + 24 * 3600 * 1000).toLocaleTimeString()}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <form method="POST" class="pt-3">
+          <input type="hidden" name="csrf" value={csrfToken} />
+          <input type="hidden" name="_action" value="rotate_api_key" />
+          <button
+            type="submit"
+            onclick="return confirm('Rotate the Admin API Write Key? The current key will enter a 24-hour grace window.');"
+            class="px-4 py-2 rounded bg-[var(--surface-2)] hover:bg-[var(--accent-soft)] text-[var(--accent)] border border-[var(--accent)]/40 font-mono text-xs font-semibold transition-colors cursor-pointer flex items-center gap-2"
+          >
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+            </svg>
+            Rotate Admin API Key (24h Grace)
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</AdminLayout>

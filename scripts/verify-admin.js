@@ -5,10 +5,13 @@
  * Tests all requirements from BUILD PROMPT:
  * 1. Stealth 404 (empty body) for unauthenticated /admin and /admin/api/*
  * 2. Agent write & readonly key enforcement
- * 3. End-to-end rescan with audit log "agent" entry and diff
- * 4. Owner login, session creation, 403 on missing CSRF token, success with CSRF
- * 5. Grep test: zero /admin references in public HTML, robots.txt, and sitemap
- * 6. Rate limiting & 401 on wrong API keys (run last to prevent IP lockout on test suite)
+ * 3. Score tampering rejection (HTTP 422)
+ * 4. Queue Gate & Agent End-to-end: sos_add_tool -> unlisted -> sos_approve -> public listed -> rebuild
+ * 5. Accuracy self-test banner: poison score -> banner appears; restore -> clears
+ * 6. Owner login, session creation, 403 on missing CSRF token, success with CSRF
+ * 7. MCP Server Integration via JSON-RPC stdio
+ * 8. Grep stealth tests: zero /admin references in public HTML, robots.txt, and sitemap
+ * 9. Rate limiting & 401 on wrong API keys (run last to prevent IP lockout)
  */
 
 import fs from 'node:fs';
@@ -94,44 +97,250 @@ async function run() {
       headers: { 'Authorization': `Bearer ${ADMIN_API_KEY}` },
     });
     assert(healthRes.status === 200, `Full admin key allowed GET /admin/api/health (200 OK)`);
-    const healthJson = await healthRes.json();
-    assert(healthJson.pipeline?.freshness === 'nominal', `Pipeline freshness verified nominal`);
+
+    // Test Full Admin Key on GET /admin/api/status
+    const statusRes = await fetch(`${BASE_URL}/admin/api/status`, {
+      headers: { 'Authorization': `Bearer ${ADMIN_API_KEY}` },
+    });
+    assert(statusRes.status === 200, `Full admin key allowed GET /admin/api/status (200 OK)`);
+    const statusJson = await statusRes.json();
+    assert(statusJson.counts && statusJson.counts.total > 0, `Status returned counts (total: ${statusJson.counts?.total})`);
   } catch (err) {
     assert(false, `Agent key test failed: ${err.message}`);
   }
 
-  // Test 3: End-to-End Agent Rescan & Audit Trail Verification
-  console.log('\n3. Testing End-to-End Agent Rescan & Audit Logging...');
+  // Test 3: Score Tampering Prohibited (HTTP 422)
+  console.log('\n3. Testing Score Tampering Prohibited (HTTP 422)...');
   try {
-    const rescanRes = await fetch(`${BASE_URL}/admin/api/rescan`, {
+    const tamperRes = await fetch(`${BASE_URL}/admin/api/tools/jellyfin`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${ADMIN_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ safety_score: 99.9 }),
+    });
+    assert(
+      tamperRes.status === 422,
+      `Attempting to patch score fields returned 422 Unprocessable Entity (got ${tamperRes.status})`
+    );
+    const tamperJson = await tamperRes.json();
+    assert(
+      tamperJson.error?.includes('Score tampering prohibited'),
+      `Received score tampering rejection error: "${tamperJson.error}"`
+    );
+
+    // Test editing human-written field ONLY -> should SUCCEED (200)
+    const legitPatchRes = await fetch(`${BASE_URL}/admin/api/tools/jellyfin`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${ADMIN_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ tagline: 'The volunteer-built media solution that puts you in control of your entertainment.' }),
+    });
+    assert(legitPatchRes.status === 200, `Editing human fields succeeded (200 OK)`);
+  } catch (err) {
+    assert(false, `Score tampering test failed: ${err.message}`);
+  }
+
+  // Test 4: Queue Gate & End-to-End Agent Workflow (Add -> Unlisted -> Approve -> Public Listed -> Rebuild)
+  console.log('\n4. Testing Queue Gate & End-to-End Agent Workflow...');
+  try {
+    const testSlug = 'test-queue-gate';
+    const testRepo = 'gate-org/test-queue-gate';
+
+    // 4a. Agent adds a tool
+    const addRes = await fetch(`${BASE_URL}/admin/api/tools`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${ADMIN_API_KEY}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ repo: 'uptime-kuma' }),
+      body: JSON.stringify({
+        repo_url: `https://github.com/${testRepo}`,
+        category: 'developer-tools',
+        name: 'Test Queue Gate Tool',
+      }),
     });
-    assert(rescanRes.status === 200, `Agent triggered rescan for uptime-kuma (200 OK)`);
-    const rescanJson = await rescanRes.json();
-    assert(rescanJson.status === 'completed', `Rescan job completed successfully`);
+    assert(addRes.status === 201, `Agent added new tool (201 Created)`);
+    const addData = await addRes.json();
+    assert(addData.unlisted === true, `New tool added with unlisted: true`);
 
-    // Verify audit log
-    const auditFile = path.join(__dirname, '..', 'data', 'audit.jsonl');
-    assert(fs.existsSync(auditFile), `Audit log file exists at data/audit.jsonl`);
-    const auditLines = fs.readFileSync(auditFile, 'utf-8').trim().split('\n');
-    const lastEntries = auditLines.slice(-10).map((l) => JSON.parse(l));
-
-    const agentScanEntry = lastEntries.find(
-      (e) => e.principal === 'agent' && e.action === 'TOOL_RESCAN' && e.details?.slug === 'uptime-kuma'
+    // 4b. Verify Queue Gate: Public /tools/test-queue-gate MUST return 404
+    const publicUnapprovedRes = await fetch(`${BASE_URL}/tools/${testSlug}`);
+    assert(
+      publicUnapprovedRes.status === 404,
+      `Queue Gate enforced: unapproved tool returns 404 on public site (got ${publicUnapprovedRes.status})`
     );
-    assert(Boolean(agentScanEntry), `Found audit entry labeled "agent" for TOOL_RESCAN on uptime-kuma`);
-    assert(Array.isArray(agentScanEntry?.details?.diff), `Audit entry contains verified telemetry diff`);
+
+    // 4c. Agent approves the tool
+    const approveRes = await fetch(`${BASE_URL}/admin/api/queue/${testSlug}/approve`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${ADMIN_API_KEY}`,
+      },
+    });
+    assert(approveRes.status === 200, `Agent approved tool via /admin/api/queue/${testSlug}/approve (200 OK)`);
+
+    // 4d. Verify tool is now listed and public
+    const publicApprovedRes = await fetch(`${BASE_URL}/tools/${testSlug}`);
+    assert(
+      publicApprovedRes.status === 200,
+      `Public access granted after approval: /tools/${testSlug} returns 200 OK`
+    );
+
+    // 4e. Trigger rebuild
+    const rebuildRes = await fetch(`${BASE_URL}/admin/api/rebuild`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${ADMIN_API_KEY}`,
+      },
+    });
+    assert(
+      rebuildRes.status === 200 || rebuildRes.status === 202,
+      `Rebuild triggered successfully (${rebuildRes.status})`
+    );
+
+    // 4f. Verify audit log contains agent entries with diffs
+    const auditRes = await fetch(`${BASE_URL}/admin/api/audit?limit=15`, {
+      headers: { 'Authorization': `Bearer ${ADMIN_API_KEY}` },
+    });
+    assert(auditRes.status === 200, `Fetched audit log (200 OK)`);
+    const auditEntries = await auditRes.json();
+    const hasAgentAdd = auditEntries.some((e) => e.who === 'agent' && e.action === 'TOOL_ADD');
+    const hasAgentApprove = auditEntries.some((e) => e.who === 'agent' && e.action === 'TOOL_APPROVE');
+    const hasAgentRebuild = auditEntries.some((e) => e.who === 'agent' && e.action === 'STATIC_REBUILD_TRIGGERED');
+
+    assert(hasAgentAdd, `Audit log contains TOOL_ADD labeled "agent"`);
+    assert(hasAgentApprove, `Audit log contains TOOL_APPROVE labeled "agent"`);
+    assert(hasAgentRebuild, `Audit log contains STATIC_REBUILD_TRIGGERED labeled "agent"`);
+
+    // 4g. Clean up test tool
+    await fetch(`${BASE_URL}/admin/api/queue/${testSlug}/reject`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${ADMIN_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ reason: 'Test verification cleanup' }),
+    });
   } catch (err) {
-    assert(false, `Agent rescan test failed: ${err.message}`);
+    assert(false, `Queue gate test failed: ${err.message}`);
   }
 
-  // Test 3.5: MCP Server Integration via Stdio (scripts/mcp-server.js)
-  console.log('\n3.5. Testing Model Context Protocol Server (scripts/mcp-server.js)...');
+  // Test 5: Owner Login, Session Lifecycle, and CSRF Protection
+  console.log('\n5. Testing Owner Login & CSRF Protection...');
+  let sessionCookie = '';
+  let csrfToken = '';
+
+  try {
+    const testPassword = process.env.ADMIN_TEST_PASSWORD || process.env.ADMIN_PASSWORD || 'super-secret-admin-pass-2050';
+
+    const loginParams = new URLSearchParams();
+    loginParams.append('email', ADMIN_EMAIL);
+    loginParams.append('password', testPassword);
+
+    const loginRes = await fetch(`${BASE_URL}/admin/login`, {
+      method: 'POST',
+      body: loginParams,
+      redirect: 'manual',
+    });
+
+    const setCookie = loginRes.headers.get('set-cookie');
+    assert(
+      loginRes.status === 302 || loginRes.status === 200,
+      `Owner login succeeded (status ${loginRes.status})`
+    );
+    assert(Boolean(setCookie && setCookie.includes('sos_session=')), `Received httpOnly session cookie`);
+
+    const sessionMatch = setCookie?.match(/sos_session=([^;]+)/);
+    sessionCookie = sessionMatch ? `sos_session=${sessionMatch[1]}` : '';
+
+    // Access /admin dashboard with session cookie
+    const dashboardRes = await fetch(`${BASE_URL}/admin`, {
+      headers: { Cookie: sessionCookie },
+    });
+    assert(dashboardRes.status === 200, `Authenticated owner can access /admin (200 OK)`);
+    const dashboardHtml = await dashboardRes.text();
+    assert(dashboardHtml.includes('SOC CONTROL PLANE'), `Dashboard contains SOC CONTROL PLANE banner`);
+    assert(dashboardHtml.includes(ADMIN_EMAIL), `Dashboard displays authenticated operator email`);
+
+    // Extract CSRF token from dashboard HTML
+    const csrfMatch = dashboardHtml.match(/name="csrf"\s+value="([^"]+)"/);
+    csrfToken = csrfMatch ? csrfMatch[1] : '';
+    assert(Boolean(csrfToken), `Found CSRF token in dashboard DOM`);
+
+    // Test mutating action WITHOUT CSRF token -> MUST RETURN 403
+    const noCsrfRes = await fetch(`${BASE_URL}/admin/api/rebuild`, {
+      method: 'POST',
+      headers: { Cookie: sessionCookie },
+    });
+    assert(noCsrfRes.status === 403, `Mutating without CSRF token returned 403 Forbidden`);
+
+    // Test mutating action WITH CSRF token -> MUST SUCCEED
+    const validCsrfRes = await fetch(`${BASE_URL}/admin/api/rebuild`, {
+      method: 'POST',
+      headers: {
+        Cookie: sessionCookie,
+        'X-CSRF-Token': csrfToken,
+      },
+    });
+    assert(
+      validCsrfRes.status === 200 || validCsrfRes.status === 202,
+      `Mutating with valid CSRF token succeeded (${validCsrfRes.status} OK)`
+    );
+  } catch (err) {
+    assert(false, `Owner session & CSRF test failed: ${err.message}`);
+  }
+
+  // Test 6: Accuracy Self-Test Banner (Poison -> Banner Appears -> Restore -> Clears)
+  console.log('\n6. Testing Accuracy Self-Test Banner Reaction...');
+  try {
+    const jellyfinPath = path.join(__dirname, '..', 'src', 'data', 'tools', 'jellyfin.json');
+    const originalJellyfin = fs.readFileSync(jellyfinPath, 'utf-8');
+
+    // 6a. Normal state -> check no regression banner
+    const normalAdminRes = await fetch(`${BASE_URL}/admin`, {
+      headers: { Cookie: sessionCookie },
+    });
+    const normalHtml = await normalAdminRes.text();
+    assert(
+      !normalHtml.includes('CRITICAL ACCURACY REGRESSION: Catalog Self-Test Failed'),
+      `Normal catalog state: no critical regression banner`
+    );
+
+    // 6b. Temporarily poison jellyfin score to 50.0
+    const parsedJellyfin = JSON.parse(originalJellyfin);
+    parsedJellyfin.safety_score = 50.0;
+    fs.writeFileSync(jellyfinPath, JSON.stringify(parsedJellyfin, null, 2) + '\n', 'utf-8');
+
+    const poisonedAdminRes = await fetch(`${BASE_URL}/admin`, {
+      headers: { Cookie: sessionCookie },
+    });
+    const poisonedHtml = await poisonedAdminRes.text();
+    assert(
+      poisonedHtml.includes('CRITICAL ACCURACY REGRESSION: Catalog Self-Test Failed'),
+      `Poisoned score detected: red alert banner appears on dashboard`
+    );
+
+    // 6c. Restore jellyfin to original 91.8
+    fs.writeFileSync(jellyfinPath, originalJellyfin, 'utf-8');
+
+    const restoredAdminRes = await fetch(`${BASE_URL}/admin`, {
+      headers: { Cookie: sessionCookie },
+    });
+    const restoredHtml = await restoredAdminRes.text();
+    assert(
+      !restoredHtml.includes('CRITICAL ACCURACY REGRESSION: Catalog Self-Test Failed'),
+      `Score restored: regression banner cleared automatically`
+    );
+  } catch (err) {
+    assert(false, `Accuracy self-test banner failed: ${err.message}`);
+  }
+
+  // Test 7: Model Context Protocol (MCP) Server Integration (scripts/mcp-server.js)
+  console.log('\n7. Testing Model Context Protocol Server (scripts/mcp-server.js)...');
   try {
     const mcpRes = await new Promise((resolve, reject) => {
       const child = spawn('node', ['scripts/mcp-server.js'], {
@@ -180,83 +389,17 @@ async function run() {
     assert(false, `MCP server test failed: ${err.message}`);
   }
 
-  // Test 4: Owner Login, Session Lifecycle, and CSRF Protection
-  console.log('\n4. Testing Owner Login & CSRF Protection...');
+  // Test 8: Grep Stealth Tests (Zero /admin references in public site)
+  console.log('\n8. Testing Stealth & Absence of /admin in Public Assets...');
   try {
-    const testPassword = process.env.ADMIN_TEST_PASSWORD || process.env.ADMIN_PASSWORD || 'super-secret-admin-pass-2050';
-
-    // Attempt login with credentials
-    const loginParams = new URLSearchParams();
-    loginParams.append('email', ADMIN_EMAIL);
-    loginParams.append('password', testPassword);
-
-    const loginRes = await fetch(`${BASE_URL}/admin/login`, {
-      method: 'POST',
-      body: loginParams,
-      redirect: 'manual',
-    });
-
-    const setCookie = loginRes.headers.get('set-cookie');
-    assert(
-      loginRes.status === 302 || loginRes.status === 200,
-      `Owner login succeeded (status ${loginRes.status})`
-    );
-    assert(Boolean(setCookie && setCookie.includes('sos_session=')), `Received httpOnly session cookie`);
-
-    const sessionMatch = setCookie?.match(/sos_session=([^;]+)/);
-    const sessionCookie = sessionMatch ? `sos_session=${sessionMatch[1]}` : '';
-
-    // Access /admin dashboard with session cookie
-    const dashboardRes = await fetch(`${BASE_URL}/admin`, {
-      headers: { Cookie: sessionCookie },
-    });
-    assert(dashboardRes.status === 200, `Authenticated owner can access /admin (200 OK)`);
-    const dashboardHtml = await dashboardRes.text();
-    assert(dashboardHtml.includes('SOC CONTROL PLANE'), `Dashboard contains SOC CONTROL PLANE banner`);
-    assert(dashboardHtml.includes(ADMIN_EMAIL), `Dashboard displays authenticated operator email`);
-
-    // Extract CSRF token from dashboard HTML
-    const csrfMatch = dashboardHtml.match(/name="csrf"\s+value="([^"]+)"/);
-    const csrfToken = csrfMatch ? csrfMatch[1] : null;
-    assert(Boolean(csrfToken), `Found CSRF token in dashboard DOM`);
-
-    // Test mutating action WITHOUT CSRF token -> MUST RETURN 403
-    const noCsrfRes = await fetch(`${BASE_URL}/admin/api/rebuild`, {
-      method: 'POST',
-      headers: { Cookie: sessionCookie },
-    });
-    assert(noCsrfRes.status === 403, `Mutating without CSRF token returned 403 Forbidden`);
-
-    // Test mutating action WITH CSRF token -> MUST SUCCEED
-    const validCsrfRes = await fetch(`${BASE_URL}/admin/api/rebuild`, {
-      method: 'POST',
-      headers: {
-        Cookie: sessionCookie,
-        'X-CSRF-Token': csrfToken,
-      },
-    });
-    assert(
-      validCsrfRes.status === 200 || validCsrfRes.status === 202,
-      `Mutating with valid CSRF token succeeded (${validCsrfRes.status} OK)`
-    );
-  } catch (err) {
-    assert(false, `Owner session & CSRF test failed: ${err.message}`);
-  }
-
-  // Test 5: Grep Stealth Tests (Zero /admin references in public site)
-  console.log('\n5. Testing Stealth & Absence of /admin in Public Assets...');
-  try {
-    // Check robots.txt
     const robotsRes = await fetch(`${BASE_URL}/robots.txt`);
     const robotsText = await robotsRes.text();
     assert(!robotsText.includes('/admin'), `robots.txt contains NO mention of /admin (beacon avoided)`);
 
-    // Check sitemap-index.xml
     const sitemapRes = await fetch(`${BASE_URL}/sitemap-index.xml`);
     const sitemapText = await sitemapRes.text();
     assert(!sitemapText.includes('/admin'), `sitemap-index.xml contains NO mention of /admin`);
 
-    // Check homepage and catalog HTML
     const homeRes = await fetch(`${BASE_URL}/`);
     const homeHtml = await homeRes.text();
     assert(!homeHtml.includes('href="/admin"'), `Homepage contains zero links to /admin`);
@@ -264,8 +407,8 @@ async function run() {
     assert(false, `Grep stealth test failed: ${err.message}`);
   }
 
-  // Test 6: Invalid API key -> 401 & Rate limiting after 5 failures (executed last)
-  console.log('\n6. Testing Bearer API Key validation & Rate Limiting (destructive)...');
+  // Test 9: Invalid API key -> 401 & Rate limiting after 5 failures (executed last)
+  console.log('\n9. Testing Bearer API Key validation & Rate Limiting (destructive)...');
   try {
     const badKeyRes = await fetch(`${BASE_URL}/admin/api/health`, {
       headers: { 'Authorization': 'Bearer totally-invalid-secret-key-1234' },

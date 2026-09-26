@@ -4,11 +4,22 @@ import crypto from 'node:crypto';
 
 export interface AuditEntry {
   id: string;
+  at: string;
   timestamp: string;
+  who: 'owner' | 'agent' | 'anonymous';
   principal: 'owner' | 'agent' | 'anonymous';
   action: string;
+  target?: string;
+  diff?: any;
   ip: string;
   details: Record<string, any>;
+}
+
+export interface AuditQueryOptions {
+  limit?: number;
+  who?: string;
+  action?: string;
+  target?: string;
 }
 
 const DATA_DIR = path.join(process.cwd(), 'data');
@@ -31,11 +42,19 @@ export function logAudit(
 ): AuditEntry {
   ensureDataDir();
 
+  const now = new Date().toISOString();
+  const target = details.slug || details.repo || details.target || details.path || details.jobId || undefined;
+  const diff = details.diff || undefined;
+
   const entry: AuditEntry = {
     id: crypto.randomUUID(),
-    timestamp: new Date().toISOString(),
+    at: now,
+    timestamp: now,
+    who: principal,
     principal,
     action,
+    target,
+    diff,
     ip,
     details,
   };
@@ -49,10 +68,21 @@ export function logAudit(
  * Read recent entries from the append-only audit log (newest first)
  */
 export function getRecentAuditEntries(limit = 20): AuditEntry[] {
+  return queryAuditEntries({ limit });
+}
+
+/**
+ * Query audit log with filtering by who, action, target, and limit
+ */
+export function queryAuditEntries(options: AuditQueryOptions = {}): AuditEntry[] {
   ensureDataDir();
   if (!fs.existsSync(AUDIT_FILE)) {
     return [];
   }
+
+  const limit = options.limit && options.limit > 0 ? options.limit : 50;
+  const filterWho = options.who?.toLowerCase();
+  const filterAction = options.action?.toUpperCase();
 
   try {
     const content = fs.readFileSync(AUDIT_FILE, 'utf-8');
@@ -62,7 +92,27 @@ export function getRecentAuditEntries(limit = 20): AuditEntry[] {
     // Parse from end to start for newest entries
     for (let i = lines.length - 1; i >= 0 && entries.length < limit; i--) {
       try {
-        entries.push(JSON.parse(lines[i]));
+        const raw = JSON.parse(lines[i]);
+        const entry: AuditEntry = {
+          ...raw,
+          at: raw.at || raw.timestamp,
+          who: raw.who || raw.principal || 'anonymous',
+          principal: raw.principal || raw.who || 'anonymous',
+        };
+
+        if (filterWho && filterWho !== 'all' && entry.who !== filterWho) {
+          continue;
+        }
+
+        if (filterAction && filterAction !== 'ALL' && entry.action !== filterAction) {
+          continue;
+        }
+
+        if (options.target && entry.target && !entry.target.includes(options.target)) {
+          continue;
+        }
+
+        entries.push(entry);
       } catch {
         // Skip malformed lines if any
       }
@@ -73,4 +123,3 @@ export function getRecentAuditEntries(limit = 20): AuditEntry[] {
     return [];
   }
 }
-

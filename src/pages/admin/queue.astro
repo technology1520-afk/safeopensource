@@ -1,0 +1,280 @@
+---
+import AdminLayout from '../../components/admin/AdminLayout.astro';
+import { getPendingQueueTools, approveTool, rejectTool, bulkApprove } from '../../lib/admin/tools-service';
+
+export const prerender = false;
+
+const auth = Astro.locals.auth;
+if (!auth || auth.principal !== 'owner') {
+  return new Response('', { status: 404 });
+}
+
+const session = auth.session;
+const csrfToken = session?.csrfToken || '';
+
+let notification = '';
+let notificationType: 'success' | 'error' = 'success';
+
+// Handle POST actions for approve, reject, bulk approve
+if (Astro.request.method === 'POST') {
+  try {
+    const formData = await Astro.request.formData();
+    const action = formData.get('_action') as string;
+
+    if (action === 'approve') {
+      const id = (formData.get('tool_id') as string || '').trim();
+      const tool = approveTool(id, 'owner', auth.ip);
+      notification = `Tool "${tool.name}" approved and published to public catalog.`;
+    } else if (action === 'reject') {
+      const id = (formData.get('tool_id') as string || '').trim();
+      const reason = (formData.get('reason') as string || 'Owner rejected').trim();
+      rejectTool(id, reason, 'owner', auth.ip);
+      notification = `Tool "${id}" rejected and removed from queue.`;
+    } else if (action === 'bulk_approve') {
+      const selectedIds = formData.getAll('selected_tools') as string[];
+      if (selectedIds.length > 0) {
+        const approved = bulkApprove(selectedIds, 'owner', auth.ip);
+        notification = `Bulk approved ${approved.length} tool(s) to public catalog.`;
+      }
+    }
+  } catch (err: any) {
+    notification = err.message || 'Action failed';
+    notificationType = 'error';
+  }
+}
+
+const queueTools = getPendingQueueTools();
+---
+
+<AdminLayout title="Approval Queue" activeTab="queue" csrfToken={csrfToken} userEmail={session?.email}>
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[var(--border)]">
+    <div>
+      <div class="flex items-center gap-2">
+        <h1 class="text-xl font-bold font-mono tracking-tight text-[var(--text)]">Approval Queue</h1>
+        <span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-[var(--caution-soft)] text-[var(--caution)]">
+          {queueTools.length} PENDING
+        </span>
+      </div>
+      <p class="text-xs text-[var(--text-2)] mt-0.5">
+        The Accuracy Gate: User scans and newly enrolled repositories land here unlisted. Zero public surface until owner approval.
+      </p>
+    </div>
+  </div>
+
+  {notification && (
+    <div
+      class={`p-3 rounded font-mono text-xs border ${
+        notificationType === 'success'
+          ? 'bg-[var(--healthy-soft)] text-[var(--healthy)] border-[var(--healthy)]/30'
+          : 'bg-[var(--risky-soft)] text-[var(--risky)] border-[var(--risky)]/30'
+      }`}
+    >
+      {notification}
+    </div>
+  )}
+
+  {queueTools.length === 0 ? (
+    <div class="p-12 text-center rounded-lg border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow)]">
+      <div class="w-12 h-12 rounded-full bg-[var(--healthy-soft)] text-[var(--healthy)] mx-auto flex items-center justify-center font-bold text-lg mb-3">
+        ✓
+      </div>
+      <h3 class="text-sm font-mono font-bold text-[var(--text)] uppercase tracking-wide">
+        Queue Clear: Continuous Gate Active
+      </h3>
+      <p class="text-xs text-[var(--text-2)] max-w-md mx-auto mt-1 font-sans">
+        Zero tools awaiting review. User-initiated scans will automatically appear here as unlisted until you evaluate their scorecard and risks.
+      </p>
+    </div>
+  ) : (
+    <form method="POST" id="queue-form" class="space-y-4">
+      <input type="hidden" name="csrf" value={csrfToken} />
+
+      <div class="flex items-center justify-between p-3 rounded-lg bg-[var(--surface)] border border-[var(--border)]">
+        <div class="flex items-center gap-3">
+          <label class="flex items-center gap-2 text-xs font-mono cursor-pointer text-[var(--text)]">
+            <input type="checkbox" id="select-all" class="rounded border-[var(--border)] text-[var(--accent)] cursor-pointer" />
+            <span class="font-semibold">Select All ({queueTools.length})</span>
+          </label>
+        </div>
+
+        <button
+          type="submit"
+          name="_action"
+          value="bulk_approve"
+          class="px-3 py-1.5 rounded bg-[var(--accent)] hover:opacity-90 text-white font-mono text-xs font-semibold transition-opacity cursor-pointer flex items-center gap-1.5"
+        >
+          <span>Bulk Approve Selected</span>
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        {queueTools.map((tool) => {
+          const scorecardMissing = tool.scorecard === null || tool.components?.security_health === null;
+          const advCount = tool.advisories_count || tool.cves?.length || 0;
+          const hasHighAdvisories = advCount > 0 && tool.verdict === 'healthy';
+          const displayVerdict = hasHighAdvisories ? 'caution' : tool.verdict;
+
+          return (
+            <div class="p-5 rounded-lg border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow)] space-y-4">
+              <!-- Top Row: Checkbox, Name, Verdict, Score -->
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[var(--border)]">
+                <div class="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    name="selected_tools"
+                    value={tool.slug}
+                    class="tool-checkbox mt-1 rounded border-[var(--border)] text-[var(--accent)] cursor-pointer"
+                  />
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <span class="font-mono text-base font-bold text-[var(--text)]">{tool.name}</span>
+                      <span class="text-xs font-mono text-[var(--text-3)]">({tool.repo})</span>
+                      <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-[var(--surface-2)] text-[var(--text-2)] border border-[var(--border)]">
+                        {tool.category}
+                      </span>
+                    </div>
+                    <p class="text-xs text-[var(--text-2)] mt-0.5">{tool.tagline}</p>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                  <div class="text-right font-mono">
+                    <div class="text-xl font-bold text-[var(--text)]">{tool.safety_score} / 100</div>
+                    <div class="text-[10px] text-[var(--text-3)]">COMPUTED SCORE</div>
+                  </div>
+
+                  <span
+                    class={`px-2.5 py-1 rounded text-xs font-mono font-bold uppercase tracking-wider ${
+                      displayVerdict === 'healthy'
+                        ? 'bg-[var(--healthy-soft)] text-[var(--healthy)] border border-[var(--healthy)]/30'
+                        : displayVerdict === 'caution'
+                        ? 'bg-[var(--caution-soft)] text-[var(--caution)] border border-[var(--caution)]/30'
+                        : 'bg-[var(--risky-soft)] text-[var(--risky)] border border-[var(--risky)]/30'
+                    }`}
+                  >
+                    {displayVerdict}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Middle: Provenance & Component Weights -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs font-mono">
+                <div class="p-2.5 rounded bg-[var(--surface-2)] border border-[var(--border)]">
+                  <div class="text-[10px] text-[var(--text-3)] uppercase">Security Health (35%)</div>
+                  <div class="font-bold text-[var(--text)] mt-0.5">
+                    {tool.components?.security_health !== null && tool.components?.security_health !== undefined
+                      ? `${tool.components.security_health} / 100`
+                      : 'N/A'}
+                  </div>
+                  {scorecardMissing && (
+                    <span class="text-[9px] text-[var(--caution)] font-bold">Practices Unverified</span>
+                  )}
+                </div>
+
+                <div class="p-2.5 rounded bg-[var(--surface-2)] border border-[var(--border)]">
+                  <div class="text-[10px] text-[var(--text-3)] uppercase">Maintenance (30%)</div>
+                  <div class="font-bold text-[var(--text)] mt-0.5">
+                    {tool.components?.maintenance ?? 'N/A'} / 100
+                  </div>
+                  <span class="text-[9px] text-[var(--text-3)]">Commit cadence & triage</span>
+                </div>
+
+                <div class="p-2.5 rounded bg-[var(--surface-2)] border border-[var(--border)]">
+                  <div class="text-[10px] text-[var(--text-3)] uppercase">Community (20%)</div>
+                  <div class="font-bold text-[var(--text)] mt-0.5">
+                    {tool.components?.community ?? 'N/A'} / 100
+                  </div>
+                  <span class="text-[9px] text-[var(--text-3)]">{tool.contributors} contributors</span>
+                </div>
+
+                <div class="p-2.5 rounded bg-[var(--surface-2)] border border-[var(--border)]">
+                  <div class="text-[10px] text-[var(--text-3)] uppercase">Releases (15%)</div>
+                  <div class="font-bold text-[var(--text)] mt-0.5">
+                    {tool.components?.releases ?? 'N/A'} / 100
+                  </div>
+                  <span class="text-[9px] text-[var(--text-3)]">Latest: {tool.latest_release || 'None'}</span>
+                </div>
+              </div>
+
+              <!-- Provenance Line & Signals -->
+              <div class="p-3 rounded bg-[var(--surface-2)]/60 border border-[var(--border)] text-xs font-mono space-y-1">
+                <div class="flex items-center justify-between text-[11px]">
+                  <span class="font-semibold text-[var(--text)]">Provenanced Derivation:</span>
+                  <span class="text-[var(--text-3)]">Scanned: {tool.scanned_at}</span>
+                </div>
+                <div class="text-[11px] text-[var(--text-2)]">
+                  {tool.provenance || 'Weights: Security Health (35%) · Maintenance (30%) · Community (20%) · Releases (15%)'}
+                </div>
+                <div class="flex items-center gap-3 pt-1 text-[11px]">
+                  <span>Advisories: <strong class="text-[var(--text)]">{advCount}</strong></span>
+                  <span>Scorecard: <strong class="text-[var(--text)]">{tool.scorecard ?? 'None'}</strong></span>
+                  {scorecardMissing && (
+                    <span class="px-1.5 py-0.2 rounded text-[10px] font-bold bg-[var(--caution-soft)] text-[var(--caution)] border border-[var(--caution)]/30">
+                      security practices UNVERIFIED
+                    </span>
+                  )}
+                  {hasHighAdvisories && (
+                    <span class="text-[10px] text-[var(--risky)] font-bold">
+                      🔴 High severity advisory prevents Healthy rating
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <!-- Risk Reasons -->
+              {tool.risk_reasons && tool.risk_reasons.length > 0 && (
+                <div class="text-xs font-mono space-y-1">
+                  <div class="text-[10px] uppercase text-[var(--text-3)] font-semibold">Risk Analysis:</div>
+                  <ul class="list-disc list-inside space-y-0.5 text-[var(--text-2)]">
+                    {tool.risk_reasons.map((r) => (
+                      <li>{r}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <!-- Action Buttons -->
+              <div class="flex items-center justify-end gap-2 pt-2 border-t border-[var(--border)]">
+                <button
+                  type="submit"
+                  name="_action"
+                  value="reject"
+                  onclick={`document.getElementById('reject-tool-id').value = '${tool.slug}';`}
+                  class="px-3 py-1.5 rounded bg-[var(--surface-2)] hover:bg-[var(--risky-soft)] text-[var(--risky)] border border-[var(--border)] hover:border-[var(--risky)]/40 font-mono text-xs font-semibold transition-colors cursor-pointer"
+                >
+                  Reject & Delete
+                </button>
+
+                <button
+                  type="submit"
+                  name="_action"
+                  value="approve"
+                  onclick={`document.getElementById('approve-tool-id').value = '${tool.slug}';`}
+                  class="px-4 py-1.5 rounded bg-[var(--accent)] hover:opacity-90 text-white font-mono text-xs font-semibold transition-opacity cursor-pointer"
+                >
+                  Approve → Publish
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <!-- Hidden inputs for single action submissions -->
+      <input type="hidden" name="tool_id" id="approve-tool-id" value="" />
+      <input type="hidden" name="tool_id" id="reject-tool-id" value="" />
+    </form>
+  )}
+
+  <script is:inline>
+    const selectAll = document.getElementById('select-all');
+    if (selectAll) {
+      selectAll.addEventListener('change', (e) => {
+        document.querySelectorAll('.tool-checkbox').forEach((cb) => {
+          cb.checked = e.target.checked;
+        });
+      });
+    }
+  </script>
+</AdminLayout>

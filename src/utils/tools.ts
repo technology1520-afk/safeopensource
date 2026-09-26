@@ -8,17 +8,25 @@ const rawToolsList: ToolData[] = Object.values(toolModules).map((mod) => {
   return (mod.default ?? mod) as ToolData;
 });
 
+export function isToolListed(tool: ToolData): boolean {
+  if (tool.unlisted === true) return false;
+  if ((tool as any).status === 'unlisted') return false;
+  return true;
+}
+
 export function getAllTools(): ToolData[] {
-  return [...rawToolsList].sort((a, b) => b.safety_score - a.safety_score);
+  return [...rawToolsList].filter(isToolListed).sort((a, b) => b.safety_score - a.safety_score);
 }
 
 export function getToolBySlug(slug: string): ToolData | undefined {
-  return rawToolsList.find((t) => t.slug === slug);
+  const tool = rawToolsList.find((t) => t.slug === slug);
+  if (!tool || !isToolListed(tool)) return undefined;
+  return tool;
 }
 
 export function getToolsByCategory(categorySlug: string): ToolData[] {
   return rawToolsList
-    .filter((t) => t.category === categorySlug)
+    .filter((t) => isToolListed(t) && t.category === categorySlug)
     .sort((a, b) => b.safety_score - a.safety_score);
 }
 

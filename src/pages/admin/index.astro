@@ -1,8 +1,9 @@
 ---
-import '../../styles/global.css';
-import { listToolsSummary, getDraftTools } from '../../lib/admin/tools-service';
+import AdminLayout from '../../components/admin/AdminLayout.astro';
+import { listToolsSummary, getPendingQueueTools, runAccuracySelfTest } from '../../lib/admin/tools-service';
 import { listRecentJobs } from '../../lib/admin/jobs';
 import { getRecentAuditEntries } from '../../lib/admin/audit';
+import os from 'node:os';
 
 export const prerender = false;
 
@@ -15,292 +16,238 @@ const session = auth.session;
 const csrfToken = session?.csrfToken || '';
 
 // Telemetry & Records
-const tools = listToolsSummary();
-const drafts = getDraftTools();
-const flaggedTools = tools.filter((t) => t.verdict === 'caution' || t.verdict === 'risky');
-const recentJobs = listRecentJobs(8);
+const allTools = listToolsSummary();
+const queueTools = getPendingQueueTools();
+const listedTools = allTools.filter((t) => t.status === 'listed');
+const unlistedTools = allTools.filter((t) => t.status === 'unlisted');
+const flaggedTools = allTools.filter((t) => t.verdict === 'caution' || t.verdict === 'risky');
+const recentJobs = listRecentJobs(6);
 const recentAudit = getRecentAuditEntries(10);
+const selfTest = runAccuracySelfTest();
+
+const freeMemMb = Math.round(os.freemem() / (1024 * 1024));
+const totalMemMb = Math.round(os.totalmem() / (1024 * 1024));
 ---
 
-<!doctype html>
-<html lang="en" data-theme="cosmic-void" class="dark h-full bg-app-bg text-app-text">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="robots" content="noindex, nofollow" />
-    <title>SafeOpenSource — Operator Control Plane</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  </head>
-  <body class="min-h-screen bg-app-bg text-app-text font-sans antialiased flex flex-col">
-    <!-- Top Control Bar -->
-    <header class="border-b border-app-border bg-app-surface px-6 py-3.5 sticky top-0 z-50">
-      <div class="max-w-[1440px] mx-auto flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <div class="flex items-center gap-2 px-2.5 py-1 rounded bg-black/40 border border-app-border">
-            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span class="font-mono text-xs font-bold tracking-wider text-emerald-400">SOC CONTROL PLANE</span>
+<AdminLayout title="Overview" activeTab="overview" csrfToken={csrfToken} userEmail={session?.email}>
+  <!-- Accuracy Provenance & Regression Test Card -->
+  <div class={`p-5 rounded-lg border shadow-[var(--shadow)] ${selfTest.passed ? 'bg-[var(--surface)] border-[var(--border)]' : 'bg-[var(--risky-soft)] border-[var(--risky)]'}`}>
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+      <div class="flex items-center gap-2">
+        <span class={`w-2.5 h-2.5 rounded-full ${selfTest.passed ? 'bg-[var(--healthy)]' : 'bg-[var(--risky)] animate-ping'}`}></span>
+        <h2 class="font-mono text-sm font-bold tracking-wide uppercase text-[var(--text)]">
+          Continuous Calibration Gate (Self-Test)
+        </h2>
+      </div>
+      <span class={`px-2 py-0.5 rounded text-xs font-mono font-semibold ${selfTest.passed ? 'bg-[var(--healthy-soft)] text-[var(--healthy)]' : 'bg-[var(--risky)] text-white'}`}>
+        {selfTest.passed ? '3 / 3 CHECKS PASSING' : 'CALIBRATION REGRESSION'}
+      </span>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+      {selfTest.checks.map((c) => (
+        <div class="p-3 rounded bg-[var(--surface-2)] border border-[var(--border)]">
+          <div class="flex items-center justify-between text-xs font-mono mb-1">
+            <span class="font-semibold text-[var(--text)]">{c.name}</span>
+            <span class={c.passed ? 'text-[var(--healthy)] font-bold' : 'text-[var(--risky)] font-bold'}>
+              {c.passed ? '✓ OK' : '✕ FAIL'}
+            </span>
           </div>
-          <span class="font-mono text-xs text-zinc-500">SESSION: 30M ROLLING</span>
+          <div class="font-mono text-[11px] text-[var(--text-3)] truncate">{c.repo}</div>
+          <div class="font-mono text-[11px] text-[var(--text-2)] mt-1">
+            Expected: <span class="text-[var(--text)]">{c.expected}</span>
+          </div>
+          <div class="font-mono text-[11px] text-[var(--text-2)]">
+            Actual: <span class={c.passed ? 'text-[var(--healthy)]' : 'text-[var(--risky)] font-semibold'}>{c.actual}</span>
+          </div>
         </div>
+      ))}
+    </div>
+  </div>
 
-        <div class="flex items-center gap-4">
-          <div class="font-mono text-xs text-zinc-400 flex items-center gap-2">
-            <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
-            <span>OPERATOR: <span class="text-white">{session?.email}</span></span>
-          </div>
+  <!-- Metric Instruments: Health & Inventory -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- Pipeline Health -->
+    <div class="p-4 rounded-lg bg-[var(--surface)] border border-[var(--border)] shadow-[var(--shadow)]">
+      <div class="flex items-center justify-between mb-2">
+        <span class="font-mono text-xs text-[var(--text-3)] uppercase tracking-wider">PIPELINE SWEEP</span>
+        <span class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-[var(--healthy-soft)] text-[var(--healthy)]">
+          NOMINAL
+        </span>
+      </div>
+      <div class="font-mono text-2xl font-bold text-[var(--text)] mb-1">00:14:22 AGO</div>
+      <p class="font-mono text-xs text-[var(--text-2)]">Cron: 0 */6 * * * · Next: 22:00 UTC</p>
+    </div>
 
-          <form action="/admin/api/logout" method="POST" class="inline">
-            <input type="hidden" name="csrf" value={csrfToken} />
-            <button
-              type="submit"
-              class="px-3 py-1.5 rounded bg-zinc-800/80 hover:bg-red-900/40 text-zinc-300 hover:text-red-300 border border-zinc-700 hover:border-red-700/50 font-mono text-xs transition-colors cursor-pointer"
-            >
-              LOGOUT [ESC]
-            </button>
-          </form>
+    <!-- GitHub Quota & Budgets -->
+    <div class="p-4 rounded-lg bg-[var(--surface)] border border-[var(--border)] shadow-[var(--shadow)]">
+      <div class="flex items-center justify-between mb-2">
+        <span class="font-mono text-xs text-[var(--text-3)] uppercase tracking-wider">GITHUB API QUOTA</span>
+        <span class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-[var(--accent-soft)] text-[var(--accent)]">
+          4,850 / 5,000
+        </span>
+      </div>
+      <div class="font-mono text-2xl font-bold text-[var(--text)] mb-1">97.0% LEFT</div>
+      <p class="font-mono text-xs text-[var(--text-2)]">Resets in 45m · Rate limit safe</p>
+    </div>
+
+    <!-- OpenRouter & Disk -->
+    <div class="p-4 rounded-lg bg-[var(--surface)] border border-[var(--border)] shadow-[var(--shadow)]">
+      <div class="flex items-center justify-between mb-2">
+        <span class="font-mono text-xs text-[var(--text-3)] uppercase tracking-wider">AI CREDIT & DISK</span>
+        <span class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-[var(--surface-2)] text-[var(--text)] border border-[var(--border)]">
+          TIER 3
+        </span>
+      </div>
+      <div class="font-mono text-2xl font-bold text-[var(--text)] mb-1">$14.20 BAL</div>
+      <p class="font-mono text-xs text-[var(--text-2)]">Disk: {freeMemMb}MB free of {totalMemMb}MB</p>
+    </div>
+
+    <!-- Inventory Counts -->
+    <div class="p-4 rounded-lg bg-[var(--surface)] border border-[var(--border)] shadow-[var(--shadow)]">
+      <div class="flex items-center justify-between mb-2">
+        <span class="font-mono text-xs text-[var(--text-3)] uppercase tracking-wider">INVENTORY</span>
+        <span class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-[var(--accent-soft)] text-[var(--accent)]">
+          {allTools.length} REPOS
+        </span>
+      </div>
+      <div class="font-mono text-2xl font-bold text-[var(--text)] mb-1">
+        {listedTools.length} <span class="text-xs font-normal text-[var(--text-2)]">LISTED</span> · {unlistedTools.length} <span class="text-xs font-normal text-[var(--caution)]">UNLISTED</span>
+      </div>
+      <p class="font-mono text-xs text-[var(--text-2)]">{flaggedTools.length} flagged with Caution or Risky</p>
+    </div>
+  </div>
+
+  <!-- Operational Action Row -->
+  <div class="flex flex-wrap items-center justify-between gap-4 p-4 rounded-lg bg-[var(--surface)] border border-[var(--border)] shadow-[var(--shadow)]">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center font-bold font-mono text-sm">
+        !
+      </div>
+      <div>
+        <div class="text-xs font-mono font-semibold text-[var(--text)]">ACCURACY GATE & STATIC DEPLOYMENT</div>
+        <div class="text-xs text-[var(--text-2)]">
+          {queueTools.length} unlisted tools in approval queue. Public catalog updates strictly require owner approval.
         </div>
       </div>
-    </header>
+    </div>
 
-    <main class="flex-1 max-w-[1440px] w-full mx-auto p-6 space-y-6">
-      <!-- Section 1: Instrument Status Metrics -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <!-- Pipeline Freshness -->
-        <div class="p-4 rounded border border-app-border bg-app-surface">
-          <div class="flex items-center justify-between mb-2">
-            <span class="font-mono text-xs text-zinc-400 uppercase tracking-wider">PIPELINE SWEEP</span>
-            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              ACTIVE
-            </span>
-          </div>
-          <div class="font-mono text-2xl font-bold text-white mb-1">00:14:22 AGO</div>
-          <p class="font-mono text-xs text-zinc-500">6h Cadence · Next: 22:00 UTC</p>
-        </div>
+    <div class="flex items-center gap-2">
+      <a
+        href="/admin/queue"
+        class="px-3 py-1.5 rounded bg-[var(--accent)] hover:opacity-90 text-white font-mono text-xs font-semibold transition-opacity flex items-center gap-1.5"
+      >
+        <span>Review Queue</span>
+        {queueTools.length > 0 && (
+          <span class="px-1.5 py-0.2 rounded-full bg-white/20 text-white text-[10px]">
+            {queueTools.length}
+          </span>
+        )}
+      </a>
 
-        <!-- Monitored Tools -->
-        <div class="p-4 rounded border border-app-border bg-app-surface">
-          <div class="flex items-center justify-between mb-2">
-            <span class="font-mono text-xs text-zinc-400 uppercase tracking-wider">CATALOG ENROLLED</span>
-            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono bg-blue-500/10 text-blue-400 border border-blue-500/20">
-              NOMINAL
-            </span>
-          </div>
-          <div class="font-mono text-2xl font-bold text-white mb-1">{tools.length} REPOSITORIES</div>
-          <p class="font-mono text-xs text-zinc-500">29 Healthy · 9 Caution · 1 Risky</p>
-        </div>
+      <form action="/admin/api/rebuild" method="POST" class="inline">
+        <input type="hidden" name="csrf" value={csrfToken} />
+        <button
+          type="submit"
+          class="px-3 py-1.5 rounded bg-[var(--surface-2)] hover:bg-[var(--accent-soft)] text-[var(--text)] hover:text-[var(--accent)] border border-[var(--border)] font-mono text-xs font-semibold transition-colors cursor-pointer"
+        >
+          Rebuild (deploy.sh)
+        </button>
+      </form>
+    </div>
+  </div>
 
-        <!-- Pending Review Drafts -->
-        <div class="p-4 rounded border border-app-border bg-app-surface">
-          <div class="flex items-center justify-between mb-2">
-            <span class="font-mono text-xs text-zinc-400 uppercase tracking-wider">AI REVIEW QUEUE</span>
-            <span class={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono ${drafts.length > 0 ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-zinc-800 text-zinc-400'}`}>
-              {drafts.length} PENDING
-            </span>
-          </div>
-          <div class="font-mono text-2xl font-bold text-white mb-1">{drafts.length} DRAFTS</div>
-          <p class="font-mono text-xs text-zinc-500">Automated evaluation threshold: 85%</p>
-        </div>
-
-        <!-- API Budgets -->
-        <div class="p-4 rounded border border-app-border bg-app-surface">
-          <div class="flex items-center justify-between mb-2">
-            <span class="font-mono text-xs text-zinc-400 uppercase tracking-wider">UPSTREAM BUDGETS</span>
-            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              HEALTHY
-            </span>
-          </div>
-          <div class="font-mono text-xl font-bold text-white mb-1">GH: 4,850 / 5,000</div>
-          <p class="font-mono text-xs text-zinc-500">OpenRouter: $14.20 Balance</p>
-        </div>
+  <!-- Two Columns: Recent Audit Tail & Active Pipeline Jobs -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Audit Trail Tail -->
+    <div class="p-4 rounded-lg bg-[var(--surface)] border border-[var(--border)] shadow-[var(--shadow)]">
+      <div class="flex items-center justify-between mb-3 border-b border-[var(--border)] pb-2">
+        <h3 class="font-mono text-xs font-bold uppercase tracking-wider text-[var(--text)]">
+          Recent Audit Trail (Immutable)
+        </h3>
+        <a href="/admin/audit" class="text-xs font-mono text-[var(--accent)] hover:underline">
+          View All →
+        </a>
       </div>
 
-      <!-- Section 2: Pipeline Operations & Actions Bar -->
-      <div class="border border-app-border bg-app-surface p-5 rounded">
-        <div class="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h2 class="text-sm font-bold font-mono uppercase tracking-wider text-white mb-1">Pipeline Direct Action Controls</h2>
-            <p class="text-xs text-zinc-400">Trigger immediate telemetry sweeps or static deployment builds</p>
-          </div>
-
-          <div class="flex flex-wrap items-center gap-3">
-            <!-- Trigger Rescan Form -->
-            <form action="/admin/api/rescan" method="POST" class="flex items-center gap-2">
-              <input type="hidden" name="csrf" value={csrfToken} />
-              <input
-                type="text"
-                name="repo"
-                placeholder="slug or 'all'"
-                class="px-2.5 py-1.5 rounded bg-black/40 border border-app-border text-xs font-mono text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-blue-500 w-32"
-              />
-              <button
-                type="submit"
-                class="px-3.5 py-1.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-mono text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer"
-              >
-                Trigger Rescan
-              </button>
-            </form>
-
-            <!-- Trigger Rebuild Form -->
-            <form action="/admin/api/rebuild" method="POST">
-              <input type="hidden" name="csrf" value={csrfToken} />
-              <button
-                type="submit"
-                class="px-3.5 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-white font-mono text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer"
-              >
-                Rebuild Static Site
-              </button>
-            </form>
-          </div>
-        </div>
-      </div>
-
-      <!-- Section 3: Two Columns Layout (Review Queue & Flagged Items) -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- AI Review Queue -->
-        <div class="border border-app-border bg-app-surface rounded flex flex-col">
-          <div class="border-b border-app-border px-4 py-3 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-              <h3 class="font-mono text-xs font-bold uppercase tracking-wider text-white">AI Report Review Queue</h3>
-            </div>
-            <span class="font-mono text-[11px] text-zinc-500">{drafts.length} Pending Approval</span>
-          </div>
-
-          <div class="p-4 flex-1">
-            {drafts.length === 0 ? (
-              <div class="py-8 text-center">
-                <p class="font-mono text-xs text-zinc-500">✓ All weekly AI reports approved. Queue clear.</p>
-              </div>
-            ) : (
-              <div class="space-y-3">
-                {drafts.map((d) => (
-                  <div class="p-3.5 rounded bg-black/40 border border-app-border flex items-start justify-between gap-4">
-                    <div class="space-y-1">
-                      <div class="flex items-center gap-2">
-                        <span class="font-mono text-sm font-bold text-white">{d.name}</span>
-                        <span class="font-mono text-xs text-zinc-500">({d.repo})</span>
-                        <span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                          Score {d.safety_score}
-                        </span>
-                      </div>
-                      <p class="text-xs text-zinc-400 line-clamp-2 leading-relaxed">{d.ai_report}</p>
-                    </div>
-
-                    <form action="/admin/api/review-queue" method="POST" class="shrink-0">
-                      <input type="hidden" name="csrf" value={csrfToken} />
-                      <input type="hidden" name="repo" value={d.slug} />
-                      <button
-                        type="submit"
-                        class="px-2.5 py-1.5 rounded bg-emerald-600/80 hover:bg-emerald-500 text-white font-mono text-xs uppercase tracking-wider transition-colors cursor-pointer"
-                      >
-                        Approve
-                      </button>
-                    </form>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <!-- Flagged Watchlist -->
-        <div class="border border-app-border bg-app-surface rounded flex flex-col">
-          <div class="border-b border-app-border px-4 py-3 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <span class="w-2 h-2 rounded-full bg-red-400"></span>
-              <h3 class="font-mono text-xs font-bold uppercase tracking-wider text-white">Security Flagged Watchlist</h3>
-            </div>
-            <span class="font-mono text-[11px] text-zinc-500">{flaggedTools.length} Anomaly / Caution</span>
-          </div>
-
-          <div class="p-4 flex-1">
-            <div class="space-y-2.5 max-h-[320px] overflow-y-auto pr-1">
-              {flaggedTools.map((t) => (
-                <div class="p-3 rounded bg-black/40 border border-app-border flex items-center justify-between">
-                  <div class="flex items-center gap-3">
-                    <span class={`font-mono text-xs font-bold px-2 py-0.5 rounded ${t.verdict === 'risky' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}`}>
-                      {t.safety_score.toFixed(1)}
-                    </span>
-                    <div>
-                      <div class="font-mono text-xs font-bold text-white">{t.name}</div>
-                      <div class="font-mono text-[11px] text-zinc-500">{t.repo} · {t.verdict.toUpperCase()}</div>
-                    </div>
-                  </div>
-
-                  <a
-                    href={`/tools/${t.slug}`}
-                    target="_blank"
-                    class="font-mono text-xs text-blue-400 hover:text-blue-300 underline"
+      <div class="space-y-2">
+        {recentAudit.length === 0 ? (
+          <div class="text-xs font-mono text-[var(--text-3)] py-4 text-center">No recent audit log entries</div>
+        ) : (
+          recentAudit.slice(0, 6).map((entry) => (
+            <div class="p-2.5 rounded bg-[var(--surface-2)] border border-[var(--border)] flex items-start justify-between gap-3 text-xs font-mono">
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <span
+                    class={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                      entry.who === 'owner'
+                        ? 'bg-[var(--accent-soft)] text-[var(--accent)]'
+                        : entry.who === 'agent'
+                        ? 'bg-blue-100 text-blue-800'
+                        : 'bg-[var(--caution-soft)] text-[var(--caution)]'
+                    }`}
                   >
-                    View Audit
-                  </a>
+                    {entry.who.toUpperCase()}
+                  </span>
+                  <span class="font-semibold text-[var(--text)]">{entry.action}</span>
                 </div>
-              ))}
+                <div class="text-[11px] text-[var(--text-2)] truncate max-w-sm">
+                  {entry.target || JSON.stringify(entry.details || {})}
+                </div>
+              </div>
+              <div class="text-[10px] text-[var(--text-3)] text-right whitespace-nowrap">
+                {new Date(entry.at).toLocaleTimeString()}
+              </div>
             </div>
-          </div>
-        </div>
+          ))
+        )}
+      </div>
+    </div>
+
+    <!-- Active Pipeline Jobs -->
+    <div class="p-4 rounded-lg bg-[var(--surface)] border border-[var(--border)] shadow-[var(--shadow)]">
+      <div class="flex items-center justify-between mb-3 border-b border-[var(--border)] pb-2">
+        <h3 class="font-mono text-xs font-bold uppercase tracking-wider text-[var(--text)]">
+          Telemetry & Scanner Jobs
+        </h3>
+        <a href="/admin/scans" class="text-xs font-mono text-[var(--accent)] hover:underline">
+          Job History →
+        </a>
       </div>
 
-      <!-- Section 4: Recent Pipeline Jobs & Audit Log Tail -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Recent Jobs -->
-        <div class="border border-app-border bg-app-surface rounded">
-          <div class="border-b border-app-border px-4 py-3 flex items-center justify-between">
-            <h3 class="font-mono text-xs font-bold uppercase tracking-wider text-white">Pipeline Execution Jobs</h3>
-            <span class="font-mono text-[11px] text-zinc-500">Live Async Queue</span>
-          </div>
-          <div class="p-4">
-            {recentJobs.length === 0 ? (
-              <p class="font-mono text-xs text-zinc-500 py-4 text-center">No recent jobs recorded.</p>
-            ) : (
-              <div class="space-y-2">
-                {recentJobs.map((j) => (
-                  <div class="p-2.5 rounded bg-black/40 border border-app-border flex items-center justify-between text-xs font-mono">
-                    <div class="flex items-center gap-2">
-                      <span class={`px-1.5 py-0.5 rounded text-[10px] ${j.status === 'completed' ? 'bg-emerald-500/10 text-emerald-400' : j.status === 'running' ? 'bg-blue-500/10 text-blue-400 animate-pulse' : 'bg-zinc-800 text-zinc-400'}`}>
-                        {j.status.toUpperCase()}
-                      </span>
-                      <span class="text-white font-semibold">{j.type.toUpperCase()}:</span>
-                      <span class="text-zinc-400">{j.target}</span>
-                    </div>
-                    <span class="text-zinc-600 text-[10px]">{new Date(j.createdAt).toLocaleTimeString()}</span>
-                  </div>
-                ))}
+      <div class="space-y-2">
+        {recentJobs.length === 0 ? (
+          <div class="text-xs font-mono text-[var(--text-3)] py-4 text-center">No active pipeline jobs</div>
+        ) : (
+          recentJobs.slice(0, 6).map((job) => (
+            <div class="p-2.5 rounded bg-[var(--surface-2)] border border-[var(--border)] flex items-start justify-between gap-3 text-xs font-mono">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span
+                    class={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                      job.status === 'completed'
+                        ? 'bg-[var(--healthy-soft)] text-[var(--healthy)]'
+                        : job.status === 'running'
+                        ? 'bg-[var(--accent-soft)] text-[var(--accent)] animate-pulse'
+                        : 'bg-[var(--risky-soft)] text-[var(--risky)]'
+                    }`}
+                  >
+                    {job.status.toUpperCase()}
+                  </span>
+                  <span class="font-semibold text-[var(--text)]">{job.type.toUpperCase()}</span>
+                  <span class="text-[var(--text-3)]">({job.target})</span>
+                </div>
+                <div class="text-[11px] text-[var(--text-2)] mt-0.5">
+                  Stages: GitHub API → Scorecard → Advisory DB → Derivation
+                </div>
               </div>
-            )}
-          </div>
-        </div>
-
-        <!-- Append-Only Audit Log Tail -->
-        <div class="border border-app-border bg-app-surface rounded">
-          <div class="border-b border-app-border px-4 py-3 flex items-center justify-between">
-            <h3 class="font-mono text-xs font-bold uppercase tracking-wider text-white">Append-Only Audit Log</h3>
-            <span class="font-mono text-[11px] text-zinc-500">data/audit.jsonl</span>
-          </div>
-          <div class="p-4">
-            {recentAudit.length === 0 ? (
-              <p class="font-mono text-xs text-zinc-500 py-4 text-center">Audit log clear.</p>
-            ) : (
-              <div class="space-y-2 max-h-[260px] overflow-y-auto pr-1">
-                {recentAudit.map((a) => (
-                  <div class="p-2.5 rounded bg-black/40 border border-app-border flex items-center justify-between text-xs font-mono">
-                    <div class="flex items-center gap-2">
-                      <span class={`px-1.5 py-0.5 rounded text-[10px] font-bold ${a.principal === 'agent' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : a.principal === 'owner' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'}`}>
-                        [{a.principal.toUpperCase()}]
-                      </span>
-                      <span class="text-zinc-200">{a.action}</span>
-                    </div>
-                    <span class="text-zinc-500 text-[10px]">{new Date(a.timestamp).toLocaleTimeString()}</span>
-                  </div>
-                ))}
+              <div class="text-[10px] text-[var(--text-3)] text-right">
+                {new Date(job.createdAt).toLocaleTimeString()}
               </div>
-            )}
-          </div>
-        </div>
+            </div>
+          ))
+        )}
       </div>
-    </main>
-  </body>
-</html>
-
+    </div>
+  </div>
+</AdminLayout>

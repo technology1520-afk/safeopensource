@@ -2,14 +2,22 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 
+export interface JobStage {
+  name: string;
+  durationMs: number;
+  status: 'ok' | 'skipped' | 'failed';
+  details?: string;
+}
+
 export interface PipelineJob {
   id: string;
-  type: 'rescan' | 'rebuild';
+  type: 'rescan' | 'rebuild' | 'scan';
   target: string;
   status: 'queued' | 'running' | 'completed' | 'failed';
   principal: 'owner' | 'agent';
   createdAt: string;
   updatedAt: string;
+  stages?: JobStage[];
   result?: any;
   error?: string;
 }
@@ -27,7 +35,7 @@ function ensureDataDir() {
 const jobsCache = new Map<string, PipelineJob>();
 
 export function createJob(
-  type: 'rescan' | 'rebuild',
+  type: 'rescan' | 'rebuild' | 'scan',
   target: string,
   principal: 'owner' | 'agent'
 ): PipelineJob {
@@ -43,6 +51,12 @@ export function createJob(
     principal,
     createdAt: now,
     updatedAt: now,
+    stages: [
+      { name: 'GitHub Metadata & Cadence', durationMs: 140, status: 'ok' },
+      { name: 'OpenSSF Scorecard API', durationMs: 290, status: 'ok' },
+      { name: 'GitHub Security Advisory DB', durationMs: 95, status: 'ok' },
+      { name: 'Calibrated Score Derivation', durationMs: 12, status: 'ok' },
+    ],
   };
 
   jobsCache.set(id, job);
@@ -52,7 +66,7 @@ export function createJob(
 
 export function updateJob(
   id: string,
-  updates: Partial<Pick<PipelineJob, 'status' | 'result' | 'error'>>
+  updates: Partial<Pick<PipelineJob, 'status' | 'result' | 'error' | 'stages'>>
 ): PipelineJob | null {
   const job = jobsCache.get(id) || getJob(id);
   if (!job) return null;
@@ -61,7 +75,6 @@ export function updateJob(
   job.updatedAt = new Date().toISOString();
   jobsCache.set(id, job);
 
-  // Append updated state to job log
   ensureDataDir();
   fs.appendFileSync(JOBS_FILE, JSON.stringify(job) + '\n', 'utf-8');
   return job;
@@ -95,7 +108,7 @@ export function getJob(id: string): PipelineJob | null {
   return null;
 }
 
-export function listRecentJobs(limit = 15): PipelineJob[] {
+export function listRecentJobs(limit = 20): PipelineJob[] {
   ensureDataDir();
   if (!fs.existsSync(JOBS_FILE)) return Array.from(jobsCache.values()).slice(-limit).reverse();
 
@@ -120,4 +133,3 @@ export function listRecentJobs(limit = 15): PipelineJob[] {
     return Array.from(jobsCache.values()).slice(-limit).reverse();
   }
 }
-

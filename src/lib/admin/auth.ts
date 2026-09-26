@@ -3,9 +3,66 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { hash, verify } from '@node-rs/argon2';
 
+import { checkRotatedKeyGrace } from './settings';
+
 const DATA_DIR = path.join(process.cwd(), 'data');
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
+function decodeBase32(str: string): Buffer {
+  const base32chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  const clean = str.toUpperCase().replace(/[=\s]/g, '');
+  let bits = '';
+  for (let i = 0; i < clean.length; i++) {
+    const val = base32chars.indexOf(clean.charAt(i));
+    if (val === -1) {
+      return Buffer.from(str, 'utf-8');
+    }
+    bits += val.toString(2).padStart(5, '0');
+  }
+  const bytes: number[] = [];
+  for (let i = 0; i + 8 <= bits.length; i += 8) {
+    bytes.push(parseInt(bits.substring(i, i + 8), 2));
+  }
+  return Buffer.from(bytes);
+}
+
+/**
+ * Verify RFC 6238 TOTP code (optional 2FA)
+ */
+export function verifyTotp(token?: string | null, secret?: string | null): boolean {
+  const totpSecret = secret !== undefined ? secret : process.env.ADMIN_TOTP_SECRET;
+  if (!totpSecret) return true; // Optional if not present in env
+  if (!token) return false;
+
+  const cleanToken = token.trim();
+  const key = decodeBase32(totpSecret);
+  const nowStep = Math.floor(Date.now() / 1000 / 30);
+
+  for (let delta = -1; delta <= 1; delta++) {
+    const step = nowStep + delta;
+    const buf = Buffer.alloc(8);
+    buf.writeBigInt64BE(BigInt(step), 0);
+
+    const hmac = crypto.createHmac('sha1', key);
+    hmac.update(buf);
+    const digest = hmac.digest();
+
+    const offset = digest[digest.length - 1] & 0x0f;
+    const code =
+      (((digest[offset] & 0x7f) << 24) |
+        ((digest[offset + 1] & 0xff) << 16) |
+        ((digest[offset + 2] & 0xff) << 8) |
+        (digest[offset + 3] & 0xff)) %
+      1000000;
+
+    const expectedToken = code.toString().padStart(6, '0');
+    if (safeCompare(cleanToken, expectedToken)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 export interface Session {
@@ -201,6 +258,13 @@ export async function authenticateRequest(request: Request, cookieSessionId?: st
     if (readonlyKey && safeCompare(token, readonlyKey)) {
       resetAuthFailures(ip);
       return { principal: 'agent', role: 'readonly', ip };
+    }
+
+    // Check 24-hour grace period for rotated keys
+    const graceCheck = checkRotatedKeyGrace(token);
+    if (graceCheck.valid) {
+      resetAuthFailures(ip);
+      return { principal: 'agent', role: graceCheck.role || 'admin', ip };
     }
 
     // Invalid Bearer key

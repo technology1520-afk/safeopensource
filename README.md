@@ -249,55 +249,64 @@ This generates:
 #### First Login:
 1. Start the server (`npm run build && npm run preview`).
 2. Navigate directly to `http://localhost:4321/admin/login`.
-3. Sign in with `ADMIN_EMAIL` and your password.
-4. The server validates Argon2id, issues a 30-minute `sos_session` cookie (`HttpOnly; SameSite=Strict; Path=/admin`), and redirects to `/admin`.
+3. Sign in with `ADMIN_EMAIL` and your password (plus 6-digit TOTP code if `ADMIN_TOTP_SECRET` is configured).
+4. The server validates Argon2id and optional TOTP, issues a 30-minute `sos_session` cookie (`HttpOnly; SameSite=Strict; Path=/admin`), and redirects to `/admin`.
+5. All mutating owner operations require a valid CSRF token embedded in forms and validated by middleware.
 
 ---
 
-### 2. Double-Gate Reverse Proxy Setup (Caddy)
+### 2. Owner Setup & Credential Generation (`scripts/gen-admin-secrets.ts`)
 
-For internet-facing production deployments, use Caddy as a double gate in front of the application:
-1. **Layer 1**: IP allowlist + HTTP Basic Auth in Caddy for the human UI path (`/admin`).
-2. **Layer 2**: Internal Argon2id session + CSRF token in the application.
+Generate cryptographically secure credentials using `scripts/gen-admin-secrets.ts` (or `.mjs`):
 
-```caddyfile
-safeopensource.org {
-    # Public routes proxied to Astro Node server
-    reverse_proxy 127.0.0.1:4321
+```bash
+# Generate credentials and print to console:
+npx tsx scripts/gen-admin-secrets.ts --email "owner@safeopensource.org" --password "YourStrongPassword"
 
-    # Double gate for /admin human interface
-    @admin_ui {
-        path /admin /admin/*
-        not path /admin/api/*
-    }
-    handle @admin_ui {
-        # Layer 1A: IP Allowlist (trusted VPN / home IP)
-        remote_ip 192.168.1.0/24 10.0.0.0/8 203.0.113.195/32
-
-        # Layer 1B: Basic Auth
-        basicauth {
-            admin $2a$14$Z1...hash...
-        }
-
-        # Forward to app for Layer 2 app session
-        reverse_proxy 127.0.0.1:4321
-    }
-}
+# Or write directly to .env (verified git-ignored):
+npx tsx scripts/gen-admin-secrets.ts --email "owner@safeopensource.org" --password "YourStrongPassword" --write-env
 ```
 
+#### Environment Variables (`.env`):
+- `ADMIN_EMAIL`: Single authorized owner email address.
+- `ADMIN_PASSWORD_HASH`: Argon2id password hash (never store plaintext).
+- `ADMIN_TOTP_SECRET`: Optional base32 TOTP secret for Authenticator apps (Google Authenticator, 1Password). If present, 6-digit 2FA is required at login.
+- `ADMIN_API_KEY`: 32-byte hex token for autonomous Agent write access.
+- `ADMIN_API_KEY_READONLY`: 32-byte hex token for read-only monitoring access.
+
 ---
 
-### 3. AI Agent & Model Context Protocol (MCP) Integration
+### 3. API Key Rotation Procedure (24-Hour Grace Window)
+
+When rotating the Agent `ADMIN_API_KEY`:
+1. **Via UI**: Navigate to `/admin/settings` and click **"Rotate Admin API Key (24h Grace)"**.
+2. **Via API**: Issue a POST request:
+   ```bash
+   curl -X POST http://localhost:4321/admin/api/settings \
+     -H "Authorization: Bearer <CURRENT_ADMIN_API_KEY>" \
+     -H "Content-Type: application/json" \
+     -d '{"action": "rotate_key", "role": "admin"}'
+   ```
+3. **Grace Window**: The previous key is preserved in `data/settings.json` and remains valid for exactly **24 hours**. This ensures autonomous AI agents and cron jobs can transition without downtime.
+4. **Audit Trail**: Every rotation event is recorded with `{who: "owner"|"agent", action: "API_KEY_ROTATED", at: timestamp, ip}`.
+
+---
+
+### 4. AI Agent & Model Context Protocol (MCP) Integration
 
 The control plane exposes an official MCP server at `scripts/mcp-server.js` using `@modelcontextprotocol/sdk`.
 
-#### Exposed MCP Tools:
+#### Exposed MCP Tools (1:1 with `/admin/api/*`):
 | Tool Name | Parameters | Description |
 | :--- | :--- | :--- |
+| `sos_status` | *(none)* | Returns pipeline health, tool counts (listed/unlisted/flagged), last sweep, and pending queue. |
 | `sos_rescan` | `repos?: string[]` | Triggers immediate security scorecard & commit sweep for one or all tools. |
-| `sos_add_tool` | `repo: string, category: string, name?: string` | Enrolls a new repository, generates safety score and draft AI report. |
-| `sos_update_content`| `repo: string, fields: object` | Updates human-written fields (tagline, use_cases, requirements, who_for). Scores remain pipeline-owned. |
-| `sos_status` | *(none)* | Returns pipeline freshness, cron status, GitHub API budget, and flagged tools. |
+| `sos_add_tool` | `repo_url: string, category: string, name?: string` | Enrolls a new repository; lands in queue as unlisted. |
+| `sos_edit_tool` | `repo: string, fields: object` | Updates human-written fields only. Attempts to modify scores return 422. |
+| `sos_approve` | `tool_id: string` | Approves a tool from the queue to make it public and listed in the catalog. |
+| `sos_reject` | `tool_id: string, reason?: string` | Rejects and deletes a tool from the queue/catalog. |
+| `sos_rebuild` | *(none)* | Triggers production static rebuild and deploy via `deploy.sh`. |
+| `sos_audit` | `limit?: number` | Queries recent append-only audit trail entries. |
 
 #### MCP Client Configuration (`claude_desktop_config.json` or Antigravity / Cursor):
 ```json
@@ -317,21 +326,37 @@ The control plane exposes an official MCP server at `scripts/mcp-server.js` usin
 
 ---
 
-### 4. Control Plane Automated Test Suite
+### 5. Accuracy Invariants & Regression Gate
 
-Run the automated verification suite to validate all security rules and capabilities:
+1. **Derivation Provenance**: The admin and catalog never display a score without its complete mathematical derivation: component weights + data sources + timestamps.
+2. **Defensive Render Override**: If a tool has >0 open High/Critical CVEs or security advisories, the UI refuses to display "Healthy" regardless of the score.
+3. **Unverified Scorecard Handling**: Repositories without OpenSSF Scorecards display an explicit `"security practices UNVERIFIED"` badge with proportional weight redistribution.
+4. **Regression Gate**: On every load, `/admin` executes an automated self-test against reference repositories:
+   - `jellyfin/jellyfin`: 91.8 (Healthy)
+   - `openclaw/openclaw`: Caution + 30 advisories
+   - `filebrowser/filebrowser`: Archived-flagged (Risky)
+   If any reference score breaks, a red blocking alert banner halts mutations until score calibration is restored.
+
+---
+
+### 6. Control Plane Automated Test Suite
+
+Run the comprehensive test suite to verify all Definition of Done requirements:
 
 ```bash
 node scripts/verify-admin.js
 ```
 
 Verifies:
-- Stealth 404 (empty body) for unauthenticated visitors
-- Agent Bearer token authentication (Read vs Write permissions)
-- Rate limiting (5 failed attempts per min $\rightarrow$ HTTP 429)
-- Owner Argon2id authentication and 30-minute session lifecycle
-- CSRF protection (mutations without token $\rightarrow$ HTTP 403)
-- End-to-end agent rescan and append-only audit trail logging
-- Absence of `/admin` in `robots.txt`, `sitemap-index.xml`, and public HTML
+- Stealth 404 (empty body) for unauthenticated visitors across `/admin` and `/admin/api/*`
+- Wrong API key 401 and 5 fails/min rate limiting (HTTP 429)
+- Owner Argon2id login, 30-minute session expiration, and CSRF token enforcement (403 on missing CSRF)
+- Agent end-to-end chain: `sos_add_tool` $\rightarrow$ `unlisted` $\rightarrow$ `sos_approve` $\rightarrow$ public listed $\rightarrow$ `sos_rebuild`
+- Queue Gate: user scans and unapproved tools return 404 on public catalog
+- Accuracy regression self-test: poisoning a score triggers the blocking banner; restoring clears it
+- Secrets verification: zero hardcoded keys or hashes in repository
+- Zero `/admin` references in public build output (`dist/client`)
+- Full MCP stdio tool execution
+
 
 
