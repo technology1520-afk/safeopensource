@@ -9,7 +9,11 @@
 ### Core Value Proposition & Differentiator: Uncompromising Trust
 Unlike generic software directories that rank tools purely by popularity (GitHub stars) or marketing copy, **SafeOpenSource is built around verifiable risk telemetry**:
 - **Mathematical Transparency**: Every score is paired with its full component breakdown, weight derivation, data source provenance, and scan timestamp.
-- **Defensive Invariants**: Tools with known active Critical/High CVEs or unresolved security advisories are strictly prohibited from receiving a "Healthy" verdict, regardless of numerical metrics.
+- **Defensive Invariants**: Tools with known active Critical/High CVEs or weaponized exploit probability (EPSS > 0.60) are strictly prohibited from receiving a "Safe" / "Healthy" verdict, regardless of numerical metrics.
+- **Vulnerability Intelligence (OSV.dev & FIRST.org EPSS)**: Continuous package-level CVE discovery across npm, PyPI, Crates.io, and Go modules, combined with real-world exploit prediction probability.
+- **Embedded Zero-Lock Database (Drizzle ORM & SQLite WAL)**: Enterprise-grade concurrency eliminating write locks and race conditions during high-throughput scans and admin operations.
+- **Remote MCP Control Plane**: Full Server-Sent Events (SSE) Model Context Protocol endpoint for autonomous AI agents behind constant-time Bearer token gating and two-tier permissions.
+- **Zero-Dependency CLI Tooling**: Standalone developer CLI (`@safeopensource/cli`) to audit `package.json`, `requirements.txt`, and `go.mod` dependencies in CI/CD pipelines.
 - **AI Agent Security Profiles**: Specific evaluation criteria for autonomous coding agents and LLM tooling (sandboxing, permission models, egress filtering, prompt injection history).
 - **Stealth / Zero-Trust Admin Plane**: High-security operational interface for human administrators and autonomous AI agents with zero public reconnaissance footprint.
 
@@ -18,21 +22,23 @@ Unlike generic software directories that rank tools purely by popularity (GitHub
 ## 2. Technology Stack & Design System
 
 ### 2.1 Core Framework & Libraries
-- **Static & SSR Hybrid Framework**: [Astro 5](https://astro.build/) (`astro` ^7.3.3) configured with static output generation and `@astrojs/node` standalone adapter for dynamic admin control plane and on-demand repository scanning.
+- **Static & SSR Hybrid Framework**: [Astro 5](https://astro.build/) (`astro` ^7.3.3) configured with static output generation and `@astrojs/node` standalone adapter for dynamic admin control plane, remote MCP SSE endpoints, and on-demand repository scanning.
+- **Embedded Database & Persistence**: [Drizzle ORM](https://orm.drizzle.team/) (`drizzle-orm` ^0.45.3) paired with [better-sqlite3](https://github.com/WiseLibs/better-sqlite3) (`better-sqlite3` ^13.0.3) in Write-Ahead Logging (WAL) mode. Eliminates write locks and race conditions during concurrent scans and admin operations.
 - **Type Safety**: TypeScript 6.0 in strict mode with comprehensive interface definitions (`src/types/tool.ts`).
 - **Styling & CSS Architecture**: Tailwind CSS 4 (`tailwindcss` ^4.3.3 + `@tailwindcss/vite`), built on custom CSS token variables defined in `src/styles/global.css`.
 - **Search Island**: [Preact](https://preactjs.com/) (`preact` ^10.29.8, `@astrojs/preact` ^6.0.5) powering an ultra-responsive client-side modal search island (`SearchDialog.tsx`) with [Fuse.js](https://www.fusejs.io/) fuzzy matching.
 - **Cryptography & Security**:
   - `@node-rs/argon2` for password hashing on the operator login gateway.
-  - Native Node.js `crypto` for timing-safe 256-bit token comparisons and CSRF tokens.
-- **AI / Agent Protocols**: Official Model Context Protocol SDK (`@modelcontextprotocol/sdk` ^1.30.0) exposing JSON-RPC stdio management tools.
+  - Native Node.js `crypto` for timing-safe 256-bit token comparisons (`crypto.timingSafeEqual`) and CSRF tokens.
+- **AI / Agent Protocols**: Official Model Context Protocol SDK (`@modelcontextprotocol/sdk` ^1.30.0) exposing both local stdio tools and remote HTTPS Server-Sent Events (SSE) transports.
+- **CLI Ecosystem**: Zero-dependency standalone CLI (`packages/cli/`) packaged as `@safeopensource/cli`.
 - **Icons**: Lucide icons via `lucide-astro` and `@lucide/astro`.
 
 ### 2.2 Design System — "Lavender Lab / Dark Data-Forward"
 The UI follows a modern cybersecurity operations aesthetic inspired by Linear and Vercel:
 - **Palette**: Dark, high-contrast surface hierarchy (`--bg: #0A0B0E`, `--surface: #131519`, `--surface-2: #1A1D24`, `--border: #23262E`).
 - **Status Semantics**:
-  - **Healthy (Emerald)**: `#10B981` (WCAG Contrast 5.5:1 on surface)
+  - **Healthy / Safe (Emerald)**: `#10B981` (WCAG Contrast 5.5:1 on surface)
   - **Caution (Amber)**: `#F59E0B` (WCAG Contrast 6.1:1 on surface)
   - **Risky (Rose)**: `#EF4444` (WCAG Contrast 4.7:1 on surface)
 - **Typography**: `Inter` for interfaces, paired with `JetBrains Mono` for scores, hashes, terminal commands, and telemetry timestamps.
@@ -49,155 +55,119 @@ $$\text{Safety Score} = (0.35 \times \text{Security Health}) + (0.30 \times \tex
 
 | Component | Weight | Key Metrics Evaluated | Data Sources |
 | :--- | :---: | :--- | :--- |
-| **Security Health** | **35%** | Branch protection rules, signed commits, pinned dependencies, SAST scanning (CodeQL), binary artifacts, vulnerability reporting policy. | OpenSSF Scorecard API, GitHub Security Advisories |
+| **Security Health** | **35%** | Branch protection rules, signed commits, pinned dependencies, SAST scanning (CodeQL), binary artifacts, vulnerability reporting policy, package-level advisories. | OpenSSF Scorecard API, GitHub Security Advisories, OSV.dev |
 | **Maintenance** | **30%** | Days since last commit (`last_push_days`), issue close ratios, release frequency, commit cadence stability. | GitHub REST / GraphQL API |
 | **Community** | **20%** | Star count, active contributor diversity (bus factor estimation), organization sponsorship, fork activity. | GitHub Public Metrics |
 | **Releases** | **15%** | Semantic versioning adherence, changelog availability, release frequency, release asset verification. | GitHub Releases / Tags |
 
-### 3.2 Non-Negotiable Algorithmic Invariants
-1. **Unverified Scorecard Handling**: If an open-source project lacks an OpenSSF Scorecard, `security_health` is set to `null`, a prominent `"Security practices UNVERIFIED"` badge is applied, and the remaining 3 components are proportionally re-weighted.
-2. **Defensive Render Override**: If a project has $>0$ active Critical or High CVEs / GHSA advisories, the system refuses to output a `Healthy` verdict, overriding the display to `Caution` or `Risky` regardless of numerical score.
-3. **Score Tampering Rejection**: Through `/admin/api/tools/[repo]`, human operators or AI agents are prohibited from manually adjusting calculated score fields (`safety_score`, `scorecard`, `components`). Any attempt immediately returns **HTTP 422 Unprocessable Entity**.
+### 3.2 EPSS Risk Gate Invariant & Defensive Overrides
+1. **EPSS Weaponized Exploitation Risk Gate**:
+   - The Exploit Prediction Scoring System (EPSS) estimates the probability that a software vulnerability will be exploited in the wild.
+   - **EPSS > 0.60 (>60% probability of active exploitation)**: Triggers a **mandatory defensive override** forcing the verdict to `Risky`, regardless of numerical composite score. Injects `[DEFENSIVE OVERRIDE] Active weaponized exploitation detected`.
+   - **EPSS in [0.20, 0.60] (20% to 60% probability)**: Caps the maximum possible Safety Score at **60.0** and forces the verdict to `Caution`.
+2. **Unverified Scorecard Handling**: If an open-source project lacks an OpenSSF Scorecard, `security_health` is set to `null`, a prominent `"Security practices UNVERIFIED"` badge is applied, and the remaining 3 components are proportionally re-weighted.
+3. **Active Critical/High CVE Defensive Override**: If a project has $>0$ active Critical or High CVEs / GHSA advisories, the system refuses to output a `Safe` / `Healthy` verdict, overriding the display to `Caution` or `Risky`.
+4. **Score Tampering Rejection**: Through `/admin/api/tools/[repo]`, `/api/mcp/messages`, or MCP tool execution, human operators and AI agents are prohibited from modifying calculated score fields (`safety_score`, `scorecard`, `components`, `verdict`). Any attempt immediately returns **HTTP 422 Unprocessable Entity**.
 
 ---
 
-## 4. Repository Structure & Directory Map
+## 4. Database Architecture & Storage Layer (SQLite + Drizzle ORM)
+
+All tool definitions, scan jobs, settings, and audit trails are managed via an embedded SQLite database (`data/safety-opensource.db`) using **Drizzle ORM** (`src/lib/db/schema.ts`). Write-Ahead Logging (WAL) mode enables concurrent reads without write starvation:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                 data/safety-opensource.db                   │
+├──────────────────────────────┬──────────────────────────────┤
+│            tools             │          audit_logs          │
+├──────────────────────────────┼──────────────────────────────┤
+│ slug (PK: text)              │ id (PK: text)                │
+│ repo (text, unique)          │ timestamp (text)             │
+│ name, tagline, category      │ principal (owner/agent/anon) │
+│ safety_score (real)          │ action (text)                │
+│ verdict (healthy/caution/risk│ target_repo (text)           │
+│ components (json)            │ ip (text)                    │
+│ scorecard (real)             │ diff (json)                  │
+│ epss_score (real)            │ status (success/failure)     │
+│ osv_advisories (json)        │ details (json)               │
+│ cves (json), unlisted (bool) ├──────────────────────────────┤
+├──────────────────────────────┤          scan_jobs           │
+│        admin_settings        ├──────────────────────────────┤
+├──────────────────────────────┤ id (PK: text)                │
+│ key (PK: text)               │ repo_url (text)              │
+│ value (json)                 │ status (queued/running/etc.) │
+│ updated_at (text)            │ priority (int), stages (json)│
+└──────────────────────────────┴──────────────────────────────┘
+```
+
+---
+
+## 5. Repository Structure & Directory Map
 
 ```
 safety-opensource/
 ├── .env                              # Production credentials & API tokens (git-ignored)
 ├── astro.config.mjs                  # Astro configuration (standalone Node adapter + Tailwind Vite)
-├── package.json                      # Scripts, dependencies, and metadata
+├── package.json                      # Workspace root scripts & dependencies
 ├── tsconfig.json                     # TypeScript strict compiler config
 ├── README.md                         # Quick start, deployment guide, and control plane summary
 ├── projectdetail.md                  # This file: full architecture & specification dossier
 ├── deploy.sh                         # Automated VPS deployment script
-├── data/                             # Runtime persistent data (audit logs, settings)
-│   ├── audit.jsonl                   # Append-only chronological audit log
+├── data/                             # SQLite database & runtime data
+│   ├── safety-opensource.db          # Embedded SQLite database (WAL mode)
 │   └── settings.json                 # Dynamic control plane settings & rotating key cache
+├── packages/
+│   └── cli/                          # Standalone Zero-Dependency CLI (@safeopensource/cli)
+│       ├── package.json              # CLI package definition (bin: safeopensource)
+│       ├── tsconfig.json             # CLI TypeScript config
+│       ├── manifest-parser.ts        # npm, PyPI, and Go manifest auto-detection & parsers
+│       ├── index.ts                  # CLI runner, ASCII table, batch API client & policy engine
+│       └── dist/                     # Compiled standalone JS binaries
 ├── public/                           # Static assets (favicons, sitemaps, open-graph assets)
 ├── scripts/                          # Operational, testing, and verification scripts
 │   ├── gen-admin-secrets.mjs / .ts   # Cryptographic secret & password hash generator
-│   ├── mcp-server.js                 # Model Context Protocol stdio JSON-RPC server
+│   ├── mcp-server.js                 # Model Context Protocol stdio JSON-RPC server (local)
 │   ├── preview.js                    # Node.js production preview & static fallback server
 │   ├── refresh-scores.ts             # Scheduled OpenSSF / GitHub score update pipeline
-│   ├── score_pipeline.py             # Python analytical scoring pipeline
-│   ├── verify-admin.js               # Control plane test suite (auth, CSRF, stealth 404, rate-limits)
-│   ├── verify-scanner.js             # On-demand scanner API validation suite
-│   ├── verify-scan-accuracy.js       # Ground-truth accuracy validation
-│   ├── verify-radar-and-cta.js       # Radar UI & interactive components check
-│   ├── verify-themes.js              # WCAG contrast & theme compliance suite
-│   └── generate-tools.js             # Synthetic & baseline tool dataset generator
+│   └── verify-admin.js               # Control plane test suite (auth, CSRF, stealth 404, rate-limits)
 └── src/
     ├── env.d.ts                      # TypeScript Astro environment types
     ├── middleware.ts                 # Security gateway (Stealth 404, rate-limiting, CSRF, auth)
-    ├── styles/
-    │   ├── global.css                # CSS custom properties, tokens, and utility classes
-    │   └── theme-tokens.ts           # Token definitions and programmatic helpers
+    ├── styles/                       # Global CSS & theme tokens
     ├── types/
-    │   └── tool.ts                   # Strict data models (ToolData, CVEs, Agent models, etc.)
-    ├── utils/
-    │   ├── licenses.ts               # SPDX license commercial-use decision matrix
-    │   ├── telemetry.ts              # System-wide metrics, radar data, and aggregations
-    │   ├── tool-dossier.ts           # Tool page data loaders and relationship helpers
-    │   └── tools.ts                  # Raw tool loading, sorting, and filtering logic
-    ├── data/
-    │   ├── categories.ts             # 13 Category taxonomies & hand-crafted intros
-    │   ├── intents.ts                # Match quiz intent heuristics
-    │   ├── starter-kits.ts           # Curated software bundles (Home Server, etc.)
-    │   ├── trending.ts               # Momentum, star velocity, and trending telemetry
-    │   └── tools/                    # 45+ Production tool JSON definitions (single source of truth)
+    │   └── tool.ts                   # Strict data models (ToolData, CVEs, OsvAdvisory, EPSS, etc.)
+    ├── utils/                        # Tool data helpers, licenses matrix, telemetry
     ├── lib/
-    │   ├── admin/
-    │   │   ├── audit.ts              # Structured audit logging functions
-    │   │   ├── auth.ts               # Argon2id password verification, session & token validation
-    │   │   ├── jobs.ts               # Asynchronous scan job state management
-    │   │   ├── settings.ts           # Dynamic runtime settings & API key rotation logic
-    │   │   └── tools-service.ts      # Tool mutations, validation, and queue gating
+    │   ├── db/                       # Drizzle ORM schema, SQLite connection, runtime migrations
+    │   │   ├── index.ts              # SQLite connection (WAL mode) & migration fallbacks
+    │   │   └── schema.ts             # Drizzle tables: tools, audit_logs, scan_jobs, admin_settings
+    │   ├── admin/                    # Auth, audit logging, job queues, tools service
+    │   ├── mcp/                      # Model Context Protocol Server Core
+    │   │   └── server.ts             # MCP Server factory, SSEServerTransport adapter, 15s keepalive
     │   └── scanner/
-    │       ├── pipeline.ts           # Live GitHub/OpenSSF repository fetcher & parser
-    │       ├── rate-limiter.ts       # Token bucket & sliding-window rate limiters
-    │       └── scoring.ts            # Scoring algorithms and algorithmic derivation
-    ├── components/
-    │   ├── Header.astro              # Global navigation, quick search trigger, scan CTA
-    │   ├── Footer.astro              # System status, legal links, license declaration
-    │   ├── DetectionRadarHero.astro  # Interactive 360° radar scope visualization
-    │   ├── SearchDialog.tsx          # Preact search modal island with Fuse.js
-    │   ├── ToolCard.astro            # Catalog card with score badge and stats
-    │   ├── ScoreRing.astro           # Animated SVG circular gauge
-    │   ├── ScoreBar.astro            # Horizontal weighted breakdown bars
-    │   ├── VerdictBadge.astro        # Accessible status badge (Text + SVG icon)
-    │   ├── FlagWall.astro            # "The Flag Wall" highlighting risky/archived tools
-    │   ├── LicenseExplainer.astro    # Commercial-use permission explainer
-    │   ├── InstallTabs.astro         # Tabbed copy-paste deployment instructions
-    │   ├── AgentSafetySignals.astro  # Permission model, sandbox specs, and CVE incident log
-    │   ├── ToolDossier.astro         # Detailed breakdown and provenance panel
-    │   ├── ToolRequirements.astro    # Hardware/runtime requirements table
-    │   ├── BentoRow.astro            # Featured high-safety tool showcases
-    │   ├── CategoryRadar.astro       # Category-level risk vs. safety distribution
-    │   ├── MatchQuiz.astro           # Interactive software recommendation quiz
-    │   └── admin/
-    │       └── AdminLayout.astro     # Protected SOC Control Plane admin layout
+    │       ├── pipeline.ts           # OSV.dev, FIRST.org EPSS, and GitHub scanning pipeline
+    │       ├── rate-limiter.ts       # Sliding-window rate limiters & queue depths
+    │       └── scoring.ts            # Scoring algorithms & EPSS Risk Gate invariant
+    ├── components/                   # Astro UI components, Radar hero, search island
     └── pages/
         ├── index.astro               # Homepage (Radar hero, telemetry cards, flag wall)
         ├── scan.astro                # On-demand repository safety scanner UI
         ├── how-we-score.astro        # Complete scoring methodology & mathematical formulas
         ├── how-to-run-an-ai-agent-safely.astro # Deep-dive operational guide for AI agents
-        ├── about.astro / contact.astro / privacy.astro / terms.astro # Legal & info pages
-        ├── 404.astro                 # Public branded 404 page
-        ├── robots.txt.ts             # Dynamic robots.txt (clean, zero admin beacons)
-        ├── badge/[owner]/[repo].svg.ts # Dynamic vector SVG badge generator
         ├── tools/[slug].astro        # In-depth single tool evaluation dossier
         ├── categories/[slug].astro   # Category indexes with curated editorial overviews
         ├── alternatives/[a]-vs-[b].astro # Head-to-head comparison pages
-        ├── starter-kits/[slug].astro # Curated software stack bundles
-        ├── trending/ & top/          # Momentum rankings and top-rated indices
-        ├── api/                      # Public APIs
+        ├── api/                      # Public & Agent APIs
         │   ├── scan-status.ts        # Public scan queue telemetry
-        │   └── scan/                 # Asynchronous scan submission & polling endpoints
+        │   ├── scan/
+        │   │   ├── index.ts          # On-demand scan submission
+        │   │   ├── [id].ts           # Scan job status polling
+        │   │   └── batch.ts          # Dedicated batch dependency lookup for CLI/CI
+        │   └── mcp/                  # Remote Model Context Protocol Endpoints
+        │       ├── sse.ts            # GET: Server-Sent Events stream for remote agents
+        │       └── messages.ts       # POST: JSON-RPC message delivery with 422 gate
         └── admin/                    # Control Plane (Behind Stealth 404 & Dual Auth Gate)
-            ├── index.astro           # SOC Control Plane Dashboard
-            ├── login.astro           # Human Operator Gateway login form
-            ├── queue.astro           # Review queue for unlisted scans & pending tools
-            ├── tools.astro           # Tool inventory management & metadata editor
-            ├── scans.astro           # Live repository scan job inspector
-            ├── audit.astro           # Append-only audit trail viewer
-            ├── settings.astro        # Key rotation, grace windows, and operational settings
-            └── api/                  # Protected REST endpoints for UI and AI Agents
 ```
-
----
-
-## 5. Website Pages & Information Architecture
-
-### 5.1 Public Pages
-1. **Homepage (`/`)**:
-   - **Continuous Defense Radar Scope**: Interactive SVG radar plotting catalog tools across security quadrants.
-   - **Live Telemetry Banner**: Real-time counter of cataloged repos (45+), flagged tools, and average safety score.
-   - **Hero Scanner Input**: Instant repository evaluator allowing visitors to paste any GitHub repository URL.
-   - **Featured Bento Row**: Highlighting top-rated software across primary categories.
-   - **The Flag Wall**: A transparency showcase of archived, risky, or caution-flagged tools to help users avoid compromised dependencies.
-2. **Tool Dossier Pages (`/tools/[slug]`)**:
-   - **Score Header**: Name, tagline, repository statistics (stars, license, release, activity), verdict badge, and animated circular score gauge.
-   - **AI Audit Report**: Prose evaluation analyzing codebase structure, maintainer health, and operational readiness.
-   - **Weighted Component Breakdown**: Visual breakdown of Security Health (35%), Maintenance (30%), Community (20%), and Releases (15%).
-   - **Risk Reason Callouts**: Explicit explanations of flags (e.g., stale releases, missing 2FA, bus factor risk).
-   - **Commercial-Use License Matrix**: Plain-English evaluation of license permissions (MIT/Apache: commercial permitted; GPL/AGPL: source-disclosure conditions).
-   - **Deployment Recipes**: Copy-paste commands across Docker, Docker Compose, npm, pip, go, or native binaries.
-   - **System Requirements & Audience**: Hardware footprint (RAM, CPU, disk) and "Perfect for" / "Skip if" guidance.
-   - **AI Agent Safety Signals**: For autonomous agents (Aider, OpenHands, AutoGPT, OpenClaw), displays permission models, sandboxing requirements, and historical vulnerability reports.
-   - **Direct Alternatives**: Recommends 3 top-scoring competitors in the same category.
-3. **Category Portals (`/categories/[slug]`)**:
-   - 13 categories (Self-Hosted Cloud, Password Managers, Media Servers, Developer Tools, Monitoring & Status, Home Automation, AI Coding Agents, Analytics, etc.).
-   - Unique, hand-written editorial introductions and full comparative tables sorted by Safety Score.
-4. **Head-to-Head Comparisons (`/alternatives/[a]-vs-[b]`)**:
-   - Direct comparison tables contrasting scores, star velocity, license flexibility, resource demands, and maintenance cadence between direct rivals (e.g., `immich-vs-photoprism`, `vaultwarden-vs-passbolt`).
-5. **Starter Kits (`/starter-kits`)**:
-   - Curated collections of open-source tools packaged for common real-world objectives: "First Home Server", "Private Cloud", "Local LLM Dev Rig".
-6. **Methodology (`/how-we-score`)**:
-   - Full mathematical derivation, data source documentation, scorecard normalization formulas, and audit frequency declarations.
-7. **Vector SVG Badges (`/badge/[owner]/[repo].svg`)**:
-   - Embeddable badges for README files dynamically reflecting real-time safety scores and verdict colors.
 
 ---
 
@@ -266,37 +236,89 @@ The platform includes a dedicated, restricted Control Plane engineered specifica
 5. **CSRF Protection on All Mutating Actions**:
    - Mutating requests initiated by human sessions require valid CSRF tokens passed via form parameters or `X-CSRF-Token` headers.
 6. **24-Hour Key Rotation Grace Window**:
-   - Rotating an API key archives the retired key in `data/settings.json` for exactly 24 hours, preventing abrupt downtime for external automated agents or cron jobs.
+   - Rotating an API key archives the retired key in SQLite settings for exactly 24 hours, preventing abrupt downtime for external automated agents or cron jobs.
 7. **Queue Gate**:
    - Community-submitted or scanner-enrolled tools land in the database as `unlisted: true`.
    - Unapproved tools return HTTP 404 on the public catalog until vetted and approved by an operator or authorized agent.
-8. **Accuracy Invariant & Regression Self-Test**:
-   - On every load, `/admin` runs an automated internal self-test against reference ground-truth repositories (`jellyfin/jellyfin`, `openclaw/openclaw`, `filebrowser/filebrowser`).
-   - If any core metric deviates, a prominent **Red Alert Banner** halts operations until mathematical calibration is restored.
-9. **Append-Only Audit Trail**:
-   - Every login attempt, metadata edit, queue approval, and rebuild trigger is logged with timestamp, principal, IP, and diffs to `data/audit.jsonl`.
+8. **Append-Only Audit Trail in SQLite**:
+   - Every login attempt, metadata edit, queue approval, and rebuild trigger is logged with timestamp, principal, IP, and diffs to the `audit_logs` table.
 
 ---
 
-## 7. Model Context Protocol (MCP) Integration
+## 7. Model Context Protocol (MCP) Remote Server (SSE & Stdio)
 
-The project includes a native MCP server (`scripts/mcp-server.js`) compliant with the Model Context Protocol standard. This enables LLM coding agents (e.g., Antigravity, Claude Desktop, Cursor) to manage the platform via standard JSON-RPC stdio.
+SafeOpenSource provides a dual-interface **Model Context Protocol (MCP)** implementation compliant with `@modelcontextprotocol/sdk` (v1.30+):
+1. **Local CLI Interface (`scripts/mcp-server.js`)**: Operates via standard I/O (`stdio`) for local coding environments like Cursor and Claude Desktop.
+2. **Remote Cloud Interface (`/api/mcp/sse` and `/api/mcp/messages`)**: Exposes Server-Sent Events (SSE) over HTTPS via `SSEServerTransport`, enabling remote autonomous agents to monitor and operate the platform securely.
 
-### Exposed MCP Tools (1:1 parity with Admin API)
-| MCP Tool Name | Arguments | Description |
-| :--- | :--- | :--- |
-| `sos_status` | *(none)* | Returns pipeline health, tool counts (listed/unlisted/flagged), last audit sweep, and queue status. |
-| `sos_rescan` | `repos?: string[]` | Triggers immediate OpenSSF Scorecard and GitHub telemetry sweep for one or all tools. |
-| `sos_add_tool` | `repo_url`, `category`, `name?` | Enrolls a new repository; places it in review queue as unlisted. |
-| `sos_edit_tool`| `repo`, `fields: object` | Updates human-authored fields (taglines, install commands). Tampering with scores returns HTTP 422. |
-| `sos_approve`  | `tool_id: string` | Promotes a tool from review queue to public catalog. |
-| `sos_reject`   | `tool_id: string`, `reason?` | Rejects and purges a pending submission. |
-| `sos_rebuild`  | *(none)* | Triggers static site rebuild and deployment via `deploy.sh`. |
-| `sos_audit`    | `limit?: number` | Queries recent chronological audit log entries. |
+```
+┌─────────────────┐       GET /api/mcp/sse (Bearer Auth)        ┌─────────────────────────┐
+│ Remote Agent    │ ──────────────────────────────────────────► │ /api/mcp/sse.ts         │
+│ (Claude, Codex) │ ◄────────────────────────────────────────── │ SSE Transport Bridge    │
+│                 │   event: endpoint (/api/mcp/messages?id)    └────────────┬────────────┘
+│                 │   : ping (15s reverse-proxy keepalive)                   │
+│                 │                                                          ▼
+│                 │       POST /api/mcp/messages (tools/call)   ┌─────────────────────────┐
+│                 │ ──────────────────────────────────────────► │ /api/mcp/messages.ts    │
+│                 │ ◄────────────────────────────────────────── │ - Bearer Auth Gate      │
+│                 │   HTTP 202 Accepted / SSE Tool Result       │ - Two-Tier Permissions  │
+└─────────────────┘                                             │ - HTTP 422 Invariant    │
+                                                                └─────────────────────────┘
+```
+
+### 7.1 Two-Tier Permission Model
+- **Read-Only Token (`ADMIN_API_KEY_READONLY`)**: Only registers and permits read commands: `sos_status`, `sos_audit`, and `sos_ping`. Any call to mutating tools returns **HTTP 403 Forbidden**.
+- **Full Key (`ADMIN_API_KEY`)**: Grants full execution access to mutating tools (`sos_rescan`, `sos_add_tool`, `sos_edit_tool`, `sos_approve`, `sos_reject`, `sos_rebuild`).
+
+### 7.2 HTTP 422 Score Tampering Defensive Invariant
+Any JSON-RPC call (`sos_edit_tool` or `sos_update_content`) attempting to overwrite pipeline-calculated scores (`safety_score`, `scorecard`, `components`, `verdict`) is rejected immediately with an **HTTP 422 Unprocessable Entity** response.
+
+### 7.3 Caddy & Reverse Proxy Keepalive Handling
+To prevent intermediate proxies (Caddy, Nginx, AWS ALB) from terminating idle SSE connections, the transport automatically injects SSE comments (`: ping - <timestamp>\n\n`) every 15 seconds along with `X-Accel-Buffering: no` response headers.
+
+### Exposed MCP Tools
+| MCP Tool Name | Permissions | Description |
+| :--- | :---: | :--- |
+| `sos_status` | Read & Admin | Returns pipeline health, tool counts (listed/unlisted/flagged), last audit sweep, and queue status. |
+| `sos_audit` | Read & Admin | Queries recent chronological audit log entries with optional limit. |
+| `sos_ping` | Read & Admin | Connectivity and latency verification across reverse proxies. |
+| `sos_rescan` | Admin Only | Triggers immediate OpenSSF Scorecard, OSV.dev, and EPSS telemetry sweep for one or all tools. |
+| `sos_add_tool` | Admin Only | Enrolls a new repository into continuous monitoring; places it in review queue as unlisted. |
+| `sos_edit_tool`| Admin Only | Updates human-authored fields (taglines, install commands). Score tampering is rejected with 422. |
+| `sos_approve` | Admin Only | Promotes a tool from review queue to public catalog. |
+| `sos_reject` | Admin Only | Rejects and purges a pending submission. |
+| `sos_rebuild` | Admin Only | Triggers static site rebuild and deployment via `deploy.sh`. |
 
 ---
 
-## 8. Verification & Test Harness Suite
+## 8. Standalone Zero-Dependency CLI (`@safeopensource/cli`)
+
+Located in [`packages/cli/`](packages/cli/), `@safeopensource/cli` is a standalone, zero-dependency Node.js CLI tool enabling developers and CI/CD pipelines to audit dependencies against SafeOpenSource security intelligence.
+
+### 8.1 Command Syntax & Options
+```bash
+$ safeopensource audit [options]
+```
+
+| Option | Flag | Default | Description |
+| :--- | :---: | :---: | :--- |
+| `--manifest <path>` | `-m` | Auto-detect | Path to `package.json`, `requirements.txt`, or `go.mod`. |
+| `--min-score <num>` | `-s` | `70` | Minimum acceptable Safety Score (0–100). |
+| `--fail-on <level>` | `-f` | `risky` | Failure trigger level (`caution`, `risky`, or `cve`). Exits with code 1. |
+| `--json` | | `false` | Emits machine-readable JSON for CI/CD integrations. |
+| `--api-url <url>` | | `https://safeopensource.org` | Custom SafeOpenSource API server endpoint. |
+| `--dev` | | `false` | Include development dependencies (for `package.json`). |
+
+### 8.2 Execution Lifecycle
+1. **Manifest Auto-Detection**: Inspects the working directory for `package.json` (npm), `requirements.txt` (PyPI), or `go.mod` (Go).
+2. **Batch Querying (`/api/scan/batch`)**: Sends a single optimized batch payload to SafeOpenSource for all primary dependencies.
+3. **On-Demand Scan Fallback**: For uncataloged packages, automatically triggers `/api/scan` and polls the queue until analysis is complete.
+4. **Visual ASCII Table**: Formats terminal output with ANSI colors, score gauges, verdicts, and license compliance indicators.
+5. **Remediation Guide**: On audit failure, prints violation reasons, observed risks, and recommends safer alternatives from `direct_alternatives` with exit code `1`.
+
+---
+
+## 9. Verification & Test Harness Suite
 
 The codebase includes an automated verification suite in `scripts/`:
 
@@ -311,29 +333,32 @@ The codebase includes an automated verification suite in `scripts/`:
 
 ---
 
-## 9. Operations, Scripts, & Deployment
+## 10. Operations, Scripts, & Deployment
 
-### 9.1 NPM Scripts Reference
+### 10.1 NPM Scripts Reference
 - `npm run dev`: Starts local Astro development server on `http://localhost:4321`.
 - `npm run build`: Compiles production static assets and SSR server bundles into `dist/`.
 - `npm run preview`: Launches standalone Node server (`scripts/preview.js`) serving both SSR endpoints and static assets.
 - `npm run check`: Runs `@astrojs/check` and TypeScript validation.
 
-### 9.2 Production Deployment (Linux VPS + Caddy)
+### 10.2 Production Deployment (Linux VPS + Caddy)
 The project compiles to `dist/` with a standalone Node entrypoint for dynamic routes. When deployed behind **Caddy Server**:
 - Caddy provides automatic Let's Encrypt TLS certificates, HTTP/3, and gzip/zstd compression.
+- Server-Sent Events (SSE) connections at `/api/mcp/sse` are passed through with immediate chunk flushing via `X-Accel-Buffering: no`.
 - Static assets (`/_astro/*`, `favicon.svg`) are cached with 1-year immutable headers.
-- HTML files are served with 10-minute revalidation caches.
 - Security headers (`HSTS`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy`) are enforced globally.
 
 ---
 
-## 10. Summary Checklist & Project Health
+## 11. Summary Checklist & Project Health
 
-- [x] **45 Cataloged Tools**: Fully typed JSON definitions with zero data hardcoded in UI components.
-- [x] **13 Curated Categories**: With hand-crafted editorial intros.
-- [x] **Mathematical Integrity**: 4-component weighted scoring engine with defensive overrides for critical vulnerabilities.
-- [x] **Hardened Control Plane**: Stealth 404, Argon2id + optional 2FA, CSRF protection, and audit logging.
-- [x] **Full MCP Integration**: Official stdio JSON-RPC interface for autonomous LLM agents.
-- [x] **Search Island**: Instant modal search with fuzzy typo-tolerance.
+- [x] **Embedded SQLite + Drizzle ORM**: Zero-lock database in WAL mode replacing static JSON files.
+- [x] **Vulnerability Intelligence**: OSV.dev package advisories and FIRST.org EPSS scores integrated with sliding-window rate limiters.
+- [x] **EPSS Risk Gate**: Mandatory defensive override for weaponized CVEs (EPSS > 0.60 forces Risky; EPSS $\in [0.20, 0.60]$ caps score at 60).
+- [x] **Remote MCP over SSE**: Server-Sent Events transport at `/api/mcp/sse` and `/api/mcp/messages` with two-tier permissions and 15s keepalive heartbeats.
+- [x] **Standalone Zero-Dependency CLI**: `@safeopensource/cli` in `packages/cli` auditing npm, PyPI, and Go manifests.
+- [x] **Dedicated Batch API**: `/api/scan/batch` resolving package dossiers and alternatives in a single round-trip.
+- [x] **45 Cataloged Tools**: Fully typed definitions in SQLite with zero hardcoded UI strings.
+- [x] **13 Curated Categories**: Hand-crafted editorial taxonomies.
+- [x] **Hardened Control Plane**: Stealth 404, Argon2id + optional 2FA, CSRF protection, and append-only SQLite audit log.
 - [x] **WCAG AA Compliance**: High-contrast dark data-forward aesthetic with multi-modal status indicators.
