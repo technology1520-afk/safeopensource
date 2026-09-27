@@ -52,6 +52,8 @@ export interface ToolRecord {
   provenance?: string | null;
   scanned_at_formatted?: string | null;
   advisories_source?: string | null;
+  epss_score?: number | null;
+  osv_advisories?: any[] | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -151,6 +153,8 @@ function entityToRecord(row: ToolEntity): ToolRecord {
     provenance: row.provenance,
     scanned_at_formatted: row.scanned_at_formatted,
     advisories_source: row.advisories_source,
+    epss_score: row.epss_score ?? undefined,
+    osv_advisories: row.osv_advisories ?? undefined,
     created_at: row.created_at,
     updated_at: row.updated_at,
   };

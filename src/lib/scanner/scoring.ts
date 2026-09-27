@@ -20,6 +20,8 @@ export interface ScoringInputs {
   advisoriesCount?: number;
   customComponents?: Partial<ScoreComponents>;
   date?: string | Date;
+  epssScore?: number | null;
+  osvAdvisoriesCount?: number;
 }
 
 export interface SafetyScoreResult {
@@ -31,6 +33,7 @@ export interface SafetyScoreResult {
   risk_reasons: string[];
   scanned_at_formatted: string;
   advisories_source: string;
+  epss_score?: number | null;
 }
 
 /**
@@ -117,6 +120,25 @@ export function compute_safety(inputs: ScoringInputs): SafetyScoreResult {
       }
     }
 
+    // Apply EPSS Risk Gate override even for reference fixture if high EPSS is detected
+    if (inputs.epssScore !== undefined && inputs.epssScore !== null) {
+      const epss = inputs.epssScore;
+      if (epss > 0.60) {
+        refVerdict = 'risky';
+        refRisks.unshift(
+          `CRITICAL EXPLOITATION PROBABILITY: EPSS score ${(epss * 100).toFixed(1)}% (>60%) indicates high likelihood of active real-world exploitation in the wild.`
+        );
+      } else if (epss >= 0.20) {
+        refScore = Math.min(refScore, 60.0);
+        if (refVerdict !== 'risky') {
+          refVerdict = 'caution';
+        }
+        refRisks.unshift(
+          `ELEVATED EXPLOIT THREAT: EPSS score ${(epss * 100).toFixed(1)}% indicates elevated exploitation risk. Safety Score capped at 60.`
+        );
+      }
+    }
+
     return {
       safety_score: refScore,
       verdict: refVerdict,
@@ -126,6 +148,7 @@ export function compute_safety(inputs: ScoringInputs): SafetyScoreResult {
       risk_reasons: refRisks,
       scanned_at_formatted: formattedTimestamp,
       advisories_source: advisoriesSource,
+      epss_score: inputs.epssScore ?? null,
     };
   }
 
@@ -138,14 +161,28 @@ export function compute_safety(inputs: ScoringInputs): SafetyScoreResult {
       releases: 34,
     };
 
-    // Redistributed calculation: (92 * 0.30 + 70 * 0.20 + 34 * 0.15) / 0.65 = 46.7 / 0.65 = 71.846... -> 71.8
-    const score = 71.8;
-    const verdict: 'healthy' | 'caution' | 'risky' = 'caution'; // Capped at caution due to unverified security
+    let score = 71.8;
+    let verdict: 'healthy' | 'caution' | 'risky' = 'caution'; // Capped at caution due to unverified security
 
     const riskReasons = [
       'No OpenSSF Scorecard available — security practices unverified.',
       'Active community repository with unverified CI branch protections and actions pinning.',
     ];
+
+    if (inputs.epssScore !== undefined && inputs.epssScore !== null) {
+      const epss = inputs.epssScore;
+      if (epss > 0.60) {
+        verdict = 'risky';
+        riskReasons.unshift(
+          `CRITICAL EXPLOITATION PROBABILITY: EPSS score ${(epss * 100).toFixed(1)}% (>60%) indicates high likelihood of active real-world exploitation in the wild.`
+        );
+      } else if (epss >= 0.20) {
+        score = Math.min(score, 60.0);
+        riskReasons.unshift(
+          `ELEVATED EXPLOIT THREAT: EPSS score ${(epss * 100).toFixed(1)}% indicates elevated exploitation risk. Safety Score capped at 60.`
+        );
+      }
+    }
 
     return {
       safety_score: score,
@@ -156,6 +193,7 @@ export function compute_safety(inputs: ScoringInputs): SafetyScoreResult {
       risk_reasons: riskReasons,
       scanned_at_formatted: formattedTimestamp,
       advisories_source: advisoriesSource,
+      epss_score: inputs.epssScore ?? null,
     };
   }
 
@@ -238,7 +276,7 @@ export function compute_safety(inputs: ScoringInputs): SafetyScoreResult {
     verdict = 'risky';
   }
 
-  // Risk reasons
+  // Risk reasons initialization
   const riskReasons: string[] = [];
   if (isArchived) {
     riskReasons.push('ARCHIVED — FLAGGED: Repository is marked as archived by maintainers. No active security patches or dependency updates.');
@@ -254,6 +292,35 @@ export function compute_safety(inputs: ScoringInputs): SafetyScoreResult {
   if (inputs.advisoriesCount && inputs.advisoriesCount > 0) {
     riskReasons.push(`${inputs.advisoriesCount} public security advisories reported in GitHub Advisory DB.`);
   }
+  if (inputs.osvAdvisoriesCount && inputs.osvAdvisoriesCount > 0) {
+    riskReasons.push(`${inputs.osvAdvisoriesCount} package-level vulnerabilities discovered via OSV.dev.`);
+  }
+
+  // ==========================================
+  // EPSS Risk Gate: Exploit Prediction Scoring System
+  // Invariant 1: EPSS > 0.60 (60% active exploitation probability) -> Mandatory 'risky' override
+  // Invariant 2: EPSS in [0.20, 0.60] -> Cap Safety Score at 60 and set 'caution' (unless already risky)
+  // ==========================================
+  if (inputs.epssScore !== undefined && inputs.epssScore !== null) {
+    const epss = inputs.epssScore;
+    if (epss > 0.60) {
+      verdict = 'risky';
+      riskReasons.unshift(
+        `CRITICAL EXPLOITATION PROBABILITY: EPSS score ${(epss * 100).toFixed(1)}% (>60%) indicates high likelihood of active real-world exploitation in the wild.`
+      );
+    } else if (epss >= 0.20) {
+      if (safetyScore > 60) {
+        safetyScore = 60.0;
+      }
+      if (verdict !== 'risky') {
+        verdict = 'caution';
+      }
+      riskReasons.unshift(
+        `ELEVATED EXPLOIT THREAT: EPSS score ${(epss * 100).toFixed(1)}% indicates elevated exploitation risk. Safety Score capped at 60.`
+      );
+    }
+  }
+
   if (riskReasons.length === 0) {
     riskReasons.push('Active developer activity and positive OpenSSF Scorecard evaluation.');
   }
@@ -269,5 +336,6 @@ export function compute_safety(inputs: ScoringInputs): SafetyScoreResult {
     risk_reasons: riskReasons,
     scanned_at_formatted: formattedTimestamp,
     advisories_source: advisoriesSource,
+    epss_score: inputs.epssScore ?? null,
   };
 }

@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { getTool } from '../admin/tools-service';
-import type { ToolData, ToolCve } from '../../types/tool';
+import type { ToolData, ToolCve, OsvAdvisory } from '../../types/tool';
 import {
   compute_safety,
   formatAdvisorySource,
@@ -55,6 +55,228 @@ export interface NormalizedRepo {
   slug: string;
 }
 
+/**
+ * High-performance sliding-window rate limiter for external vulnerability APIs
+ */
+export class SlidingWindowLimiter {
+  private timestamps: number[] = [];
+  private maxRequests: number;
+  private windowMs: number;
+
+  constructor(maxRequests: number, windowMs: number) {
+    this.maxRequests = maxRequests;
+    this.windowMs = windowMs;
+  }
+
+  async acquire(): Promise<boolean> {
+    const now = Date.now();
+    this.timestamps = this.timestamps.filter((t) => now - t < this.windowMs);
+    if (this.timestamps.length >= this.maxRequests) {
+      const oldest = this.timestamps[0];
+      const waitTime = Math.min(1000, Math.max(50, this.windowMs - (now - oldest)));
+      await new Promise((resolve) => setTimeout(resolve, waitTime));
+      return this.acquire();
+    }
+    this.timestamps.push(Date.now());
+    return true;
+  }
+}
+
+// In-memory sliding window rate limiters (OSV: 15 req/2s, EPSS: 10 req/2s)
+const osvLimiter = new SlidingWindowLimiter(15, 2000);
+const epssLimiter = new SlidingWindowLimiter(10, 2000);
+
+/**
+ * Fetch package-level and commit-level vulnerabilities from OSV.dev
+ * Querying by git commit hash or release tag across npm, PyPI, crates.io, and Go modules.
+ */
+export async function fetchOsvVulnerabilities(options: {
+  commit?: string;
+  tag?: string;
+  repo?: string;
+  name?: string;
+}): Promise<{ osvAdvisories: OsvAdvisory[]; cveIds: string[] }> {
+  const osvAdvisories: OsvAdvisory[] = [];
+  const cveSet = new Set<string>();
+
+  const processVuln = (v: any) => {
+    if (!v || !v.id) return;
+
+    const idUpper = String(v.id).toUpperCase();
+    if (idUpper.startsWith('CVE-')) {
+      cveSet.add(idUpper);
+    }
+
+    if (Array.isArray(v.aliases)) {
+      for (const alias of v.aliases) {
+        const aliasUpper = String(alias).toUpperCase();
+        if (aliasUpper.startsWith('CVE-')) {
+          cveSet.add(aliasUpper);
+        }
+      }
+    }
+
+    let severity = 'MODERATE';
+    if (v.database_specific?.severity) {
+      severity = String(v.database_specific.severity).toUpperCase();
+    } else if (Array.isArray(v.severity) && v.severity.length > 0) {
+      severity = String(v.severity[0].score || v.severity[0].type || 'MODERATE').toUpperCase();
+    }
+
+    let fixedIn: string | undefined = undefined;
+    if (Array.isArray(v.affected)) {
+      for (const aff of v.affected) {
+        if (Array.isArray(aff.ranges)) {
+          for (const rng of aff.ranges) {
+            if (Array.isArray(rng.events)) {
+              for (const ev of rng.events) {
+                if (ev.fixed) {
+                  fixedIn = String(ev.fixed);
+                  break;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    osvAdvisories.push({
+      id: v.id,
+      summary: v.summary || (v.details ? v.details.slice(0, 140) : 'Vulnerability reported in upstream dependency'),
+      severity,
+      fixed_in: fixedIn,
+    });
+  };
+
+  try {
+    // 1. Query OSV by commit SHA (if available)
+    if (options.commit && /^[0-9a-f]{40}$/i.test(options.commit)) {
+      await osvLimiter.acquire();
+      const commitRes = await fetch('https://api.osv.dev/v1/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ commit: options.commit }),
+        signal: AbortSignal.timeout(4000), // Max 4 seconds timeout
+      });
+
+      if (commitRes.ok) {
+        const data = await commitRes.json();
+        if (Array.isArray(data.vulns)) {
+          for (const vuln of data.vulns) {
+            processVuln(vuln);
+          }
+        }
+      }
+    }
+
+    // 2. Query OSV by package across ecosystem registries (npm, PyPI, crates.io, Go)
+    const pkgName = options.name || options.repo?.split('/').pop() || '';
+    if (pkgName && options.tag) {
+      const cleanVer = options.tag.replace(/^v/i, '');
+      const ecosystems = ['npm', 'PyPI', 'crates.io', 'Go'];
+
+      for (const ecosystem of ecosystems) {
+        if (osvAdvisories.length >= 10) break; // Circuit break if sufficient advisories found
+
+        await osvLimiter.acquire();
+        const pkgRes = await fetch('https://api.osv.dev/v1/query', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            package: { name: pkgName, ecosystem },
+            version: cleanVer,
+          }),
+          signal: AbortSignal.timeout(4000), // Max 4 seconds timeout
+        });
+
+        if (pkgRes.ok) {
+          const pkgData = await pkgRes.json();
+          if (Array.isArray(pkgData.vulns)) {
+            for (const vuln of pkgData.vulns) {
+              processVuln(vuln);
+            }
+          }
+        }
+      }
+    }
+  } catch {
+    // Fallback gracefully on timeout or network degradation
+  }
+
+  // Deduplicate advisories by ID
+  const uniqueAdvisories: OsvAdvisory[] = [];
+  const seenIds = new Set<string>();
+  for (const adv of osvAdvisories) {
+    if (!seenIds.has(adv.id)) {
+      seenIds.add(adv.id);
+      uniqueAdvisories.push(adv);
+    }
+  }
+
+  return {
+    osvAdvisories: uniqueAdvisories.slice(0, 15),
+    cveIds: Array.from(cveSet),
+  };
+}
+
+/**
+ * Fetch Exploit Prediction Scoring System (EPSS) metrics from the FIRST.org API
+ */
+export async function fetchEpssScores(cveIds: string[]): Promise<{
+  maxEpss: number;
+  scoresByCve: Record<string, number>;
+}> {
+  if (!cveIds || cveIds.length === 0) {
+    return { maxEpss: 0, scoresByCve: {} };
+  }
+
+  const scoresByCve: Record<string, number> = {};
+  let maxEpss = 0;
+
+  // Filter valid CVE format and deduplicate (cap at 25 to respect URL limits)
+  const cleanCves = Array.from(new Set(cveIds))
+    .filter((id) => /^CVE-\d{4}-\d+/i.test(id))
+    .slice(0, 25);
+
+  if (cleanCves.length === 0) {
+    return { maxEpss: 0, scoresByCve: {} };
+  }
+
+  try {
+    await epssLimiter.acquire();
+    const url = `https://api.first.org/data/v1/epss?cve=${cleanCves.join(',')}`;
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'SafeOpenSource-Scanner/1.0' },
+      signal: AbortSignal.timeout(4000), // Max 4 seconds timeout
+    });
+
+    if (res.ok) {
+      const json = await res.json();
+      if (Array.isArray(json.data)) {
+        for (const item of json.data) {
+          if (item && item.cve && item.epss) {
+            const score = parseFloat(item.epss);
+            if (!isNaN(score)) {
+              scoresByCve[item.cve.toUpperCase()] = score;
+              if (score > maxEpss) {
+                maxEpss = score;
+              }
+            }
+          }
+        }
+      }
+    }
+  } catch {
+    // Gracefully handle timeout or API failure without failing scan
+  }
+
+  return {
+    maxEpss: Number(maxEpss.toFixed(5)),
+    scoresByCve,
+  };
+}
+
 export function ensureScansDir() {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
   if (!fs.existsSync(SCANS_DIR)) fs.mkdirSync(SCANS_DIR, { recursive: true });
@@ -69,19 +291,15 @@ export function normalizeGitHubUrl(input: string): { normalized?: NormalizedRepo
   }
 
   let cleaned = input.trim();
-  // Strip trailing slashes, whitespace, and git extension
   cleaned = cleaned.replace(/\.git$/, '').replace(/\/+$/, '');
 
-  // Extract owner and repo
   let match = cleaned.match(/^(?:https?:\/\/)?(?:www\.)?github\.com\/([a-zA-Z0-9_.-]+)\/([a-zA-Z0-9_.-]+)(?:\/.*)?$/i);
 
   if (!match) {
-    // Try raw owner/repo
     match = cleaned.match(/^([a-zA-Z0-9_.-]+)\/([a-zA-Z0-9_.-]+)$/);
   }
 
   if (!match) {
-    // If it's a different domain like gitlab or google
     return {
       error: 'Only public GitHub repositories are supported for now (e.g., github.com/owner/repo).',
     };
@@ -113,7 +331,6 @@ export function normalizeGitHubUrl(input: string): { normalized?: NormalizedRepo
  * Check if the repo was scanned in the last 7 days (catalog or scan store)
  */
 export function checkRecentScan(fullRepo: string, slug: string): { tool?: ToolData; daysAgo?: number } {
-  // Check catalog
   const catalogTool = getTool(slug) || getTool(fullRepo);
   if (catalogTool) {
     const scannedAt = catalogTool.scanned_at;
@@ -128,7 +345,6 @@ export function checkRecentScan(fullRepo: string, slug: string): { tool?: ToolDa
     }
   }
 
-  // Check scans store
   ensureScansDir();
   const scanPath = path.join(SCANS_DIR, `${slug}.json`);
   if (fs.existsSync(scanPath)) {
@@ -159,7 +375,6 @@ export function getRecentPublicScans(limit = 5): ToolData[] {
   ensureScansDir();
   const recent: ToolData[] = [];
 
-  // Read stored recent scans list if available
   if (fs.existsSync(RECENT_SCANS_FILE)) {
     try {
       const list: ToolData[] = JSON.parse(fs.readFileSync(RECENT_SCANS_FILE, 'utf-8'));
@@ -171,7 +386,6 @@ export function getRecentPublicScans(limit = 5): ToolData[] {
     }
   }
 
-  // Fallback to latest catalog tools as baseline seed
   const fallbackSlugs = ['jellyfin', 'vaultwarden', 'uptime-kuma', 'immich', 'home-assistant'];
   for (const s of fallbackSlugs) {
     const t = getTool(s);
@@ -222,7 +436,7 @@ export function createScanJob(normalized: NormalizedRepo, url: string): ScanJob 
     {
       id: 3,
       key: 'advisories_license',
-      label: '[3/5] Checking advisories & license',
+      label: '[3/5] Ingesting OSV.dev & FIRST.org EPSS metrics',
       status: 'pending',
     },
     {
@@ -268,7 +482,7 @@ export function saveScanJob(job: ScanJob) {
 }
 
 /**
- * Execute real pipeline step-by-step
+ * Execute real pipeline step-by-step with OSV.dev and FIRST.org EPSS ingestion
  */
 export async function executeScanPipeline(job: ScanJob, onProgress?: (job: ScanJob) => void): Promise<ToolData> {
   job.status = 'running';
@@ -283,7 +497,6 @@ export async function executeScanPipeline(job: ScanJob, onProgress?: (job: ScanJ
     ...(token ? { Authorization: `token ${token}` } : {}),
   };
 
-  // Helper for stage timing
   const startStage = (idx: number) => {
     job.currentStageIndex = idx;
     const stage = job.stages[idx];
@@ -321,6 +534,7 @@ export async function executeScanPipeline(job: ScanJob, onProgress?: (job: ScanJ
   let ghData: any = {};
   let scorecardData: any = {};
   let advisoriesData: any[] = [];
+  let latestCommitSha: string | undefined = undefined;
 
   // ==========================================
   // STAGE 1: Fetching repository metadata
@@ -353,6 +567,22 @@ export async function executeScanPipeline(job: ScanJob, onProgress?: (job: ScanJ
       license: ghData.license?.spdx_id || 'NOASSERTION',
       language: ghData.language || 'Codebase',
     };
+
+    // Attempt to resolve latest commit SHA on default branch for OSV commit queries
+    try {
+      const branch = ghData.default_branch || 'main';
+      const commitRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/commits/${branch}`, {
+        headers: ghHeaders,
+        signal: AbortSignal.timeout(4000),
+      });
+      if (commitRes.ok) {
+        const commitData = await commitRes.json();
+        latestCommitSha = commitData.sha;
+      }
+    } catch {
+      // Non-fatal
+    }
+
     completeStage(0, `${job.partialData.stars?.toLocaleString()} stars • ${job.partialData.license}`);
   } catch (err: any) {
     if (job.stages[0].status !== 'failed') {
@@ -380,10 +610,6 @@ export async function executeScanPipeline(job: ScanJob, onProgress?: (job: ScanJ
         scorecardScore = null;
         completeStage(1, 'No OpenSSF Scorecard available — security practices unverified');
       }
-    } else if (scRes.status === 404) {
-      scorecardData = null;
-      scorecardScore = null;
-      completeStage(1, 'No OpenSSF Scorecard available — security practices unverified');
     } else {
       scorecardData = null;
       scorecardScore = null;
@@ -396,26 +622,63 @@ export async function executeScanPipeline(job: ScanJob, onProgress?: (job: ScanJ
   }
 
   // ==========================================
-  // STAGE 3: Checking advisories & license
+  // STAGE 3: Ingesting OSV.dev & FIRST.org EPSS metrics
   // ==========================================
   startStage(2);
   const scanDate = new Date();
   const advSource = formatAdvisorySource(scanDate);
+  let osvData: OsvAdvisory[] = [];
+  let epssScore: number = 0;
+  const discoveredCves = new Set<string>();
+
+  // 1. Ingest GitHub Advisories
   try {
     const advRes = await fetch(`https://api.github.com/advisories?affects=${owner}/${repo}`, {
       headers: ghHeaders,
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(4000),
     });
 
     if (advRes.ok) {
       const data = await advRes.json();
       advisoriesData = Array.isArray(data) ? data : [];
+      for (const adv of advisoriesData) {
+        if (adv.cve_id) {
+          discoveredCves.add(String(adv.cve_id).toUpperCase());
+        }
+      }
     }
-    completeStage(2, `${advisoriesData.length} active advisories • Source: ${advSource}`);
   } catch {
     advisoriesData = [];
-    completeStage(2, `0 active advisories • Source: ${advSource}`);
   }
+
+  // 2. Ingest OSV.dev package & commit vulnerabilities
+  try {
+    const osvRes = await fetchOsvVulnerabilities({
+      commit: latestCommitSha,
+      tag: ghData.default_branch || 'v1.0.0',
+      repo: fullRepo,
+      name: ghData.name || repo,
+    });
+    osvData = osvRes.osvAdvisories;
+    for (const cve of osvRes.cveIds) {
+      discoveredCves.add(cve.toUpperCase());
+    }
+  } catch {
+    osvData = [];
+  }
+
+  // 3. Query Exploit Prediction Scoring System (EPSS) for all discovered CVEs
+  try {
+    if (discoveredCves.size > 0) {
+      const epssRes = await fetchEpssScores(Array.from(discoveredCves));
+      epssScore = epssRes.maxEpss;
+    }
+  } catch {
+    epssScore = 0;
+  }
+
+  const epssDisplay = epssScore > 0 ? ` • Peak EPSS: ${(epssScore * 100).toFixed(1)}%` : '';
+  completeStage(2, `${advisoriesData.length} GHSA • ${osvData.length} OSV${epssDisplay} • Source: ${advSource}`);
 
   // ==========================================
   // STAGE 4: Computing Safety Score
@@ -425,7 +688,7 @@ export async function executeScanPipeline(job: ScanJob, onProgress?: (job: ScanJ
   const pushedDate = ghData.pushed_at ? new Date(ghData.pushed_at) : new Date();
   const lastPushDays = Math.max(0, Math.floor((Date.now() - pushedDate.getTime()) / (24 * 3600 * 1000)));
 
-  // Call the single canonical scoring engine
+  // Call the single canonical scoring engine with integrated EPSS & OSV parameters
   const scoringResult = compute_safety({
     repo: fullRepo,
     slug,
@@ -436,6 +699,8 @@ export async function executeScanPipeline(job: ScanJob, onProgress?: (job: ScanJ
     hasWiki: Boolean(ghData.has_wiki),
     hasIssues: Boolean(ghData.has_issues),
     advisoriesCount: advisoriesData.length,
+    osvAdvisoriesCount: osvData.length,
+    epssScore,
     date: scanDate,
   });
 
@@ -508,6 +773,8 @@ export async function executeScanPipeline(job: ScanJob, onProgress?: (job: ScanJ
     scanned_at: nowIso,
     cves: cves.length > 0 ? cves : undefined,
     unlisted: true,
+    epss_score: epssScore,
+    osv_advisories: osvData.length > 0 ? osvData : undefined,
   };
 
   // Persist to data/scans

@@ -54,6 +54,8 @@ export const tools = sqliteTable('tools', {
   provenance: text('provenance'),
   scanned_at_formatted: text('scanned_at_formatted'),
   advisories_source: text('advisories_source'),
+  epss_score: real('epss_score'),
+  osv_advisories: text('osv_advisories', { mode: 'json' }).$type<any[]>(),
   created_at: text('created_at').notNull(),
   updated_at: text('updated_at').notNull(),
 });

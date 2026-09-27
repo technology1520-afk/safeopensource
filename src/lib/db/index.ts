@@ -64,6 +64,8 @@ export function initDb() {
       provenance TEXT,
       scanned_at_formatted TEXT,
       advisories_source TEXT,
+      epss_score REAL,
+      osv_advisories TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
@@ -98,6 +100,9 @@ export function initDb() {
     CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action);
     CREATE INDEX IF NOT EXISTS idx_scan_jobs_status ON scan_jobs(status);
   `);
+
+  try { sqlite.exec("ALTER TABLE tools ADD COLUMN epss_score REAL;"); } catch {}
+  try { sqlite.exec("ALTER TABLE tools ADD COLUMN osv_advisories TEXT;"); } catch {}
 }
 
 // Guarantee tables exist upon module import

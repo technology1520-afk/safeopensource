@@ -42,6 +42,8 @@ function entityToToolData(row: ToolEntity): ToolData {
     provenance: row.provenance ?? undefined,
     scanned_at_formatted: row.scanned_at_formatted ?? undefined,
     advisories_source: row.advisories_source ?? undefined,
+    epss_score: row.epss_score ?? undefined,
+    osv_advisories: row.osv_advisories ?? undefined,
   };
 }
 

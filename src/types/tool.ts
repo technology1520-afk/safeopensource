@@ -120,6 +120,16 @@ export interface ToolData {
   archived?: boolean;
   advisories_count?: number;
   who_for?: any;
+  // Vulnerability Intelligence (OSV.dev & FIRST.org EPSS)
+  epss_score?: number;
+  osv_advisories?: Array<{ id: string; summary: string; severity: string; fixed_in?: string }>;
+}
+
+export interface OsvAdvisory {
+  id: string;
+  summary: string;
+  severity: string;
+  fixed_in?: string;
 }
 
 export interface CategoryData {
