@@ -869,3 +869,12 @@ button[type="submit"]:active,
 .text-risky {
   color: var(--risky) !important;
 }
+
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

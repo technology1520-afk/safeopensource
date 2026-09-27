@@ -8,27 +8,27 @@ const isHome = pathname === '/';
 ---
 
 <header class="sticky top-0 z-40 w-full border-b border-app-border bg-app-bg/95 backdrop-blur-md pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
-  <div class="w-full max-w-7xl 2xl:max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 h-16 flex items-center justify-between gap-3 sm:gap-6">
+  <div class="w-full max-w-7xl 2xl:max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 h-16 flex items-center justify-between gap-2 sm:gap-6">
     <!-- Zone 1: Brand Logo, Mobile Status LED & Desktop Breadcrumbs -->
-    <div class="flex items-center gap-2.5 sm:gap-3 shrink-0">
-      <a href="/" class="flex items-center gap-2.5 text-app-text hover:text-app-accent shrink-0 group min-h-[44px]">
+    <div class="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0">
+      <a href="/" class="flex items-center gap-2 text-app-text hover:text-app-accent shrink-0 group min-h-[44px]">
         <div class="w-8 h-8 rounded-lg bg-blue-600/10 border border-blue-500/30 flex items-center justify-center text-blue-400 group-hover:border-blue-500/60 transition-colors shrink-0">
           <svg class="w-4 h-4 stroke-current" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
           </svg>
         </div>
-        <div class="flex flex-col">
-          <span class="font-bold text-sm sm:text-base tracking-tight leading-none">
+        <div class="flex flex-col min-w-0">
+          <span class="font-bold text-sm sm:text-base tracking-tight leading-none truncate">
             SafeOpenSource<span class="text-blue-500">.org</span>
           </span>
-          <span class="text-[10px] font-mono text-app-subtle leading-none mt-1 hidden min-[360px]:block">
+          <span class="text-[10px] font-mono text-app-subtle leading-none mt-1 hidden sm:block truncate">
             Open-source Safety Scores
           </span>
         </div>
       </a>
 
-      <!-- Compact Active Status Badge (Visible on all devices, touch friendly) -->
-      <div class="flex items-center gap-1.5 px-2 py-0.5 rounded-full border border-emerald-500/30 bg-emerald-950/20 text-emerald-400 font-mono text-[10px] font-semibold shrink-0">
+      <!-- Compact Active Status Badge (Small pulsing dot on < sm, full text badge on >= sm) -->
+      <div class="flex items-center gap-1.5 p-1.5 sm:px-2 sm:py-0.5 rounded-full border border-emerald-500/30 bg-emerald-950/20 text-emerald-400 font-mono text-[10px] font-semibold shrink-0" title="SOC Active (Continuous Telemetry)">
         <span class="relative flex h-2 w-2 shrink-0">
           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
           <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
@@ -57,14 +57,14 @@ const isHome = pathname === '/';
       </div>
     </div>
 
-    <!-- Zone 3: Navigation Links, Mobile Search Trigger, Scan Repo CTA & Theme Toggle -->
+    <!-- Zone 3: Navigation Links, Search, Scan Repo CTA & Theme Toggle -->
     <nav class="flex items-center justify-end gap-1.5 sm:gap-3 text-xs font-medium text-app-muted shrink-0">
-      <!-- Mobile Search Icon Trigger (Minimum 44x44px Touch Target) -->
+      <!-- MOBILE (< 640px): Compact Search Icon Button (min 44x44px touch target) -->
       <button
         type="button"
         id="mobile-search-trigger"
-        class="md:hidden flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg border border-app-border bg-app-surface hover:bg-app-surface-hover text-app-muted hover:text-app-text transition-colors cursor-pointer"
-        aria-label="Open search dialog"
+        class="sm:hidden flex items-center justify-center min-w-[44px] min-h-[44px] p-2 rounded-lg bg-[#1A1D24] border border-[#23262E] text-app-muted hover:text-app-text transition-colors cursor-pointer"
+        aria-label="Open search dialog (Cmd+K)"
         title="Search catalog"
       >
         <svg class="w-4 h-4 text-app-muted hover:text-blue-400 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -73,6 +73,19 @@ const isHome = pathname === '/';
         </svg>
       </button>
 
+      <!-- MOBILE (< 640px): Compact Scan Repo Button (min 44x44px touch target) -->
+      <a
+        href="/scan"
+        class="sm:hidden flex items-center justify-center min-w-[44px] min-h-[44px] p-2 rounded-lg bg-[#1A1D24] border border-[#23262E] text-blue-400 hover:text-blue-300 transition-colors cursor-pointer"
+        aria-label="Scan repository"
+        title="Scan Any Repository"
+      >
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        </svg>
+      </a>
+
+      <!-- DESKTOP (>= 640px): Quick Nav Links -->
       <a href="/starter-kits" class="hover:text-app-text px-2.5 py-1.5 rounded-md hover:bg-app-surface transition-colors hidden sm:inline-block">
         Starter Kits
       </a>
@@ -81,13 +94,13 @@ const isHome = pathname === '/';
         Methodology
       </a>
 
-      <!-- Unmistakable "Scan Repo" Solid CTA Button + Dropdown Caret Menu -->
-      <div class="relative inline-flex items-center" id="scan-repo-cta-group">
+      <!-- DESKTOP (>= 640px): Full "Scan Repo" CTA Button + Dropdown Caret Menu -->
+      <div class="relative hidden sm:inline-flex items-center" id="scan-repo-cta-group">
         <div class="inline-flex items-stretch rounded-lg shadow-xs">
           <a
             href="/scan"
             id="scan-repo-primary-btn"
-            class="scan-repo-cta-btn inline-flex items-center gap-1.5 px-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-l-lg font-mono font-semibold text-xs cursor-pointer select-none"
+            class="scan-repo-cta-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-l-lg font-mono font-semibold text-xs cursor-pointer select-none"
           >
             <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -101,7 +114,7 @@ const isHome = pathname === '/';
             aria-haspopup="menu"
             aria-expanded="false"
             aria-controls="scan-repo-dropdown-menu"
-            class="scan-repo-cta-caret inline-flex items-center justify-center min-w-[36px] sm:min-w-0 min-h-[44px] sm:min-h-0 px-2 py-2 sm:py-1.5 rounded-r-lg border-l border-white/25 cursor-pointer select-none"
+            class="scan-repo-cta-caret inline-flex items-center justify-center px-2 py-1.5 rounded-r-lg border-l border-white/25 cursor-pointer select-none"
           >
             <svg class="w-3.5 h-3.5 transition-transform duration-150" id="scan-repo-caret-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="6 9 12 15 18 9" />
@@ -136,7 +149,7 @@ const isHome = pathname === '/';
         </div>
       </div>
 
-      <!-- Dual Personality Theme Toggle (Lavender Lab <-> Cosmic Void, Min 44x44px touch target) -->
+      <!-- Theme Toggle (Min 44x44px touch target on all devices) -->
       <button
         type="button"
         id="theme-toggle"
