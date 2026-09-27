@@ -36,6 +36,27 @@ const categoriesWithStats = categories.map((cat) => {
   title="SafeOpenSource — Live Open-Source Security Operations Console"
   description="Continuous security scans for open-source tools with objective 0–100 Safety Scores. We watch repositories so you don't get burned."
 >
+  <!-- Mobile Sticky Category Pill Navigation (< md) -->
+  <nav
+    class="flex md:hidden overflow-x-auto no-scrollbar gap-2 py-2 px-4 -mx-4 -mt-6 mb-6 sticky top-14 sm:top-16 z-30 bg-[#0A0B0E]/90 backdrop-blur-md border-b border-[#23262E] items-center"
+    aria-label="Quick Category Filter Navigation"
+  >
+    <a
+      href="#categories"
+      class="shrink-0 whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-mono font-semibold bg-blue-600 text-white shadow-xs"
+    >
+      All Sectors
+    </a>
+    {categories.map((cat) => (
+      <a
+        href={`/categories/${cat.slug}`}
+        class="shrink-0 whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-mono font-medium text-app-muted hover:text-app-text bg-[#131519] border border-[#23262E] hover:border-app-border-hover transition-colors"
+      >
+        {cat.name}
+      </a>
+    ))}
+  </nav>
+
   <!-- Hero Section: Security Ops Center Console -->
   <section class="py-8 sm:py-12 lg:py-16 text-center">
     <!-- Headline and Core Mission Statement -->

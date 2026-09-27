@@ -29,6 +29,34 @@ const avgScore = tools.length > 0
   title={`Best Open Source ${category.name} Tools — Safety Scores & Audits | SafeOpenSource`}
   description={`Comprehensive directory of the best open-source ${category.name.toLowerCase()} software. Evaluated with independent 0-100 Safety Scores, supply-chain checks, and license permissions.`}
 >
+  <!-- Mobile Sticky Category Pill Navigation (< md) -->
+  <nav
+    class="flex md:hidden overflow-x-auto no-scrollbar gap-2 py-2 px-4 -mx-4 -mt-6 mb-6 sticky top-14 sm:top-16 z-30 bg-[#0A0B0E]/90 backdrop-blur-md border-b border-[#23262E] items-center"
+    aria-label="Quick Category Filter Navigation"
+  >
+    <a
+      href="/#categories"
+      class="shrink-0 whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-mono font-medium text-app-muted hover:text-app-text bg-[#131519] border border-[#23262E] hover:border-app-border-hover transition-colors"
+    >
+      All Sectors
+    </a>
+    {categories.map((cat) => {
+      const isActive = cat.slug === category.slug;
+      return (
+        <a
+          href={`/categories/${cat.slug}`}
+          class={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-colors ${
+            isActive
+              ? 'bg-blue-600 text-white font-semibold shadow-xs'
+              : 'text-app-muted hover:text-app-text bg-[#131519] border border-[#23262E] hover:border-app-border-hover'
+          }`}
+        >
+          {cat.name}
+        </a>
+      );
+    })}
+  </nav>
+
   <!-- Breadcrumbs -->
   <nav class="flex items-center gap-2 text-xs font-mono text-app-subtle mb-6" aria-label="Breadcrumb">
     <a href="/" class="hover:text-app-text">Home</a>
@@ -126,7 +154,7 @@ const avgScore = tools.length > 0
       </span>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div class="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-3 gap-0 md:gap-4 rounded-xl md:rounded-none overflow-hidden md:overflow-visible border border-[#23262E] md:border-0 divide-y md:divide-y-0 divide-[#23262E]">
       {tools.map((tool) => (
         <ToolCard tool={tool} />
       ))}

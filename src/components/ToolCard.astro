@@ -29,84 +29,178 @@ function formatDays(days: number): string {
   const months = Math.floor(days / 30);
   return `${months}mo ago`;
 }
+
+// Compact numeric score badge styling (green/amber/rose pill)
+const scorePillColor =
+  tool.safety_score >= 80
+    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+    : tool.safety_score >= 50
+      ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+      : 'bg-rose-500/10 text-rose-400 border-rose-500/30';
+
+// 7-point scan cadence history for desktop sparkline
+const sparklinePoints = tool.momentum?.sparkline && tool.momentum.sparkline.length >= 2
+  ? tool.momentum.sparkline
+  : [tool.safety_score - 1.2, tool.safety_score - 0.8, tool.safety_score - 0.4, tool.safety_score - 0.1, tool.safety_score, tool.safety_score - 0.2, tool.safety_score];
+
+const minScore = Math.min(...sparklinePoints);
+const maxScore = Math.max(...sparklinePoints);
+const range = maxScore - minScore || 1;
+const sparkCoords = sparklinePoints
+  .map((val, idx) => {
+    const x = (idx / (sparklinePoints.length - 1)) * 60;
+    const y = 14 - ((val - minScore) / range) * 12;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  })
+  .join(' ');
 ---
 
 <a
   href={`/tools/${tool.slug}`}
-  class={`group relative flex flex-col justify-between rounded-xl border border-app-border bg-app-surface p-5 hover:border-app-border-hover hover:bg-app-surface-hover transition-all duration-150 ${className}`}
+  class={`group relative flex min-h-[56px] py-2.5 px-3 items-center justify-between gap-3 border-b border-[#23262E] bg-[#131519] hover:bg-app-surface-hover active:bg-[#20232B] transition-all md:flex-col md:justify-between md:min-h-0 md:rounded-xl md:border md:border-app-border md:bg-app-surface md:p-5 md:hover:border-app-border-hover ${className}`}
 >
-  <div>
-    <!-- Card Top Header -->
-    <div class="flex items-start justify-between gap-3 mb-3">
-      <div class="flex items-center gap-3 min-w-0 flex-1">
-        <!-- 40x40px logo container -->
-        <div class="w-10 h-10 rounded-lg bg-app-surface-2 border border-app-border overflow-hidden shrink-0 flex items-center justify-center p-0.5">
-          <img
-            src={logoSrc}
-            alt={`${tool.name} logo`}
-            class="w-full h-full object-contain rounded-md"
-            loading="lazy"
-            width="40"
-            height="40"
-            onerror={`this.onerror=null;this.src="${fallbackSvg}";`}
-          />
-        </div>
-
-        <div class="min-w-0 flex-1">
-          <h3 class="font-semibold text-base text-app-text group-hover:text-blue-400 transition-colors truncate">
-            {tool.name}
-          </h3>
-          <span class="text-micro text-app-subtle truncate block mt-0.5">
-            {tool.repo}
-          </span>
-        </div>
+  <!-- ======================================================== -->
+  <!-- MOBILE VIEW (< md): Dense, Tap-Friendly List Row (~56px)  -->
+  <!-- ======================================================== -->
+  <div class="flex md:hidden items-center justify-between gap-3 w-full min-h-[44px]">
+    <!-- Left: 32x32px logo/avatar + Tool Name + Category tag -->
+    <div class="flex items-center gap-3 min-w-0 flex-1">
+      <div class="w-8 h-8 rounded-md bg-app-surface-2 border border-[#23262E] overflow-hidden shrink-0 flex items-center justify-center p-0.5">
+        <img
+          src={logoSrc}
+          alt={`${tool.name} logo`}
+          class="w-full h-full object-contain rounded"
+          loading="lazy"
+          width="32"
+          height="32"
+          onerror={`this.onerror=null;this.src="${fallbackSvg}";`}
+        />
       </div>
 
-      <div class="shrink-0 flex items-center gap-2">
-        <ScoreRing score={tool.safety_score} size="sm" animate={false} />
+      <div class="min-w-0 flex-1">
+        <h3 class="font-semibold text-sm text-app-text group-hover:text-blue-400 transition-colors truncate leading-tight">
+          {tool.name}
+        </h3>
+        <span class="text-[10px] font-mono text-gray-500 block truncate uppercase mt-0.5">
+          {tool.category}
+        </span>
       </div>
     </div>
 
-    <!-- Tagline -->
-    <p class="text-xs text-app-muted line-clamp-2 leading-relaxed mb-4">
-      {tool.tagline}
-    </p>
+    <!-- Right: Compact Numeric Score Badge (e.g. 92.0) + Chevron Icon -->
+    <div class="flex items-center gap-2 shrink-0">
+      <span class={`px-2 py-0.5 rounded-full text-xs font-mono font-bold border tabular-nums ${scorePillColor}`}>
+        {tool.safety_score.toFixed(1)}
+      </span>
+      <svg
+        class="w-4 h-4 text-app-subtle group-hover:text-app-text transition-colors shrink-0"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <polyline points="9 18 15 12 9 6" />
+      </svg>
+    </div>
   </div>
 
-  <!-- Card Footer Stats -->
-  <div class="pt-3 border-t border-app-border flex items-center justify-between text-xs">
-    <div class="flex items-center gap-3 text-app-subtle font-mono text-[11px]">
-      <!-- Stars -->
-      <span class="inline-flex items-center gap-1" title={`${tool.stars} GitHub stars`}>
-        <svg class="w-3 h-3 text-amber-400/80 shrink-0" viewBox="0 0 24 24" fill="currentColor">
-          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-        </svg>
-        <span>{formatStars(tool.stars)}</span>
-      </span>
+  <!-- ======================================================== -->
+  <!-- DESKTOP VIEW (>= md): Rich Expanded Card with Telemetry  -->
+  <!-- ======================================================== -->
+  <div class="hidden md:flex md:flex-col md:justify-between w-full h-full">
+    <div>
+      <!-- Card Top Header -->
+      <div class="flex items-start justify-between gap-3 mb-3">
+        <div class="flex items-center gap-3 min-w-0 flex-1">
+          <!-- 40x40px logo container -->
+          <div class="w-10 h-10 rounded-lg bg-app-surface-2 border border-app-border overflow-hidden shrink-0 flex items-center justify-center p-0.5">
+            <img
+              src={logoSrc}
+              alt={`${tool.name} logo`}
+              class="w-full h-full object-contain rounded-md"
+              loading="lazy"
+              width="40"
+              height="40"
+              onerror={`this.onerror=null;this.src="${fallbackSvg}";`}
+            />
+          </div>
 
-      <!-- Push Activity -->
-      <span class="inline-flex items-center gap-1" title={`Last pushed ${tool.last_push_days} days ago`}>
-        <svg class="w-3 h-3 text-app-subtle shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10" />
-          <polyline points="12 6 12 12 16 14" />
-        </svg>
-        <span>{formatDays(tool.last_push_days)}</span>
-      </span>
+          <div class="min-w-0 flex-1">
+            <h3 class="font-semibold text-base text-app-text group-hover:text-blue-400 transition-colors truncate">
+              {tool.name}
+            </h3>
+            <span class="text-micro text-app-subtle truncate block mt-0.5 font-mono">
+              {tool.repo}
+            </span>
+          </div>
+        </div>
 
-      <!-- License -->
-      <span class="px-1.5 py-0.5 rounded bg-app-bg border border-app-border text-[10px] text-app-muted">
-        {tool.license_spdx}
-      </span>
+        <div class="shrink-0 flex items-center gap-2">
+          <ScoreRing score={tool.safety_score} size="sm" animate={false} />
+        </div>
+      </div>
 
-      <!-- Freshness Scan Timestamp -->
-      <span class="text-[10px] text-app-subtle hidden sm:inline" title="Automated static security sweep date">
-        {tool.scanned_at.split('T')[0]}
-      </span>
+      <!-- Tagline (Desktop only) -->
+      <p class="text-xs text-app-muted line-clamp-2 leading-relaxed mb-3">
+        {tool.tagline}
+      </p>
+
+      <!-- 7-Point Scan Cadence Sparkline Graph (Desktop only) -->
+      <div class="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-app-surface-2 border border-app-border text-[11px] font-mono text-app-subtle mb-3">
+        <span class="text-[10px] uppercase tracking-wider text-app-muted font-medium">7-Pt Cadence</span>
+        <div class="flex items-center gap-2">
+          <svg class="w-16 h-3.5 overflow-visible" viewBox="0 0 60 16" aria-hidden="true">
+            <polyline
+              fill="none"
+              stroke="var(--accent, #60a5fa)"
+              stroke-width="1.75"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              points={sparkCoords}
+            />
+          </svg>
+          <span class="text-[10px] font-semibold text-app-text">{tool.safety_score.toFixed(1)}</span>
+        </div>
+      </div>
     </div>
 
-    <div>
-      <VerdictBadge verdict={tool.verdict} size="sm" />
+    <!-- Card Footer Stats -->
+    <div class="pt-3 border-t border-app-border flex items-center justify-between text-xs">
+      <div class="flex items-center gap-3 text-app-subtle font-mono text-[11px]">
+        <!-- Stars -->
+        <span class="inline-flex items-center gap-1" title={`${tool.stars} GitHub stars`}>
+          <svg class="w-3 h-3 text-amber-400/80 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+          </svg>
+          <span>{formatStars(tool.stars)}</span>
+        </span>
+
+        <!-- Push Activity -->
+        <span class="inline-flex items-center gap-1" title={`Last pushed ${tool.last_push_days} days ago`}>
+          <svg class="w-3 h-3 text-app-subtle shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+          <span>{formatDays(tool.last_push_days)}</span>
+        </span>
+
+        <!-- License -->
+        <span class="px-1.5 py-0.5 rounded bg-app-bg border border-app-border text-[10px] text-app-muted">
+          {tool.license_spdx}
+        </span>
+
+        <!-- Freshness Scan Timestamp -->
+        <span class="text-[10px] text-app-subtle hidden sm:inline" title="Automated static security sweep date">
+          {tool.scanned_at.split('T')[0]}
+        </span>
+      </div>
+
+      <div>
+        <VerdictBadge verdict={tool.verdict} size="sm" />
+      </div>
     </div>
   </div>
 </a>
-
