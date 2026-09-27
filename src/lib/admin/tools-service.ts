@@ -34,6 +34,7 @@ export interface ToolRecord {
   self_host_difficulty: string;
   install_commands: InstallCommands | Record<string, string>;
   website_url?: string | null;
+  logo_url?: string | null;
   ai_report: string;
   ai_report_status?: 'draft' | 'approved';
   scanned_at: string;
@@ -74,6 +75,9 @@ export interface ToolSummary {
   security_health: number | null;
   advisories_count?: number;
   provenance?: string;
+  tagline?: string;
+  website_url?: string | null;
+  logo_url?: string | null;
 }
 
 export interface DiffEntry {
@@ -99,7 +103,7 @@ export const PROTECTED_FIELDS = new Set([
   'incident_history',
 ]);
 
-export const ALLOWED_HUMAN_FIELDS = new Set([
+export const ALLOWED_EDITABLE_FIELDS = new Set([
   'tagline',
   'name',
   'category',
@@ -109,10 +113,13 @@ export const ALLOWED_HUMAN_FIELDS = new Set([
   'audience',
   'who_for',
   'website_url',
+  'logo_url',
   'ai_report_status',
   'ai_report',
   'unlisted',
 ]);
+
+export const ALLOWED_HUMAN_FIELDS = ALLOWED_EDITABLE_FIELDS;
 
 function entityToRecord(row: ToolEntity): ToolRecord {
   return {
@@ -135,6 +142,7 @@ function entityToRecord(row: ToolEntity): ToolRecord {
     self_host_difficulty: row.self_host_difficulty,
     install_commands: row.install_commands,
     website_url: row.website_url,
+    logo_url: row.logo_url,
     ai_report: row.ai_report,
     ai_report_status: row.ai_report_status,
     scanned_at: row.scanned_at,
@@ -216,6 +224,9 @@ export function listToolsSummary(): ToolSummary[] {
     security_health: row.components?.security_health ?? null,
     advisories_count: row.advisories_count || row.cves?.length || 0,
     provenance: row.provenance ?? undefined,
+    tagline: row.tagline,
+    website_url: row.website_url,
+    logo_url: row.logo_url,
   }));
 }
 
@@ -370,7 +381,7 @@ export function patchToolContent(
  * Add a new repository to the review queue within a Drizzle transaction.
  */
 export function addTool(
-  data: { repo?: string; repo_url?: string; category: string; name?: string; tagline?: string },
+  data: { repo?: string; repo_url?: string; category: string; name?: string; tagline?: string; logo_url?: string },
   principal: 'owner' | 'agent' | string,
   ip: string
 ): ToolRecord {
@@ -408,6 +419,7 @@ export function addTool(
       docker: `docker run -d --name ${slug} ${repo}:latest`,
     },
     website_url: `https://github.com/${repo}`,
+    logo_url: data.logo_url || null,
     ai_report: `${name} has been enrolled into SafeOpenSource continuous security monitoring. Initial telemetry shows healthy release cadence and active maintainer responsiveness. Full automated scorecard evaluation underway.`,
     ai_report_status: 'draft',
     scanned_at: now,

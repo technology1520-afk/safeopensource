@@ -26,6 +26,7 @@ if (Astro.request.method === 'POST') {
       const tagline = (formData.get('tagline') as string || '').trim();
       const category = (formData.get('category') as string || '').trim();
       const website_url = (formData.get('website_url') as string || '').trim();
+      const logo_url = (formData.get('logo_url') as string || '').trim();
 
       patchToolContent(
         repo,
@@ -33,6 +34,7 @@ if (Astro.request.method === 'POST') {
           tagline,
           category,
           website_url,
+          logo_url,
         },
         'owner',
         auth.ip
@@ -114,13 +116,26 @@ const tools = listToolsSummary();
               <tr class="hover:bg-[var(--surface-2)]/50 transition-colors">
                 <!-- Tool & Repo -->
                 <td class="py-3 px-4">
-                  <div class="font-semibold text-sm text-[var(--text)]">{tool.name}</div>
-                  <div class="text-[11px] text-[var(--text-3)]">{tool.repo}</div>
-                  {tool.provenance && (
-                    <div class="text-[10px] text-[var(--text-3)] mt-0.5 max-w-xs truncate" title={tool.provenance}>
-                      {tool.provenance}
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-[var(--surface-2)] border border-[var(--border)] overflow-hidden shrink-0 flex items-center justify-center p-0.5">
+                      <img
+                        src={tool.logo_url || `https://github.com/${tool.repo.split('/')[0]}.png?size=64`}
+                        alt={`${tool.name} logo`}
+                        class="w-full h-full object-contain rounded"
+                        loading="lazy"
+                        onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%238D86A3\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><rect width=\'18\' height=\'18\' x=\'3\' y=\'3\' rx=\'2\'/><path d=\'m9 10-2 2 2 2\'/><path d=\'m15 10 2 2-2 2\'/></svg>';"
+                      />
                     </div>
-                  )}
+                    <div class="min-w-0">
+                      <div class="font-semibold text-sm text-[var(--text)] truncate">{tool.name}</div>
+                      <div class="text-[11px] text-[var(--text-3)] truncate">{tool.repo}</div>
+                      {tool.provenance && (
+                        <div class="text-[10px] text-[var(--text-3)] mt-0.5 max-w-xs truncate" title={tool.provenance}>
+                          {tool.provenance}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </td>
 
                 <!-- Category -->
@@ -186,6 +201,23 @@ const tools = listToolsSummary();
                 <!-- Actions -->
                 <td class="py-3 px-4 text-right">
                   <div class="inline-flex items-center gap-1.5">
+                    {/* Edit Metadata Modal Trigger */}
+                    <button
+                      type="button"
+                      class="btn-open-edit-modal px-2 py-1 rounded bg-[var(--surface-2)] hover:bg-[var(--border)] text-[var(--text-2)] hover:text-[var(--text)] border border-[var(--border)] text-[10px] transition-colors cursor-pointer"
+                      data-slug={tool.slug}
+                      data-repo={tool.repo}
+                      data-name={tool.name}
+                      data-category={tool.category}
+                      data-tagline={tool.tagline || ''}
+                      data-website={tool.website_url || ''}
+                      data-logo={tool.logo_url || ''}
+                      data-score={tool.safety_score}
+                      title="Edit narrative metadata & logo"
+                    >
+                      Edit
+                    </button>
+
                     {/* Toggle unlist/list */}
                     <form method="POST" class="inline">
                       <input type="hidden" name="csrf" value={csrfToken} />
@@ -214,7 +246,7 @@ const tools = listToolsSummary();
                       </button>
                     </form>
 
-                    {/* Details modal trigger / view link */}
+                    {/* Public Dossier Link */}
                     <a
                       href={`/tools/${tool.slug}`}
                       target="_blank"
@@ -231,4 +263,241 @@ const tools = listToolsSummary();
       </table>
     </div>
   </div>
+
+  <!-- Tool Metadata Edit Modal -->
+  <div
+    id="edit-tool-modal"
+    class="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4 overflow-y-auto"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="edit-modal-title"
+  >
+    <div class="relative w-full max-w-lg rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-2xl space-y-5 my-8">
+      <!-- Modal Header -->
+      <div class="flex items-start justify-between gap-3 border-b border-[var(--border)] pb-3">
+        <div>
+          <span class="text-micro text-[var(--accent)] font-mono block mb-0.5 uppercase font-bold tracking-wider">HUMAN-MANAGED ATTRIBUTES</span>
+          <h2 id="edit-modal-title" class="text-base font-bold text-[var(--text)] font-mono">
+            Edit Tool Metadata
+          </h2>
+        </div>
+        <button
+          type="button"
+          id="btn-close-modal"
+          class="w-7 h-7 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] hover:bg-[var(--border)] text-[var(--text-2)] hover:text-[var(--text)] flex items-center justify-center text-sm cursor-pointer transition-colors"
+          aria-label="Close modal"
+        >
+          &times;
+        </button>
+      </div>
+
+      <!-- Defensive Invariant Alert -->
+      <div class="p-3 rounded-lg border border-amber-500/30 bg-amber-500/10 font-mono text-xs text-amber-400 space-y-1">
+        <div class="flex items-center gap-1.5 font-bold">
+          <span>DEFENSIVE INVARIANT (HTTP 422 STRICT)</span>
+        </div>
+        <p class="text-[11px] text-[var(--text-2)] leading-relaxed">
+          Safety Score (<span id="modal-tool-score" class="font-bold text-amber-400">--</span>/100) and OpenSSF metrics are pipeline-owned. Attempts to modify scoring or telemetry trigger HTTP 422 Unprocessable Entity.
+        </p>
+      </div>
+
+      <!-- Edit Form -->
+      <form method="POST" id="edit-tool-form" class="space-y-4 font-mono text-xs">
+        <input type="hidden" name="csrf" value={csrfToken} />
+        <input type="hidden" name="_action" value="edit_human_fields" />
+        <input type="hidden" name="repo" id="modal-repo-input" value="" />
+
+        <div>
+          <label class="block text-[11px] text-[var(--text-2)] uppercase mb-1 font-semibold">Repository</label>
+          <input
+            type="text"
+            id="modal-repo-display"
+            disabled
+            class="w-full px-3 py-2 rounded-lg bg-[var(--surface-2)] text-[var(--text-3)] border border-[var(--border)] cursor-not-allowed text-xs font-mono"
+          />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="modal-category" class="block text-[11px] text-[var(--text-2)] uppercase mb-1 font-semibold">Category</label>
+            <input
+              type="text"
+              name="category"
+              id="modal-category"
+              required
+              class="w-full px-3 py-2 rounded-lg bg-[var(--surface-2)] text-[var(--text)] border border-[var(--border)] focus:outline-none focus:border-[var(--accent)] text-xs font-mono"
+            />
+          </div>
+
+          <div>
+            <label for="modal-website" class="block text-[11px] text-[var(--text-2)] uppercase mb-1 font-semibold">Website URL</label>
+            <input
+              type="url"
+              name="website_url"
+              id="modal-website"
+              placeholder="https://..."
+              class="w-full px-3 py-2 rounded-lg bg-[var(--surface-2)] text-[var(--text)] border border-[var(--border)] focus:outline-none focus:border-[var(--accent)] text-xs font-mono"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label for="modal-tagline" class="block text-[11px] text-[var(--text-2)] uppercase mb-1 font-semibold">Tagline</label>
+          <textarea
+            name="tagline"
+            id="modal-tagline"
+            rows="2"
+            required
+            class="w-full px-3 py-2 rounded-lg bg-[var(--surface-2)] text-[var(--text)] border border-[var(--border)] focus:outline-none focus:border-[var(--accent)] text-xs font-sans leading-relaxed"
+          ></textarea>
+        </div>
+
+        <!-- Logo URL Field with Live Preview Thumbnail and Quick Action Button -->
+        <div class="p-3.5 rounded-xl border border-[var(--border)] bg-[var(--surface-2)]/50 space-y-3">
+          <div class="flex items-center justify-between gap-2 flex-wrap">
+            <label for="modal-logo-url" class="text-[11px] text-[var(--text-2)] uppercase font-semibold">
+              Logo URL
+            </label>
+            <button
+              type="button"
+              id="btn-fetch-github-avatar"
+              class="px-2.5 py-1 rounded bg-[var(--accent-soft)] hover:bg-[var(--accent)] text-[var(--accent)] hover:text-white border border-[var(--accent)]/30 text-[10px] font-semibold transition-colors cursor-pointer flex items-center gap-1"
+            >
+              <span>Fetch GitHub Avatar</span>
+            </button>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <!-- Live Preview Thumbnail Container -->
+            <div class="w-12 h-12 rounded-xl bg-[var(--surface-2)] border border-[var(--border)] overflow-hidden shrink-0 flex items-center justify-center p-1 shadow-inner">
+              <img
+                id="modal-logo-preview"
+                src=""
+                alt="Logo Preview"
+                class="w-full h-full object-contain rounded-lg"
+              />
+            </div>
+
+            <div class="flex-1 min-w-0">
+              <input
+                type="url"
+                name="logo_url"
+                id="modal-logo-url"
+                placeholder="https://example.com/logo.png or avatar URL"
+                class="w-full px-3 py-2 rounded-lg bg-[var(--surface-2)] text-[var(--text)] border border-[var(--border)] focus:outline-none focus:border-[var(--accent)] text-xs font-mono"
+              />
+              <span class="text-[10px] text-[var(--text-3)] block mt-1">
+                Custom PNG/SVG or GitHub owner avatar fallback.
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-[var(--border)]">
+          <button
+            type="button"
+            id="btn-cancel-modal"
+            class="px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface-2)] hover:bg-[var(--border)] text-[var(--text-2)] hover:text-[var(--text)] transition-colors cursor-pointer font-semibold text-xs"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            id="btn-save-modal"
+            class="px-4 py-2 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white transition-colors cursor-pointer font-semibold text-xs shadow-xs"
+          >
+            Save Metadata
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script is:inline>
+    (function () {
+      const modal = document.getElementById('edit-tool-modal');
+      const repoInput = document.getElementById('modal-repo-input');
+      const repoDisplay = document.getElementById('modal-repo-display');
+      const categoryInput = document.getElementById('modal-category');
+      const taglineInput = document.getElementById('modal-tagline');
+      const websiteInput = document.getElementById('modal-website');
+      const logoUrlInput = document.getElementById('modal-logo-url');
+      const logoPreview = document.getElementById('modal-logo-preview');
+      const toolScoreDisplay = document.getElementById('modal-tool-score');
+      const fetchAvatarBtn = document.getElementById('btn-fetch-github-avatar');
+      const closeModalBtn = document.getElementById('btn-close-modal');
+      const cancelModalBtn = document.getElementById('btn-cancel-modal');
+
+      let currentTargetRepo = '';
+      const fallbackSvg = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238D86A3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect width='18' height='18' x='3' y='3' rx='2'/><path d='m9 10-2 2 2 2'/><path d='m15 10 2 2-2 2'/></svg>";
+
+      function updatePreview(url, repo) {
+        let target = (url || '').trim();
+        if (!target && repo) {
+          const owner = repo.split('/')[0];
+          target = `https://github.com/${owner}.png?size=128`;
+        }
+        if (target && logoPreview) {
+          logoPreview.src = target;
+          logoPreview.onerror = function() {
+            this.src = fallbackSvg;
+          };
+        } else if (logoPreview) {
+          logoPreview.src = fallbackSvg;
+        }
+      }
+
+      logoUrlInput?.addEventListener('input', function() {
+        updatePreview(this.value, currentTargetRepo);
+      });
+
+      fetchAvatarBtn?.addEventListener('click', function() {
+        if (currentTargetRepo) {
+          const owner = currentTargetRepo.split('/')[0];
+          const avatarUrl = `https://github.com/${owner}.png?size=128`;
+          if (logoUrlInput) {
+            logoUrlInput.value = avatarUrl;
+          }
+          updatePreview(avatarUrl, currentTargetRepo);
+        }
+      });
+
+      document.querySelectorAll('.btn-open-edit-modal').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const repo = btn.getAttribute('data-repo') || '';
+          const slug = btn.getAttribute('data-slug') || '';
+          const name = btn.getAttribute('data-name') || '';
+          const category = btn.getAttribute('data-category') || '';
+          const tagline = btn.getAttribute('data-tagline') || '';
+          const website = btn.getAttribute('data-website') || '';
+          const logo = btn.getAttribute('data-logo') || '';
+          const score = btn.getAttribute('data-score') || '--';
+
+          currentTargetRepo = repo;
+          if (repoInput) repoInput.value = slug;
+          if (repoDisplay) repoDisplay.value = `${name} (${repo})`;
+          if (categoryInput) categoryInput.value = category;
+          if (taglineInput) taglineInput.value = tagline;
+          if (websiteInput) websiteInput.value = website;
+          if (logoUrlInput) logoUrlInput.value = logo;
+          if (toolScoreDisplay) toolScoreDisplay.textContent = score;
+
+          updatePreview(logo, repo);
+
+          if (modal) modal.classList.remove('hidden');
+        });
+      });
+
+      function closeModal() {
+        if (modal) modal.classList.add('hidden');
+      }
+
+      closeModalBtn?.addEventListener('click', closeModal);
+      cancelModalBtn?.addEventListener('click', closeModal);
+      modal?.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+      });
+    })();
+  </script>
 </AdminLayout>

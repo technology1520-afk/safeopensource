@@ -36,6 +36,7 @@ export const tools = sqliteTable('tools', {
   self_host_difficulty: text('self_host_difficulty').notNull(),
   install_commands: text('install_commands', { mode: 'json' }).$type<InstallCommands>().notNull(),
   website_url: text('website_url'),
+  logo_url: text('logo_url'),
   ai_report: text('ai_report').notNull(),
   ai_report_status: text('ai_report_status').$type<'draft' | 'approved'>().notNull().default('approved'),
   scanned_at: text('scanned_at').notNull(),

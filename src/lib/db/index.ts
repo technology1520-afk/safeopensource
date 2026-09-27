@@ -46,6 +46,7 @@ export function initDb() {
       self_host_difficulty TEXT NOT NULL,
       install_commands TEXT NOT NULL,
       website_url TEXT,
+      logo_url TEXT,
       ai_report TEXT NOT NULL,
       ai_report_status TEXT NOT NULL DEFAULT 'approved',
       scanned_at TEXT NOT NULL,
@@ -103,6 +104,7 @@ export function initDb() {
 
   try { sqlite.exec("ALTER TABLE tools ADD COLUMN epss_score REAL;"); } catch {}
   try { sqlite.exec("ALTER TABLE tools ADD COLUMN osv_advisories TEXT;"); } catch {}
+  try { sqlite.exec("ALTER TABLE tools ADD COLUMN logo_url TEXT;"); } catch {}
 }
 
 // Guarantee tables exist upon module import

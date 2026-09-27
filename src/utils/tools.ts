@@ -24,6 +24,7 @@ function entityToToolData(row: ToolEntity): ToolData {
     self_host_difficulty: row.self_host_difficulty as any,
     install_commands: row.install_commands,
     website_url: row.website_url ?? undefined,
+    logo_url: row.logo_url ?? undefined,
     ai_report: row.ai_report,
     ai_report_status: row.ai_report_status,
     scanned_at: row.scanned_at,

@@ -14,6 +14,7 @@ const HumanFieldsSchema = z
     requirements: z.record(z.string(), z.any()).optional(),
     who_for: z.record(z.string(), z.any()).optional(),
     website_url: z.string().optional(),
+    logo_url: z.string().optional(),
     ai_report_status: z.enum(['draft', 'approved']).optional(),
     ai_report: z.string().optional(),
     unlisted: z.boolean().optional(),

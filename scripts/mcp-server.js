@@ -118,11 +118,12 @@ server.registerTool(
       category: z.string().describe('Category slug (e.g. "monitoring-status", "cloud-storage", "password-auth", "ai-agents").'),
       name: z.string().optional().describe('Optional human display name.'),
       tagline: z.string().optional().describe('Optional brief tagline description.'),
+      logo_url: z.string().optional().describe('Optional custom logo image URL.'),
     },
   },
-  async ({ repo_url, category, name, tagline }) => {
+  async ({ repo_url, category, name, tagline, logo_url }) => {
     try {
-      const res = await callAdminApi('/tools', 'POST', { repo_url, category, name, tagline });
+      const res = await callAdminApi('/tools', 'POST', { repo_url, category, name, tagline, logo_url });
       return {
         content: [{ type: 'text', text: JSON.stringify(res, null, 2) }],
       };
@@ -139,10 +140,10 @@ server.registerTool(
 server.registerTool(
   'sos_edit_tool',
   {
-    description: 'Update human-written fields for a repository (tagline, name, category, use_cases, requirements, who_for, website_url). Scores are pipeline-owned; attempts to alter scores are rejected with 422.',
+    description: 'Update human-written fields for a repository (tagline, name, category, use_cases, requirements, who_for, website_url, logo_url). Scores are pipeline-owned; attempts to alter scores are rejected with 422.',
     inputSchema: {
       repo: z.string().describe('Target repository slug or name (e.g. "uptime-kuma").'),
-      fields: z.record(z.any()).describe('Dictionary of human-written fields to update.'),
+      fields: z.record(z.any()).describe('Dictionary of human-written fields to update (e.g. tagline, name, category, website_url, logo_url).'),
     },
   },
   async ({ repo, fields }) => {

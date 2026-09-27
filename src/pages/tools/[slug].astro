@@ -63,6 +63,11 @@ function formatDays(days: number): string {
   return `pushed ${days} days ago`;
 }
 
+const repoOwner = tool.repo ? tool.repo.split('/')[0] : '';
+const fallbackAvatar = repoOwner ? `https://github.com/${repoOwner}.png?size=160` : '';
+const logoSrc = tool.logo_url && tool.logo_url.trim() ? tool.logo_url : fallbackAvatar;
+const fallbackSvg = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238D86A3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect width='18' height='18' x='3' y='3' rx='2'/><path d='m9 10-2 2 2 2'/><path d='m15 10 2 2-2 2'/></svg>";
+
 // JSON-LD structured data for validator.schema.org
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -123,11 +128,30 @@ const jsonLd = {
   <header class="rounded-2xl border border-app-border bg-app-surface p-6 sm:p-8 mb-8">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
       <div class="flex-1">
-        <div class="flex items-center gap-3 mb-2 flex-wrap">
-          <h1 class="text-2xl sm:text-4xl font-extrabold text-app-text tracking-tight">
-            {tool.name}
-          </h1>
-          <VerdictBadge verdict={tool.verdict} size="md" />
+        <div class="flex items-start sm:items-center gap-4 mb-3">
+          <!-- High-Resolution Logo Container -->
+          <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-app-surface-2 border border-app-border overflow-hidden shrink-0 flex items-center justify-center p-1.5 shadow-xs">
+            <img
+              src={logoSrc}
+              alt={`${tool.name} logo`}
+              class="w-full h-full object-contain rounded-xl"
+              width="64"
+              height="64"
+              onerror={`this.onerror=null;this.src="${fallbackSvg}";`}
+            />
+          </div>
+
+          <div>
+            <div class="flex items-center gap-3 mb-1 flex-wrap">
+              <h1 class="text-2xl sm:text-4xl font-extrabold text-app-text tracking-tight">
+                {tool.name}
+              </h1>
+              <VerdictBadge verdict={tool.verdict} size="md" />
+            </div>
+            <span class="text-xs font-mono text-app-subtle block">
+              {tool.repo}
+            </span>
+          </div>
         </div>
 
         <p class="text-sm sm:text-base text-app-muted leading-relaxed max-w-2xl mb-5">

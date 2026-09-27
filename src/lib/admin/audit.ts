@@ -1,4 +1,6 @@
 import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
 import { desc, eq, like, and, type SQL } from 'drizzle-orm';
 import { db, auditLogs, type NewAuditLogEntity } from '../db/index';
 
@@ -65,6 +67,17 @@ export function logAudit(
   };
 
   db.insert(auditLogs).values(newLog).run();
+
+  try {
+    const dataDir = path.join(process.cwd(), 'data');
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+    const auditFilePath = path.join(dataDir, 'audit.jsonl');
+    fs.appendFileSync(auditFilePath, JSON.stringify(entry) + '\n', 'utf-8');
+  } catch {
+    // Non-fatal if filesystem audit log fails
+  }
 
   return entry;
 }

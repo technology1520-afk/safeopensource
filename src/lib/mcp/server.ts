@@ -445,11 +445,12 @@ export function createConfiguredMcpServer(role: 'admin' | 'readonly', ip: string
           category: z.string().describe('Category slug.'),
           name: z.string().optional().describe('Human display name.'),
           tagline: z.string().optional().describe('Brief tagline description.'),
+          logo_url: z.string().optional().describe('Optional custom logo image URL.'),
         },
       },
-      async ({ repo_url, category, name, tagline }) => {
+      async ({ repo_url, category, name, tagline, logo_url }) => {
         try {
-          const createdTool = addTool({ repo: repo_url, category, name, tagline }, 'agent', ip);
+          const createdTool = addTool({ repo: repo_url, category, name, tagline, logo_url }, 'agent', ip);
           return {
             content: [{ type: 'text', text: JSON.stringify(createdTool, null, 2) }],
           };
@@ -466,10 +467,10 @@ export function createConfiguredMcpServer(role: 'admin' | 'readonly', ip: string
     server.registerTool(
       'sos_edit_tool',
       {
-        description: 'Update human-written fields for a repository (tagline, name, category, use_cases, requirements, who_for, website_url). Calculated scores cannot be altered.',
+        description: 'Update human-written fields for a repository (tagline, name, category, use_cases, requirements, who_for, website_url, logo_url). Calculated scores cannot be altered.',
         inputSchema: {
           repo: z.string().describe('Target repository slug or name.'),
-          fields: z.record(z.string(), z.any()).describe('Dictionary of human-written fields to update.'),
+          fields: z.record(z.string(), z.any()).describe('Dictionary of human-written fields to update (e.g. tagline, name, category, website_url, logo_url).'),
         },
       },
       async ({ repo, fields }) => {

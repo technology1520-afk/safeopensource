@@ -101,6 +101,7 @@ export interface ToolData {
   self_host_difficulty: "Easy" | "Medium" | "Moderate" | "Advanced";
   install_commands: InstallCommands;
   website_url?: string;
+  logo_url?: string;
   // Expanded What/How/Who & Momentum stack
   use_cases?: string[];
   how_to_use?: HowToUseStep[];

@@ -11,6 +11,7 @@ const AddToolSchema = z
     category: z.string().min(1, 'Category is required'),
     name: z.string().optional(),
     tagline: z.string().optional(),
+    logo_url: z.string().optional(),
   })
   .strict()
   .refine((data) => Boolean(data.repo_url || data.repo), {
@@ -54,7 +55,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    const { repo_url, repo, category, name, tagline } = parseResult.data;
+    const { repo_url, repo, category, name, tagline, logo_url } = parseResult.data;
     const targetRepo = repo_url || repo || '';
 
     const createdTool = addTool(
@@ -63,6 +64,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         category,
         name,
         tagline,
+        logo_url,
       },
       auth.principal,
       auth.ip
