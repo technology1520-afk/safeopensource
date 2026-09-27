@@ -87,9 +87,9 @@ const siteName = 'SafeOpenSource';
       <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
     )}
   </head>
-  <body class="bg-app-bg text-app-text min-h-screen flex flex-col antialiased selection:bg-blue-600/30 selection:text-white">
+  <body class="bg-app-bg text-app-text min-h-screen flex flex-col antialiased selection:bg-blue-600/30 selection:text-white overflow-x-hidden">
     <Header />
-    <main class="flex-1 w-full max-w-[1200px] mx-auto px-4 sm:px-6 py-8 sm:py-12">
+    <main class="flex-1 w-full max-w-7xl 2xl:max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-6 sm:py-10 lg:py-12">
       <slot />
     </main>
     <Footer />

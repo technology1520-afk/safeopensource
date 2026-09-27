@@ -93,8 +93,16 @@ export default function SearchDialog({ tools }: SearchDialogProps) {
       }
     }
 
+    function handleCustomOpen() {
+      setIsOpen(true);
+    }
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('open-search-dialog', handleCustomOpen);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('open-search-dialog', handleCustomOpen);
+    };
   }, [isOpen]);
 
   // Auto-focus input on modal open

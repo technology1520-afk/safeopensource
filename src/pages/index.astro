@@ -37,40 +37,40 @@ const categoriesWithStats = categories.map((cat) => {
   description="Continuous security scans for open-source tools with objective 0–100 Safety Scores. We watch repositories so you don't get burned."
 >
   <!-- Hero Section: Security Ops Center Console -->
-  <section class="pt-2 pb-6 sm:pt-6 sm:pb-10 text-center">
+  <section class="py-8 sm:py-12 lg:py-16 text-center">
     <!-- Headline and Core Mission Statement -->
-    <div class="max-w-3xl mx-auto mb-10">
-      <div class="inline-flex items-center gap-2 text-micro text-emerald-400 font-mono mb-3 px-3 py-1 rounded-full border border-emerald-500/30 bg-emerald-950/20">
-        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span>SECURITY OPS CENTER :: CONTINUOUS REPO TELEMETRY</span>
+    <div class="max-w-4xl mx-auto mb-8 sm:mb-12">
+      <div class="inline-flex items-center gap-2 text-micro text-emerald-400 font-mono mb-4 px-3.5 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-950/20 shadow-xs">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span class="tracking-wider">SECURITY OPS CENTER :: CONTINUOUS REPO TELEMETRY</span>
       </div>
 
-      <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-app-text leading-tight mb-4">
+      <h1 class="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-app-text leading-[1.1] mb-5 sm:mb-6 max-w-4xl mx-auto">
         We watch these projects so you don't get <span class="text-rose-400">burned</span>.
       </h1>
 
-      <p class="text-sm sm:text-base text-app-muted leading-relaxed mb-6 max-w-2xl mx-auto font-sans">
+      <p class="text-sm sm:text-base lg:text-lg text-gray-400 max-w-2xl mx-auto leading-relaxed font-sans">
         Not a software directory. A live mission-control station monitoring open-source software with verifiable 0–100 Safety Scores, OpenSSF Scorecards, and incident alerts.
       </p>
     </div>
 
     <!-- Monitored Taxonomies: Category Grid (Promoted Above the Fold for Intent-Based Discovery) -->
-    <div id="categories" class="my-8 sm:my-10 scroll-mt-24 text-left" aria-label="Monitored Categories">
+    <div id="categories" class="my-8 sm:my-12 lg:my-14 scroll-mt-24 text-left" aria-label="Monitored Categories">
       <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-6 pb-4 border-b border-app-border">
         <div>
           <span class="text-micro text-app-subtle block mb-1 font-mono tracking-wider uppercase">
             MONITORED TAXONOMIES &middot; CHOOSE A SECTOR TO INSPECT SAFETY SCORES
           </span>
-          <h2 class="text-xl sm:text-2xl font-bold tracking-tight text-app-text">
+          <h2 class="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-app-text">
             Browse by Category
           </h2>
         </div>
-        <span class="text-xs font-mono text-app-subtle">
+        <span class="text-xs font-mono text-app-subtle shrink-0">
           13 Sectors Active
         </span>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-5 2xl:gap-6">
         {categoriesWithStats.map((cat) => (
           <CategoryCard
             category={cat}
@@ -82,65 +82,74 @@ const categoriesWithStats = categories.map((cat) => {
       </div>
     </div>
 
-    <!-- Observatory Radar Scope Hero (Continuous Defense Radar) -->
-    <div class="my-10 sm:my-14 text-left" aria-label="Continuous Defense Radar Scope">
-      <DetectionRadarHero />
-    </div>
-
-    <!-- On-Demand Repository Deep Scan & Continuous Telemetry Monitor Fallback -->
-    <div class="my-10 sm:my-14 max-w-3xl mx-auto text-left scroll-mt-24" id="deep-scanner" aria-label="On-Demand Repository Audit">
-      <div class="text-center mb-6">
-        <span class="text-micro text-blue-400 font-mono block mb-1">ON-DEMAND REPOSITORY AUDIT</span>
-        <h2 class="text-lg sm:text-xl font-bold text-app-text mb-2">
-          Deep Scan & Telemetry Stream
-        </h2>
-        <p class="text-xs sm:text-sm text-app-muted font-sans max-w-xl mx-auto">
-          Don't see your tool above? Paste any public repository URL for a real-time safety audit.
-        </p>
+    <!-- Observatory Radar Scope & Live Telemetry Verification Monitor (SOC Mission Control Console) -->
+    <div class="my-10 sm:my-14 lg:my-16 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start text-left" id="soc-console" aria-label="Security Operations Center Console">
+      <!-- Left (7 Cols on desktop): Continuous Defense Radar Scope -->
+      <div class="w-full lg:col-span-7 min-w-0">
+        <DetectionRadarHero />
       </div>
 
-      <!-- Real-Time On-Demand Scanner Input Box -->
-      <form action="/scan" method="GET" class="w-full max-w-xl mx-auto mb-6" role="search">
-        <div class="flex flex-col sm:flex-row items-stretch gap-2 p-1.5 rounded-2xl border border-app-border bg-app-surface shadow-xl">
-          <div class="relative flex-1">
-            <label for="repo-url-input" class="sr-only">Public Repository URL</label>
-            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-app-subtle">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-              </svg>
+      <!-- Right (5 Cols on desktop): On-Demand Deep Scan & Continuous Telemetry Monitor -->
+      <div class="w-full lg:col-span-5 min-w-0 space-y-6 scroll-mt-24" id="deep-scanner" aria-label="On-Demand Repository Audit">
+        <!-- On-Demand Repository Audit Scanner Card -->
+        <div class="rounded-xl border border-app-border bg-app-surface p-5 sm:p-6 shadow-xl">
+          <div class="mb-4">
+            <div class="flex items-center gap-2 mb-1.5">
+              <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+              <span class="text-micro text-blue-400 font-mono tracking-wider">ON-DEMAND REPOSITORY AUDIT</span>
             </div>
-            <input
-              id="repo-url-input"
-              type="text"
-              name="url"
-              required
-              placeholder="Paste any GitHub repository (e.g. github.com/owner/repo)"
-              class="w-full pl-10 pr-3 py-2.5 rounded-xl bg-app-surface-2 text-app-text placeholder:text-app-subtle text-xs font-mono focus:outline-none focus:ring-1 focus:ring-blue-500 border border-transparent"
-              autocomplete="off"
-              spellcheck="false"
-            />
+            <h2 class="text-lg sm:text-xl font-bold text-app-text mb-1 tracking-tight">
+              Deep Scan & Telemetry Stream
+            </h2>
+            <p class="text-xs sm:text-sm text-app-muted font-sans leading-relaxed">
+              Don't see your tool monitored above? Paste any public GitHub repository for a real-time safety audit.
+            </p>
           </div>
-          <button
-            type="submit"
-            class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-mono text-xs font-bold transition-colors shrink-0 flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
-          >
-            <span>Scan Any Repo</span>
-            <span aria-hidden="true">&rarr;</span>
-          </button>
+
+          <!-- Real-Time On-Demand Scanner Input Box -->
+          <form action="/scan" method="GET" class="w-full" role="search">
+            <div class="flex flex-col sm:flex-row items-stretch gap-2 p-1.5 rounded-xl border border-app-border bg-app-surface-2 shadow-inner">
+              <div class="relative flex-1 min-w-0">
+                <label for="repo-url-input" class="sr-only">Public Repository URL</label>
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-app-subtle">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  </svg>
+                </div>
+                <input
+                  id="repo-url-input"
+                  type="text"
+                  name="url"
+                  required
+                  placeholder="Paste GitHub URL (e.g. owner/repo)"
+                  class="w-full pl-10 pr-3 py-2.5 rounded-lg bg-transparent text-app-text placeholder:text-app-subtle text-xs font-mono focus:outline-none focus:ring-1 focus:ring-blue-500 border border-transparent min-h-[44px]"
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+              </div>
+              <button
+                type="submit"
+                class="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-mono text-xs font-bold transition-colors shrink-0 flex items-center justify-center gap-1.5 cursor-pointer shadow-xs min-h-[44px]"
+              >
+                <span>Scan Repo</span>
+                <span aria-hidden="true">&rarr;</span>
+              </button>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-1.5 mt-3 font-mono text-[11px] text-app-subtle">
+              <span>Popular:</span>
+              <a href="/scan?url=jellyfin/jellyfin" class="text-app-muted hover:text-app-accent underline">jellyfin</a>
+              <span>&middot;</span>
+              <a href="/scan?url=dani-garcia/vaultwarden" class="text-app-muted hover:text-app-accent underline">vaultwarden</a>
+              <span>&middot;</span>
+              <a href="/scan?url=louislam/uptime-kuma" class="text-app-muted hover:text-app-accent underline">uptime-kuma</a>
+            </div>
+          </form>
         </div>
 
-        <div class="flex items-center justify-center gap-2 mt-2 font-mono text-[11px] text-app-subtle">
-          <span>Popular:</span>
-          <a href="/scan?url=jellyfin/jellyfin" class="text-app-muted hover:text-app-accent underline">jellyfin</a>
-          <span>&middot;</span>
-          <a href="/scan?url=dani-garcia/vaultwarden" class="text-app-muted hover:text-app-accent underline">vaultwarden</a>
-          <span>&middot;</span>
-          <a href="/scan?url=louislam/uptime-kuma" class="text-app-muted hover:text-app-accent underline">uptime-kuma</a>
-        </div>
-      </form>
-
-      <!-- Live Telemetry Monitor (Real Data Strip) -->
-      <LiveScanConsole />
+        <!-- Live Telemetry Monitor (Real Data Strip) -->
+        <LiveScanConsole />
+      </div>
     </div>
   </section>
 
