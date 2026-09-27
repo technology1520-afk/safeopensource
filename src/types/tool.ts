@@ -118,6 +118,8 @@ export interface ToolData {
   scanned_at_formatted?: string;
   advisories_source?: string;
   archived?: boolean;
+  advisories_count?: number;
+  who_for?: any;
 }
 
 export interface CategoryData {

@@ -1,18 +1,19 @@
-import fs from 'node:fs';
-import path from 'node:path';
 import crypto from 'node:crypto';
+import { desc, eq, like, and, type SQL } from 'drizzle-orm';
+import { db, auditLogs, type NewAuditLogEntity } from '../db/index';
 
 export interface AuditEntry {
   id: string;
   at: string;
   timestamp: string;
-  who: 'owner' | 'agent' | 'anonymous';
-  principal: 'owner' | 'agent' | 'anonymous';
+  who: 'owner' | 'agent' | 'anonymous' | string;
+  principal: 'owner' | 'agent' | 'anonymous' | string;
   action: string;
   target?: string;
   diff?: any;
   ip: string;
   details: Record<string, any>;
+  status?: 'success' | 'failure';
 }
 
 export interface AuditQueryOptions {
@@ -22,32 +23,23 @@ export interface AuditQueryOptions {
   target?: string;
 }
 
-const DATA_DIR = path.join(process.cwd(), 'data');
-const AUDIT_FILE = path.join(DATA_DIR, 'audit.jsonl');
-
-function ensureDataDir() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
-}
-
 /**
- * Append an immutable entry to the audit log
+ * Append an immutable entry to the audit log in SQLite via Drizzle ORM.
  */
 export function logAudit(
-  principal: 'owner' | 'agent' | 'anonymous',
+  principal: 'owner' | 'agent' | 'anonymous' | string,
   action: string,
   ip: string,
-  details: Record<string, any> = {}
+  details: Record<string, any> = {},
+  status: 'success' | 'failure' = 'success'
 ): AuditEntry {
-  ensureDataDir();
-
   const now = new Date().toISOString();
+  const id = crypto.randomUUID();
   const target = details.slug || details.repo || details.target || details.path || details.jobId || undefined;
   const diff = details.diff || undefined;
 
   const entry: AuditEntry = {
-    id: crypto.randomUUID(),
+    id,
     at: now,
     timestamp: now,
     who: principal,
@@ -57,69 +49,75 @@ export function logAudit(
     diff,
     ip,
     details,
+    status,
   };
 
-  const line = JSON.stringify(entry) + '\n';
-  fs.appendFileSync(AUDIT_FILE, line, 'utf-8');
+  const newLog: NewAuditLogEntity = {
+    id,
+    timestamp: now,
+    principal,
+    action,
+    target_repo: target || null,
+    ip,
+    diff: diff || null,
+    status,
+    details,
+  };
+
+  db.insert(auditLogs).values(newLog).run();
+
   return entry;
 }
 
 /**
- * Read recent entries from the append-only audit log (newest first)
+ * Read recent entries from SQLite (newest first).
  */
 export function getRecentAuditEntries(limit = 20): AuditEntry[] {
   return queryAuditEntries({ limit });
 }
 
 /**
- * Query audit log with filtering by who, action, target, and limit
+ * Query audit log with filtering by who, action, target, and limit.
  */
 export function queryAuditEntries(options: AuditQueryOptions = {}): AuditEntry[] {
-  ensureDataDir();
-  if (!fs.existsSync(AUDIT_FILE)) {
-    return [];
-  }
-
   const limit = options.limit && options.limit > 0 ? options.limit : 50;
+  const conditions: SQL[] = [];
+
   const filterWho = options.who?.toLowerCase();
-  const filterAction = options.action?.toUpperCase();
-
-  try {
-    const content = fs.readFileSync(AUDIT_FILE, 'utf-8');
-    const lines = content.trim().split('\n').filter(Boolean);
-    const entries: AuditEntry[] = [];
-
-    // Parse from end to start for newest entries
-    for (let i = lines.length - 1; i >= 0 && entries.length < limit; i--) {
-      try {
-        const raw = JSON.parse(lines[i]);
-        const entry: AuditEntry = {
-          ...raw,
-          at: raw.at || raw.timestamp,
-          who: raw.who || raw.principal || 'anonymous',
-          principal: raw.principal || raw.who || 'anonymous',
-        };
-
-        if (filterWho && filterWho !== 'all' && entry.who !== filterWho) {
-          continue;
-        }
-
-        if (filterAction && filterAction !== 'ALL' && entry.action !== filterAction) {
-          continue;
-        }
-
-        if (options.target && entry.target && !entry.target.includes(options.target)) {
-          continue;
-        }
-
-        entries.push(entry);
-      } catch {
-        // Skip malformed lines if any
-      }
-    }
-
-    return entries;
-  } catch {
-    return [];
+  if (filterWho && filterWho !== 'all') {
+    conditions.push(eq(auditLogs.principal, filterWho));
   }
+
+  const filterAction = options.action?.toUpperCase();
+  if (filterAction && filterAction !== 'ALL') {
+    conditions.push(eq(auditLogs.action, filterAction));
+  }
+
+  if (options.target) {
+    conditions.push(like(auditLogs.target_repo, `%${options.target}%`));
+  }
+
+  const query = db
+    .select()
+    .from(auditLogs)
+    .orderBy(desc(auditLogs.timestamp))
+    .limit(limit);
+
+  const rows = conditions.length > 0
+    ? query.where(and(...conditions)).all()
+    : query.all();
+
+  return rows.map((row) => ({
+    id: row.id,
+    at: row.timestamp,
+    timestamp: row.timestamp,
+    who: row.principal,
+    principal: row.principal,
+    action: row.action,
+    target: row.target_repo || undefined,
+    diff: row.diff,
+    ip: row.ip,
+    details: row.details || {},
+    status: row.status,
+  }));
 }
