@@ -22,14 +22,8 @@ jobs:
       - name: Build (Linux binaries for Netlify runtime)
         run: npm run build
 
-      - name: Deploy to Netlify
-        uses: nwtgck/actions-netlify@v3
-        with:
-          publish-dir: dist
-          functions-dir: .netlify/v1/functions
-          production-deploy: true
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          deploy-message: "Deploy from GitHub Actions: ${{ github.sha }}"
+      - name: Deploy to Netlify (CLI)
+        run: npx netlify-cli@latest deploy --prod --site "$NETLIFY_SITE_ID" --dir dist --functions .netlify/v1/functions --no-build
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
