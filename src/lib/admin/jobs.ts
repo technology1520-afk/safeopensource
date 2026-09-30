@@ -22,7 +22,7 @@ export interface PipelineJob {
   error?: string;
 }
 
-const DATA_DIR = path.join(process.cwd(), 'data');
+import { DATA_DIR } from '../paths';
 const JOBS_FILE = path.join(DATA_DIR, 'jobs.jsonl');
 
 function ensureDataDir() {

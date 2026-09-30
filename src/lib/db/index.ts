@@ -4,9 +4,14 @@ import path from 'node:path';
 import fs from 'node:fs';
 import * as schema from './schema';
 
-const DATA_DIR = path.join(process.cwd(), 'data');
+const DATA_DIR = process.env.SOS_DATA_DIR || (process.env.NETLIFY ? '/tmp/sos-data' : path.join(process.cwd(), 'data'));
 if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
+  try {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  } catch {
+    // Read-only filesystem (serverless): fall back to /tmp
+    if (!fs.existsSync('/tmp/sos-data')) fs.mkdirSync('/tmp/sos-data', { recursive: true });
+  }
 }
 
 export const DB_PATH = process.env.SQLITE_DB_PATH || path.join(DATA_DIR, 'safety-opensource.db');

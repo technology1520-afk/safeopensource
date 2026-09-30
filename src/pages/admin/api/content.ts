@@ -5,7 +5,7 @@ import { logAudit } from '../../../lib/admin/audit';
 
 export const prerender = false;
 
-const DATA_DIR = path.join(process.cwd(), 'data');
+import { DATA_DIR } from '../../../lib/paths';
 const SETTINGS_FILE = path.join(DATA_DIR, 'content-settings.json');
 
 const defaultSettings = {

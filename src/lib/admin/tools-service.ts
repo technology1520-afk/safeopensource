@@ -5,7 +5,7 @@ import { db, tools, type ToolEntity, type NewToolEntity } from '../db/index';
 import { logAudit } from './audit';
 
 const TOOLS_DIR = path.join(process.cwd(), 'src', 'data', 'tools');
-const SCANS_DIR = path.join(process.cwd(), 'data', 'scans');
+import { SCANS_DIR } from '../paths';
 
 import type { InstallCommands, ToolCve } from '../../types/tool';
 

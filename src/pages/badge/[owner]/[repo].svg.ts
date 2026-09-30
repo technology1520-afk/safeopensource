@@ -3,6 +3,7 @@ import { getTool } from '../../../lib/admin/tools-service';
 import { THEME_TOKENS } from '../../../styles/theme-tokens';
 import fs from 'node:fs';
 import path from 'node:path';
+import { SCANS_DIR } from '../../../lib/paths';
 
 export const prerender = false;
 
@@ -43,7 +44,7 @@ export const GET: APIRoute = async ({ params, request, clientAddress, url }) => 
 
   // If not found in catalog, try data/scans
   if (!tool) {
-    const scanFile = path.join(process.cwd(), 'data', 'scans', `${slug}.json`);
+    const scanFile = path.join(SCANS_DIR, `${slug}.json`);
     if (fs.existsSync(scanFile)) {
       try {
         tool = JSON.parse(fs.readFileSync(scanFile, 'utf-8'));

@@ -5,7 +5,7 @@ import { hash, verify } from '@node-rs/argon2';
 
 import { checkRotatedKeyGrace } from './settings';
 
-const DATA_DIR = path.join(process.cwd(), 'data');
+import { DATA_DIR } from '../paths';
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }

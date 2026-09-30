@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { desc, eq, like, and, type SQL } from 'drizzle-orm';
 import { db, auditLogs, type NewAuditLogEntity } from '../db/index';
+import { DATA_DIR } from '../paths';
 
 export interface AuditEntry {
   id: string;
@@ -69,7 +70,7 @@ export function logAudit(
   db.insert(auditLogs).values(newLog).run();
 
   try {
-    const dataDir = path.join(process.cwd(), 'data');
+    const dataDir = DATA_DIR;
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true });
     }

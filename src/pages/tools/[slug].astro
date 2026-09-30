@@ -1,6 +1,7 @@
 ---
 import fs from 'node:fs';
 import path from 'node:path';
+import { SCANS_DIR } from '../../lib/paths';
 import Layout from '../../layouts/Layout.astro';
 import ScoreRing from '../../components/ScoreRing.astro';
 import VerdictBadge from '../../components/VerdictBadge.astro';
@@ -32,7 +33,7 @@ let toolRecord = (getTool(slug) || getToolBySlug(slug)) as ToolData | null;
 
 // 2. Look up in data/scans for newly scanned unlisted tools
 if (!toolRecord) {
-  const scanFile = path.join(process.cwd(), 'data', 'scans', `${slug}.json`);
+  const scanFile = path.join(SCANS_DIR, `${slug}.json`);
   if (fs.existsSync(scanFile)) {
     try {
       toolRecord = JSON.parse(fs.readFileSync(scanFile, 'utf-8'));

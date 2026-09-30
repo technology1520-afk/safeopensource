@@ -23,7 +23,8 @@ export interface AdminSettings {
   rotatedKeys: RotatedKey[];
 }
 
-const SETTINGS_FILE = path.join(process.cwd(), 'data', 'settings.json');
+import { DATA_DIR } from '../paths';
+const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
 
 const DEFAULT_SETTINGS: AdminSettings = {
   announcement: {
@@ -38,7 +39,7 @@ const DEFAULT_SETTINGS: AdminSettings = {
 };
 
 function ensureDataDir() {
-  const dir = path.join(process.cwd(), 'data');
+  const dir = DATA_DIR;
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }

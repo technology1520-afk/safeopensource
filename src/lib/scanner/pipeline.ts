@@ -7,7 +7,7 @@ import {
   formatAdvisorySource,
 } from './scoring';
 
-const DATA_DIR = path.join(process.cwd(), 'data');
+const DATA_DIR = process.env.SOS_DATA_DIR || (process.env.NETLIFY ? '/tmp/sos-data' : path.join(process.cwd(), 'data'));
 const SCANS_DIR = path.join(DATA_DIR, 'scans');
 const RECENT_SCANS_FILE = path.join(DATA_DIR, 'recent-scans.json');
 
