@@ -1,0 +1,34 @@
+{
+  "slug": "filebrowser",
+  "repo": "filebrowser/filebrowser",
+  "name": "File Browser",
+  "tagline": "Web File Browser which can be used to upload, delete, preview, and edit your files.",
+  "category": "cloud-storage",
+  "license_spdx": "Apache-2.0",
+  "stars": 25400,
+  "contributors": 140,
+  "last_push_days": 120,
+  "latest_release": "v2.23.0",
+  "safety_score": 42,
+  "verdict": "risky",
+  "archived": true,
+  "risk_reasons": [
+    "ARCHIVED — FLAGGED: Repository is marked as archived by maintainers. No active vulnerability remediation or patch delivery.",
+    "Historical path traversal vulnerabilities require strict read-only sandbox mount parameters."
+  ],
+  "scorecard": 4.2,
+  "components": {
+    "security_health": 30,
+    "maintenance": 40,
+    "community": 50,
+    "releases": 45
+  },
+  "language": "Go",
+  "self_host_difficulty": "Easy",
+  "install_commands": {
+    "docker": "docker run -v /path/to/files:/srv -v /path/to/config:/etc -p 8080:80 filebrowser/filebrowser"
+  },
+  "website_url": "https://filebrowser.org",
+  "ai_report": "File Browser has been officially marked as archived by its maintainers. SafeOpenSource flags this repository as Risky due to the discontinuation of regular vulnerability triage and patch distribution.",
+  "scanned_at": "2026-09-20T12:00:00.000Z"
+}

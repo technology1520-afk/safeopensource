@@ -1,0 +1,39 @@
+{
+  "slug": "hermes-agent",
+  "repo": "NousResearch/hermes-agent",
+  "name": "Hermes Agent",
+  "tagline": "The agent that grows with you",
+  "category": "ai-agents",
+  "license_spdx": "MIT",
+  "stars": 249100,
+  "contributors": 958,
+  "last_push_days": 0,
+  "latest_release": "main",
+  "safety_score": 71.8,
+  "verdict": "caution",
+  "risk_reasons": [
+    "No OpenSSF Scorecard available — security practices unverified.",
+    "Active community repository with unverified CI branch protections and actions pinning."
+  ],
+  "scorecard": null,
+  "components": {
+    "security_health": null,
+    "maintenance": 92,
+    "community": 70,
+    "releases": 34
+  },
+  "provenance": "Maintenance 92 (46.2%) + Community 70 (30.8%) + Releases 34 (23.1%) = 71.8",
+  "scanned_at_formatted": "Scanned 2026-09-26 12:01 UTC",
+  "advisories_source": "GitHub Advisory DB, checked 2026-09-26",
+  "archived": false,
+  "language": "Python",
+  "self_host_difficulty": "Medium",
+  "install_commands": {
+    "clone": "git clone https://github.com/NousResearch/hermes-agent.git"
+  },
+  "website_url": "https://hermes-agent.nousresearch.com",
+  "ai_report": "hermes-agent (nousresearch/hermes-agent) has been evaluated by the SafeOpenSource continuous telemetry pipeline. The project achieves an overall Safety Score of 71.8/100 with a CAUTION posture based on unverified OpenSSF telemetry and GitHub commit momentum (0d since last push). Maintainers provide public source availability under MIT.",
+  "ai_report_status": "approved",
+  "scanned_at": "2026-09-26T12:00:00.000Z",
+  "unlisted": false
+}

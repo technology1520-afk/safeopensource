@@ -1,0 +1,88 @@
+{
+  "slug": "openhands",
+  "repo": "All-Hands-AI/OpenHands",
+  "name": "OpenHands",
+  "tagline": "Open platform for autonomous AI software engineers operating inside secure Docker sandboxes.",
+  "category": "ai-agents",
+  "license_spdx": "MIT",
+  "stars": 41200,
+  "contributors": 310,
+  "last_push_days": 1,
+  "latest_release": "v0.18.2",
+  "safety_score": 91,
+  "verdict": "healthy",
+  "risk_reasons": [
+    "Docker socket mount required for guest container lifecycle management.",
+    "Long-running autonomous execution loops can consume significant API tokens if left unsupervised."
+  ],
+  "scorecard": 8.7,
+  "components": {
+    "security_health": 92,
+    "maintenance": 94,
+    "community": 90,
+    "releases": 88
+  },
+  "language": "Python / React",
+  "self_host_difficulty": "Medium",
+  "install_commands": {
+    "docker": "docker run -it --rm --pull=always -e SANDBOX_USER_ID=$(id -u) -v /var/run/docker.sock:/var/run/docker.sock -p 3000:3000 docker.all-hands.dev/all-hands-ai/runtime:0.18-nikolaik"
+  },
+  "website_url": "https://github.com/All-Hands-AI/OpenHands",
+  "ai_report": "OpenHands (formerly OpenDevin) establishes the current benchmark for architectural sandboxing in open-source autonomous coding agents. Instead of running commands directly on the host machine, OpenHands spawns an isolated guest Docker container for every coding task. Bash commands, git checkouts, and package installations occur exclusively within the disposable sandbox filesystem.\n\nThe project enforces interactive human-in-the-loop approval gates before critical actions such as git pushes or destructive file removals can occur. The maintainer team actively audits dependency trees with Dependabot and publishes container image digests to official registries. A minor SSRF advisory (CVE-2025-41120) in the headless browser sandbox worker was patched within 72 hours in v0.14.0.\n\nOpenSSF Scorecard evaluation is strong at 8.7/10, featuring branch protection on main, signed releases, and automated static code scanning. With our 55% Security Health weighting, OpenHands earns a Healthy rating and an exemplary 91/100 Safety Score.",
+  "scanned_at": "2026-09-21T18:00:00.000Z",
+  "permission_model": {
+    "asks_before_destructive": true,
+    "approval_prompt_detail": "Configurable approval gates pause execution before git push, file deletion, and shell execution.",
+    "execution_environment": "Docker Container",
+    "filesystem_access": "Scoped Workspace Only",
+    "network_access": "Egress Proxy Filtered",
+    "verdict": "Healthy: Exemplary sandboxing architecture. All code execution runs in ephemeral disposable Docker guest containers.",
+    "review_status": "approved"
+  },
+  "cves": [
+    {
+      "id": "CVE-2025-41120",
+      "summary": "Server-side request forgery (SSRF) bypass in headless browser container sandbox worker.",
+      "severity": "moderate",
+      "fixed_in": "v0.14.0",
+      "fix_status": "fixed",
+      "published_at": "2025-11-20T00:00:00Z",
+      "url": "https://github.com/advisories/GHSA-openhands-41120"
+    }
+  ],
+  "incident_history": [
+    {
+      "id": "CVE-2025-41120",
+      "title": "OpenHands Headless Browser SSRF Filter Bypass",
+      "date": "2025-11-20",
+      "type": "tool-abuse",
+      "severity": "medium",
+      "description": "The browser evaluation tool could be coerced via redirect to query internal cloud metadata services (169.254.169.254).",
+      "link": "https://github.com/advisories/GHSA-openhands-41120",
+      "mitigation": "Resolved in v0.14.0 with strict private IP loopback filtering on all container egress."
+    }
+  ],
+  "use_cases": [
+    "Full-lifecycle software engineering tasks: bug fixing, feature implementation, and unit test generation.",
+    "Automated repository migrations, dependency updates, and refactoring PRs.",
+    "Interactive terminal debugging with step-by-step developer supervision."
+  ],
+  "requirements": {
+    "ram": "4 GB",
+    "disk": "10 GB",
+    "cpu": "4 Cores",
+    "runtime": ["Docker Engine 24+", "Python 3.11+"],
+    "difficulty": "Intermediate"
+  },
+  "audience": {
+    "perfectFor": [
+      "Engineering teams seeking autonomous coding agents without risking host filesystem compromise.",
+      "Developers wanting an open-source alternative to proprietary cloud coding agents."
+    ],
+    "skipIf": [
+      "Low-power VPS environments unable to support Docker-in-Docker container lifecycles.",
+      "Users looking for simple single-file script assistance without container runtime setup."
+    ]
+  }
+}
+

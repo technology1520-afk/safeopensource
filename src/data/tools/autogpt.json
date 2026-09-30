@@ -1,0 +1,90 @@
+{
+  "slug": "autogpt",
+  "repo": "Significant-Gravitas/AutoGPT",
+  "name": "AutoGPT",
+  "tagline": "Autonomous general-purpose AI agent coordinating goal decomposition and plugin tools.",
+  "category": "ai-agents",
+  "license_spdx": "MIT",
+  "stars": 165000,
+  "contributors": 420,
+  "last_push_days": 1,
+  "latest_release": "v0.5.4",
+  "safety_score": 79,
+  "verdict": "caution",
+  "risk_reasons": [
+    "Continuous mode (--continuous) disables all human approval gates, allowing autonomous destructive action chains.",
+    "Plugin architecture allows third-party extension code execution without cryptographic signatures.",
+    "Recursive tool calls can exhaust upstream LLM budget in short intervals."
+  ],
+  "scorecard": 7.6,
+  "components": {
+    "security_health": 74,
+    "maintenance": 86,
+    "community": 92,
+    "releases": 80
+  },
+  "language": "Python",
+  "self_host_difficulty": "Medium",
+  "install_commands": {
+    "docker": "docker compose -f docker-compose.yml up -d",
+    "pip": "git clone https://github.com/Significant-Gravitas/AutoGPT.git && cd AutoGPT && ./run.sh"
+  },
+  "website_url": "https://github.com/Significant-Gravitas/AutoGPT",
+  "ai_report": "AutoGPT remains one of the most prominent open-source autonomous agent architectures, capable of breaking down high-level user objectives into recursive sub-tasks. The system supports web browsing, filesystem storage, and shell commands. In standard interactive mode, AutoGPT pauses before every tool execution to request operator authorization.\n\nHowever, the platform includes a continuous execution switch (--continuous / -c) designed for hands-free automation. In continuous mode, all approval gates are suppressed, presenting critical operational danger if the agent encounters conflicting objectives or prompt injection payloads. In 2024, CVE-2024-38520 demonstrated that untrusted plugin manifests could execute arbitrary shell commands during discovery.\n\nOpenSSF Scorecard evaluation scores 7.6/10. While dependency auditing and release frequency are robust, operators must treat continuous mode with extreme caution and never run AutoGPT with write access to production directories. With our 55% Security Health weighting, AutoGPT earns a Caution rating with a 79/100 Safety Score.",
+  "scanned_at": "2026-09-21T18:00:00.000Z",
+  "permission_model": {
+    "asks_before_destructive": true,
+    "approval_prompt_detail": "Prompts before every tool execution in interactive mode. Suppressed entirely if launched in '--continuous' mode.",
+    "execution_environment": "Docker Container / Local Python",
+    "filesystem_access": "Scoped Workspace Only",
+    "network_access": "Unrestricted Internet Access",
+    "verdict": "Caution: Safe in interactive mode; high danger in continuous mode. Operators must never deploy continuous mode on sensitive host environments.",
+    "review_status": "approved"
+  },
+  "cves": [
+    {
+      "id": "CVE-2024-38520",
+      "summary": "Arbitrary code execution via untrusted plugin manifest parser during extension discovery.",
+      "severity": "high",
+      "fixed_in": "v0.5.2",
+      "fix_status": "fixed",
+      "published_at": "2024-06-25T00:00:00Z",
+      "url": "https://github.com/advisories/GHSA-autogpt-38520"
+    }
+  ],
+  "incident_history": [
+    {
+      "id": "CVE-2024-38520",
+      "title": "AutoGPT Unverified Plugin Code Execution",
+      "date": "2024-06-25",
+      "type": "tool-abuse",
+      "severity": "high",
+      "description": "Third-party community plugins could execute arbitrary Python code upon import before user authorization.",
+      "link": "https://github.com/advisories/GHSA-autogpt-38520",
+      "mitigation": "Upgraded in v0.5.2 with strict plugin verification and isolated execution boundaries."
+    }
+  ],
+  "use_cases": [
+    "General-purpose autonomous task automation and market research synthesis.",
+    "Multi-step web crawling, summarization, and data extraction pipelines.",
+    "Experimental goal decomposition and recursive agent benchmarking."
+  ],
+  "requirements": {
+    "ram": "4 GB",
+    "disk": "5 GB",
+    "cpu": "2 Cores",
+    "runtime": ["Python 3.10+", "Docker Compose"],
+    "difficulty": "Intermediate"
+  },
+  "audience": {
+    "perfectFor": [
+      "AI researchers and developers exploring autonomous multi-step reasoning architectures.",
+      "Power users willing to supervise execution loops in interactive mode."
+    ],
+    "skipIf": [
+      "Unsupervised automated deployments on machines holding sensitive financial or corporate credentials.",
+      "Users expecting zero prompt engineering or instant guaranteed task convergence."
+    ]
+  }
+}
+

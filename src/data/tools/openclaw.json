@@ -1,0 +1,91 @@
+{
+  "slug": "openclaw",
+  "repo": "openclaw/openclaw",
+  "name": "OpenClaw",
+  "tagline": "Autonomous personal AI agent with native shell, browser, and local tool execution.",
+  "category": "ai-agents",
+  "license_spdx": "MIT",
+  "stars": 14800,
+  "contributors": 82,
+  "last_push_days": 2,
+  "latest_release": "v0.8.6",
+  "safety_score": 68,
+  "verdict": "caution",
+  "advisories_count": 30,
+  "risk_reasons": [
+    "Executes shell commands on host without container sandboxing by default.",
+    "Vulnerable to indirect prompt injection in downloaded files or git repositories (CVE-2026-35650).",
+    "Continuous autonomous mode executes file modifications without mandatory human confirmation prompt."
+  ],
+  "scorecard": 6.4,
+  "components": {
+    "security_health": 60,
+    "maintenance": 78,
+    "community": 75,
+    "releases": 72
+  },
+  "language": "TypeScript / Node",
+  "self_host_difficulty": "Medium",
+  "install_commands": {
+    "npm": "npm install -g openclaw && openclaw init",
+    "docker": "docker run -it --name openclaw -v $(pwd):/workspace openclaw/openclaw:latest"
+  },
+  "website_url": "https://github.com/openclaw/openclaw",
+  "ai_report": "OpenClaw represents a high-capability autonomous personal assistant capable of orchestrating multi-step terminal, file management, and browser tasks. However, from an operational security posture, OpenClaw presents significant inherent risks due to its default execution model. The agent executes commands with the full privileges of the host user profile unless deliberately confined within a rootless container.\n\nIn early 2026, OpenClaw was subject to CVE-2026-35650, where malicious markdown files in cloned repositories could inject hidden instructions to exfiltrate environment variables and SSH keys via curl. While maintainers introduced path sanitization in v0.8.4, operators should strictly avoid running OpenClaw with personal cloud credentials or on machines with unencrypted credentials in ~/.aws or ~/.ssh.\n\nOpenSSF Scorecard evaluation is moderate at 6.4/10. Automated dependency scanning is present, but branch protection and release signing require improvement. Because this agent operates with host privileges, SafeOpenSource assigns a Caution rating with a 68/100 Safety Score, heavily influenced by our 55% Security Health weighting for autonomous agents.",
+  "scanned_at": "2026-09-21T18:00:00.000Z",
+  "permission_model": {
+    "asks_before_destructive": false,
+    "approval_prompt_detail": "Autonomous by default; confirmation requires manual '--confirm' flag on every invocation.",
+    "execution_environment": "Raw Host Shell",
+    "filesystem_access": "Unrestricted Host Filesystem",
+    "network_access": "Unrestricted Internet Access",
+    "verdict": "Caution: Default configuration executes directly in host user space without sandbox isolation. Operators must manually pass container flags.",
+    "review_status": "approved"
+  },
+  "cves": [
+    {
+      "id": "CVE-2026-35650",
+      "summary": "Sandbox escape and arbitrary command execution via indirect prompt injection in repository README parser.",
+      "severity": "critical",
+      "fixed_in": "v0.8.4",
+      "fix_status": "fixed",
+      "published_at": "2026-02-14T00:00:00Z",
+      "url": "https://github.com/advisories/GHSA-openclaw-35650"
+    }
+  ],
+  "incident_history": [
+    {
+      "id": "CVE-2026-35650",
+      "title": "OpenClaw Indirect Prompt Injection Sandbox Escape",
+      "date": "2026-02-14",
+      "type": "sandbox-escape",
+      "severity": "critical",
+      "description": "An untrusted git repository containing hidden prompt injection instructions in markdown comments tricked the agent into reading ~/.aws/credentials and exfiltrating via a DNS query.",
+      "link": "https://github.com/advisories/GHSA-openclaw-35650",
+      "mitigation": "Upgrade to v0.8.4+ and run inside rootless Docker with '--network=internal' or read-only volume mounts."
+    }
+  ],
+  "use_cases": [
+    "Personal desktop workflow automation and repetitive shell task orchestration.",
+    "Web research synthesis via automated headless browser scraping.",
+    "Local file management, document indexing, and media file organization."
+  ],
+  "requirements": {
+    "ram": "2 GB",
+    "disk": "1 GB",
+    "cpu": "2 Cores",
+    "runtime": ["Node.js 20+", "Docker (Recommended)"],
+    "difficulty": "Needs a sysadmin"
+  },
+  "audience": {
+    "perfectFor": [
+      "Experienced developers comfortable configuring Docker sandbox perimeters.",
+      "Operators seeking fully local agent loops without hosted platform lock-in."
+    ],
+    "skipIf": [
+      "Beginners wanting turnkey zero-configuration desktop automation without security overhead.",
+      "Corporate laptops with sensitive unencrypted corporate credentials on host disk."
+    ]
+  }
+}
+

@@ -1,0 +1,68 @@
+{
+  "slug": "aider",
+  "repo": "Aider-AI/aider",
+  "name": "Aider",
+  "tagline": "AI pair programming in your terminal with automated git commits and scoped edits.",
+  "category": "ai-agents",
+  "license_spdx": "Apache-2.0",
+  "stars": 24500,
+  "contributors": 95,
+  "last_push_days": 1,
+  "latest_release": "v0.74.0",
+  "safety_score": 94,
+  "verdict": "healthy",
+  "risk_reasons": [
+    "Direct terminal tool calls can modify local working tree files if user accepts suggested edits without diff review.",
+    "Requires LLM API keys with sufficient usage credits for large context windows."
+  ],
+  "scorecard": 8.9,
+  "components": {
+    "security_health": 95,
+    "maintenance": 96,
+    "community": 92,
+    "releases": 91
+  },
+  "language": "Python",
+  "self_host_difficulty": "Easy",
+  "install_commands": {
+    "pip": "pip install aider-chat && aider",
+    "brew": "brew install aider"
+  },
+  "website_url": "https://aider.chat",
+  "ai_report": "Aider represents an exemplary approach to safe developer agent interaction by integrating deeply with the git revision control system. Unlike autonomous agents that modify files destructively in the background, Aider produces atomic git commits for every code alteration. If an AI suggested refactoring produces unintended regressions, the operator can execute a single 'git reset' or utilize Aider's built-in '/undo' command to instantly restore the exact prior repository state.\n\nFrom a network and privacy perspective, Aider restricts its network egress strictly to the operator's configured LLM endpoint (OpenAI, Anthropic, or local Ollama instances). It does not maintain external telemetry bridges or run unvetted third-party plugins. Command execution (/run) requires explicit human terminal confirmation before execution.\n\nOpenSSF Scorecard evaluation is high at 8.9/10, reflecting disciplined repository branch protection, automated dependency updates via Dependabot, and reproducible release packages published to PyPI. With our 55% Security Health weighting, Aider earns a confident Healthy rating with a 94/100 Safety Score.",
+  "scanned_at": "2026-09-21T18:00:00.000Z",
+  "permission_model": {
+    "asks_before_destructive": true,
+    "approval_prompt_detail": "Interactive terminal diff review before every file change; /undo command provides instantaneous atomic git rollback.",
+    "execution_environment": "Local CLI / Git Managed",
+    "filesystem_access": "Scoped Git Repository Only",
+    "network_access": "Configured LLM API Outbound Only",
+    "verdict": "Healthy: Gold-standard safety design. Every AI modification creates an atomic git commit, preventing permanent data loss.",
+    "review_status": "approved"
+  },
+  "cves": [],
+  "incident_history": [],
+  "use_cases": [
+    "Terminal-based interactive pair programming and test-driven development.",
+    "Automated codebase refactoring, multi-file code reviews, and documentation generation.",
+    "Rapid prototyping with local LLMs (Ollama) or frontier cloud models."
+  ],
+  "requirements": {
+    "ram": "1 GB",
+    "disk": "500 MB",
+    "cpu": "1 Core",
+    "runtime": ["Python 3.9+", "Git"],
+    "difficulty": "Beginner-friendly"
+  },
+  "audience": {
+    "perfectFor": [
+      "Software engineers seeking an AI pair programmer that respects git history and developer control.",
+      "Privacy-conscious developers pairing Aider with local Ollama models for 100% offline development."
+    ],
+    "skipIf": [
+      "Non-programmers looking for a visual point-and-click desktop automation assistant.",
+      "Operators wanting fully autonomous background agents that execute multi-day tasks without supervision."
+    ]
+  }
+}
+
