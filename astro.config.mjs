@@ -1,5 +1,5 @@
 import { defineConfig } from 'astro/config';
-import node from '@astrojs/node';
+import netlify from '@astrojs/netlify';
 import tailwindcss from '@tailwindcss/vite';
 import preact from '@astrojs/preact';
 import sitemap from '@astrojs/sitemap';
@@ -11,9 +11,7 @@ export default defineConfig({
   security: {
     checkOrigin: false
   },
-  adapter: node({
-    mode: 'standalone'
-  }),
+  adapter: netlify({ imageCDN: false }),
   integrations: [
     preact(),
     sitemap({
