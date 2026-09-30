@@ -75,32 +75,9 @@ const categoriesWithStats = categories.map((cat) => {
       </p>
     </div>
 
-    <!-- Monitored Taxonomies: Category Grid (Promoted Above the Fold for Intent-Based Discovery) -->
-    <div id="categories" class="my-8 sm:my-12 lg:my-14 scroll-mt-24 text-left" aria-label="Monitored Categories">
-      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-6 pb-4 border-b border-app-border">
-        <div>
-          <span class="text-micro text-app-subtle block mb-1 font-mono tracking-wider uppercase">
-            MONITORED TAXONOMIES &middot; CHOOSE A SECTOR TO INSPECT SAFETY SCORES
-          </span>
-          <h2 class="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-app-text">
-            Browse by Category
-          </h2>
-        </div>
-        <span class="text-xs font-mono text-app-subtle shrink-0">
-          13 Sectors Active
-        </span>
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-5 2xl:gap-6">
-        {categoriesWithStats.map((cat) => (
-          <CategoryCard
-            category={cat}
-            toolCount={cat.toolCount}
-            avgScore={cat.avgScore}
-            class="hover:border-emerald-500/50"
-          />
-        ))}
-      </div>
+    <!-- Pre-Audited Starter Kit Bundles (Promoted Above the Fold for Intent-Based Discovery) -->
+    <div id="starter-kits" class="my-8 sm:my-12 lg:my-14 scroll-mt-24 text-left" aria-label="Curated Starter Kits">
+      <StackBundles />
     </div>
 
     <!-- Observatory Radar Scope & Live Telemetry Verification Monitor (SOC Mission Control Console) -->
@@ -194,8 +171,33 @@ const categoriesWithStats = categories.map((cat) => {
   <!-- 4. Category Radar (13 Sectors SVG Grid) -->
   <CategoryRadar />
 
-  <!-- 5. "The Right Stack for You" Recommendation Bundles -->
-  <StackBundles />
+  <!-- 5. Monitored Taxonomies: Category Grid (moved below the fold) -->
+  <section id="categories" class="my-14 scroll-mt-24" aria-label="Monitored Categories">
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-6 pb-4 border-b border-app-border">
+      <div>
+        <span class="text-micro text-app-subtle block mb-1 font-mono tracking-wider uppercase">
+          MONITORED TAXONOMIES &middot; CHOOSE A SECTOR TO INSPECT SAFETY SCORES
+        </span>
+        <h2 class="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-app-text">
+          Browse by Category
+        </h2>
+      </div>
+      <span class="text-xs font-mono text-app-subtle shrink-0">
+        13 Sectors Active
+      </span>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-5 2xl:gap-6">
+      {categoriesWithStats.map((cat) => (
+        <CategoryCard
+          category={cat}
+          toolCount={cat.toolCount}
+          avgScore={cat.avgScore}
+          class="hover:border-emerald-500/50"
+        />
+      ))}
+    </div>
+  </section>
 
   <!-- 6. 3-Question Architecture Matcher Quiz -->
   <MatchQuiz />

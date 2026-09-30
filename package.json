@@ -29,5 +29,8 @@
     "preact": "^10.29.8",
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.15"
   }
 }
