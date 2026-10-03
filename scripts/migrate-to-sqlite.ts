@@ -100,12 +100,15 @@ async function migrate(): Promise<void> {
       upserted.add(tool.slug);
       const row = columns.map((col) => {
         const v = (tool as any)[col];
-        if (v === undefined) {
+        if (v === undefined || v === null) {
           if (col === 'ai_report_status') return 'approved';
           if (col === 'unlisted' || col === 'archived') return false;
           if (col === 'advisories_count') return 0;
+          if (col === 'created_at' || col === 'updated_at') return tool.scanned_at || new Date().toISOString();
           return null;
         }
+        // jsonb columns: the HTTP driver needs a JSON string, not a JS object
+        if (v !== null && typeof v === 'object') return JSON.stringify(v);
         return v;
       });
       // Use query() array form for dynamic columns
