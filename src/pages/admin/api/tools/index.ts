@@ -25,7 +25,7 @@ export const GET: APIRoute = async ({ locals }) => {
     return new Response('', { status: 404 });
   }
 
-  const tools = listToolsSummary();
+  const tools = await listToolsSummary();
   return new Response(JSON.stringify(tools), {
     status: 200,
     headers: { 'Content-Type': 'application/json' },
@@ -58,7 +58,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const { repo_url, repo, category, name, tagline, logo_url } = parseResult.data;
     const targetRepo = repo_url || repo || '';
 
-    const createdTool = addTool(
+    const createdTool = await addTool(
       {
         repo: targetRepo,
         category,

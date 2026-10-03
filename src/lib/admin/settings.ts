@@ -73,11 +73,11 @@ export function saveSettings(settings: AdminSettings): void {
   fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2) + '\n', 'utf-8');
 }
 
-export function updateSettings(
+export async function updateSettings(
   partial: Partial<AdminSettings>,
   principal: 'owner' | 'agent',
   ip: string
-): AdminSettings {
+): Promise<AdminSettings> {
   const current = getSettings();
   const updated: AdminSettings = {
     ...current,
@@ -89,7 +89,7 @@ export function updateSettings(
 
   saveSettings(updated);
 
-  logAudit(principal, 'SETTINGS_UPDATE', ip, {
+  await logAudit(principal, 'SETTINGS_UPDATE', ip, {
     modified: Object.keys(partial),
   });
 
@@ -120,12 +120,12 @@ export function checkRotatedKeyGrace(token: string): { valid: boolean; role?: 'a
  * Stores current key into rotatedKeys array with 24h grace period.
  * Generates and returns a fresh 32-byte hex key.
  */
-export function rotateApiKey(
+export async function rotateApiKey(
   currentKey: string,
   role: 'admin' | 'readonly',
   principal: 'owner' | 'agent',
   ip: string
-): { newKey: string; graceExpiresAt: string } {
+): Promise<{ newKey: string; graceExpiresAt: string }> {
   const settings = getSettings();
   const now = Date.now();
   const GRACE_PERIOD_MS = 24 * 60 * 60 * 1000;
@@ -146,7 +146,7 @@ export function rotateApiKey(
 
   const graceExpiresAt = new Date(now + GRACE_PERIOD_MS).toISOString();
 
-  logAudit(principal, 'API_KEY_ROTATED', ip, {
+  await logAudit(principal, 'API_KEY_ROTATED', ip, {
     role,
     graceExpiresAt,
   });

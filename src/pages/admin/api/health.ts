@@ -10,7 +10,7 @@ export const GET: APIRoute = async ({ locals }) => {
     return new Response('', { status: 404 });
   }
 
-  const tools = listToolsSummary();
+  const tools = await listToolsSummary();
   const flagged = tools.filter((t) => t.verdict === 'caution' || t.verdict === 'risky');
   const drafts = tools.filter((t) => t.ai_report_status === 'draft');
 

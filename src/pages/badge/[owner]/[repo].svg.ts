@@ -40,7 +40,7 @@ export const GET: APIRoute = async ({ params, request, clientAddress, url }) => 
   const slug = rawRepo.toLowerCase();
 
   // Try looking up in catalog
-  let tool = getTool(slug) || getTool(fullRepo);
+  let tool = await getTool(slug) || await getTool(fullRepo);
 
   // If not found in catalog, try data/scans
   if (!tool) {

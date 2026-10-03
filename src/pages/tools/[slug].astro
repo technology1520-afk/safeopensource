@@ -28,8 +28,8 @@ if (!slug) {
   return new Response('Not found', { status: 404 });
 }
 
-// 1. Look up in catalog
-let toolRecord = (getTool(slug) || getToolBySlug(slug)) as ToolData | null;
+// 1. Look up in catalog (Neon DB, falling back to committed JSON)
+let toolRecord = ((await getTool(slug)) || getToolBySlug(slug)) as ToolData | null;
 
 // 2. Look up in data/scans for newly scanned unlisted tools
 if (!toolRecord) {

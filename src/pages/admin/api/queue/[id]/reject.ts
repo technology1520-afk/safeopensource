@@ -28,7 +28,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
   }
 
   try {
-    rejectTool(id, reason, auth.principal, auth.ip);
+    await rejectTool(id, reason, auth.principal, auth.ip);
     return new Response(
       JSON.stringify({
         success: true,

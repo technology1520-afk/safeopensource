@@ -9,7 +9,7 @@ export const GET: APIRoute = async ({ locals }) => {
     return new Response('', { status: 404 });
   }
 
-  const drafts = getDraftTools();
+  const drafts = await getDraftTools();
   return new Response(
     JSON.stringify({
       count: drafts.length,
@@ -45,7 +45,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       });
     }
 
-    const tool = approveReport(body.repo, auth.principal, auth.ip);
+    const tool = await approveReport(body.repo, auth.principal, auth.ip);
 
     return new Response(
       JSON.stringify({

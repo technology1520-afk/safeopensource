@@ -1,7 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { desc, eq, or, like, sql } from 'drizzle-orm';
-import { db, tools, type ToolEntity, type NewToolEntity } from '../db/index';
+import { getNeonDb, neonConfigured } from '../db/neon';
+import { tools, type ToolEntity, type NewToolEntity } from '../db/schema';
 import { logAudit } from './audit';
 
 const TOOLS_DIR = path.join(process.cwd(), 'src', 'data', 'tools');
@@ -199,14 +200,13 @@ export function getAllToolFiles(): string[] {
 }
 
 /**
- * Query summary metrics for all catalog tools from SQLite.
+ * Query summary metrics for all catalog tools from Neon Postgres.
  */
-export function listToolsSummary(): ToolSummary[] {
-  const rows = db
+export async function listToolsSummary(): Promise<ToolSummary[]> {
+  const rows = await getNeonDb()
     .select()
     .from(tools)
-    .orderBy(desc(tools.safety_score))
-    .all();
+    .orderBy(desc(tools.safety_score));
 
   return rows.map((row) => ({
     slug: row.slug,
@@ -231,16 +231,41 @@ export function listToolsSummary(): ToolSummary[] {
 }
 
 /**
- * Retrieve a single tool by slug or GitHub repository name from SQLite.
+ * Retrieve a single tool by slug or GitHub repository name from Neon Postgres.
  */
-export function getTool(slugOrRepo: string): ToolRecord | null {
+export async function getTool(slugOrRepo: string): Promise<ToolRecord | null> {
   if (!slugOrRepo) return null;
 
   const cleanId = slugOrRepo.toLowerCase().trim().replace(/^https?:\/\/github\.com\//, '').replace(/\/$/, '');
   const slugFromRepo = cleanId.includes('/') ? cleanId.split('/').pop() || cleanId : cleanId;
 
+  if (!neonConfigured()) {
+    // No Neon connection (static build / preview): serve from JSON catalog only.
+    const directPath = path.join(TOOLS_DIR, `${slugFromRepo}.json`);
+    if (fs.existsSync(directPath)) {
+      try {
+        return JSON.parse(fs.readFileSync(directPath, 'utf-8'));
+      } catch {
+        // Fall through
+      }
+    }
+    if (fs.existsSync(SCANS_DIR)) {
+      const scanPath = path.join(SCANS_DIR, `${slugFromRepo}.json`);
+      if (fs.existsSync(scanPath)) {
+        try {
+          return JSON.parse(fs.readFileSync(scanPath, 'utf-8'));
+        } catch {
+          // Fall through
+        }
+      }
+    }
+    return null;
+  }
+
+  const db = getNeonDb();
+
   // Exact match on slug or exact match on repo
-  const directMatch = db
+  const directMatches = await db
     .select()
     .from(tools)
     .where(
@@ -250,7 +275,8 @@ export function getTool(slugOrRepo: string): ToolRecord | null {
         eq(sql`lower(${tools.repo})`, cleanId)
       )
     )
-    .get();
+    .limit(1);
+  const directMatch = directMatches[0] ?? null;
 
   // Check if tool JSON file on disk was updated (e.g. manual edit or test runner)
   const directPath = path.join(TOOLS_DIR, `${slugFromRepo}.json`);
@@ -270,26 +296,27 @@ export function getTool(slugOrRepo: string): ToolRecord | null {
         fileTool.verdict !== directMatch.verdict ||
         Boolean(fileTool.archived) !== Boolean(directMatch.archived))
     ) {
-      db.update(tools)
+      await db
+        .update(tools)
         .set({
           safety_score: fileTool.safety_score,
           verdict: fileTool.verdict,
           archived: Boolean(fileTool.archived),
           updated_at: new Date().toISOString(),
         })
-        .where(eq(tools.slug, directMatch.slug))
-        .run();
+        .where(eq(tools.slug, directMatch.slug));
       return { ...entityToRecord(directMatch), ...fileTool };
     }
     return entityToRecord(directMatch);
   }
 
   // Suffix match for repository (e.g. "owner/repo" matching by repo)
-  const suffixMatch = db
+  const suffixMatches = await db
     .select()
     .from(tools)
     .where(like(sql`lower(${tools.repo})`, `%/${slugFromRepo}`))
-    .get();
+    .limit(1);
+  const suffixMatch = suffixMatches[0] ?? null;
 
   if (suffixMatch) {
     return entityToRecord(suffixMatch);
@@ -318,14 +345,14 @@ export class ScoreTamperingError extends Error {
 }
 
 /**
- * Patch human-editable fields of a tool within a Drizzle transaction.
+ * Patch human-editable fields of a tool in Neon Postgres.
  */
-export function patchToolContent(
+export async function patchToolContent(
   slugOrRepo: string,
   fields: Record<string, any>,
   principal: 'owner' | 'agent' | string,
   ip: string
-): { tool: ToolRecord; diff: DiffEntry[] } {
+): Promise<{ tool: ToolRecord; diff: DiffEntry[] }> {
   // Strict check: if any protected field is present, throw ScoreTamperingError
   for (const key of Object.keys(fields)) {
     if (PROTECTED_FIELDS.has(key)) {
@@ -336,55 +363,53 @@ export function patchToolContent(
     }
   }
 
-  return db.transaction((tx) => {
-    const current = getTool(slugOrRepo);
-    if (!current) {
-      throw new Error(`Tool "${slugOrRepo}" not found`);
+  const current = await getTool(slugOrRepo);
+  if (!current) {
+    throw new Error(`Tool "${slugOrRepo}" not found`);
+  }
+
+  const diff: DiffEntry[] = [];
+  const updates: Record<string, any> = {
+    updated_at: new Date().toISOString(),
+  };
+
+  for (const [key, value] of Object.entries(fields)) {
+    const prev = (current as any)[key];
+    if (JSON.stringify(prev) !== JSON.stringify(value)) {
+      diff.push({ field: key, before: prev, after: value });
+      updates[key] = value;
+      (current as any)[key] = value;
     }
+  }
 
-    const diff: DiffEntry[] = [];
-    const updates: Record<string, any> = {
-      updated_at: new Date().toISOString(),
-    };
+  if (diff.length > 0) {
+    await getNeonDb()
+      .update(tools)
+      .set(updates)
+      .where(eq(tools.slug, current.slug));
+  }
 
-    for (const [key, value] of Object.entries(fields)) {
-      const prev = (current as any)[key];
-      if (JSON.stringify(prev) !== JSON.stringify(value)) {
-        diff.push({ field: key, before: prev, after: value });
-        updates[key] = value;
-        (current as any)[key] = value;
-      }
-    }
+  current.updated_at = updates.updated_at;
 
-    if (diff.length > 0) {
-      tx.update(tools)
-        .set(updates)
-        .where(eq(tools.slug, current.slug))
-        .run();
-    }
-
-    current.updated_at = updates.updated_at;
-
-    logAudit(principal, 'TOOL_PATCH', ip, {
-      slug: current.slug,
-      repo: current.repo,
-      diff,
-    });
-
-    syncJsonFile(current);
-
-    return { tool: current, diff };
+  await logAudit(principal, 'TOOL_PATCH', ip, {
+    slug: current.slug,
+    repo: current.repo,
+    diff,
   });
+
+  syncJsonFile(current);
+
+  return { tool: current, diff };
 }
 
 /**
- * Add a new repository to the review queue within a Drizzle transaction.
+ * Add a new repository to the review queue in Neon Postgres.
  */
-export function addTool(
+export async function addTool(
   data: { repo?: string; repo_url?: string; category: string; name?: string; tagline?: string; logo_url?: string },
   principal: 'owner' | 'agent' | string,
   ip: string
-): ToolRecord {
+): Promise<ToolRecord> {
   const rawRepo = data.repo_url || data.repo || '';
   const repo = rawRepo.replace(/^https?:\/\/github\.com\//, '').replace(/\/$/, '');
   const slug = repo.split('/').pop()?.toLowerCase() || repo.toLowerCase();
@@ -431,43 +456,43 @@ export function addTool(
     updated_at: now,
   };
 
-  return db.transaction((tx) => {
-    tx.insert(tools)
-      .values(newToolRecord)
-      .onConflictDoUpdate({
-        target: tools.slug,
-        set: newToolRecord,
-      })
-      .run();
-
-    const createdRecord = entityToRecord(newToolRecord as ToolEntity);
-
-    logAudit(principal, 'TOOL_ADD', ip, {
-      slug,
-      repo,
-      category: data.category,
-      safety_score: createdRecord.safety_score,
-      unlisted: true,
+  await getNeonDb()
+    .insert(tools)
+    .values(newToolRecord)
+    .onConflictDoUpdate({
+      target: tools.slug,
+      set: newToolRecord,
     });
 
-    syncJsonFile(createdRecord);
+  const createdRecord = entityToRecord(newToolRecord as ToolEntity);
 
-    return createdRecord;
+  await logAudit(principal, 'TOOL_ADD', ip, {
+    slug,
+    repo,
+    category: data.category,
+    safety_score: createdRecord.safety_score,
+    unlisted: true,
   });
+
+  syncJsonFile(createdRecord);
+
+  return createdRecord;
 }
 
 /**
- * Retrieve all pending or unlisted tools from SQLite.
+ * Retrieve all pending or unlisted tools from Neon Postgres.
  */
-export function getPendingQueueTools(): ToolRecord[] {
-  const rows = db
-    .select()
-    .from(tools)
-    .where(eq(tools.unlisted, true))
-    .orderBy(desc(tools.created_at))
-    .all();
+export async function getPendingQueueTools(): Promise<ToolRecord[]> {
+  const queue: ToolRecord[] = [];
 
-  const queue: ToolRecord[] = rows.map(entityToRecord);
+  if (neonConfigured()) {
+    const rows = await getNeonDb()
+      .select()
+      .from(tools)
+      .where(eq(tools.unlisted, true))
+      .orderBy(desc(tools.created_at));
+    queue.push(...rows.map(entityToRecord));
+  }
 
   // Also check data/scans for newly uploaded unlisted scans
   if (fs.existsSync(SCANS_DIR)) {
@@ -490,125 +515,124 @@ export function getPendingQueueTools(): ToolRecord[] {
 /**
  * Approve a tool from the queue to make it public and listed in the catalog.
  */
-export function approveTool(
+export async function approveTool(
   slugOrRepo: string,
   principal: 'owner' | 'agent' | string,
   ip: string
-): ToolRecord {
-  return db.transaction((tx) => {
-    const tool = getTool(slugOrRepo);
-    if (!tool) throw new Error(`Tool "${slugOrRepo}" not found`);
+): Promise<ToolRecord> {
+  const tool = await getTool(slugOrRepo);
+  if (!tool) throw new Error(`Tool "${slugOrRepo}" not found`);
 
-    const now = new Date().toISOString();
-    tx.update(tools)
+  const now = new Date().toISOString();
+  if (neonConfigured()) {
+    await getNeonDb()
+      .update(tools)
       .set({
         unlisted: false,
         ai_report_status: 'approved',
         updated_at: now,
       })
-      .where(eq(tools.slug, tool.slug))
-      .run();
+      .where(eq(tools.slug, tool.slug));
+  }
 
-    tool.unlisted = false;
-    tool.ai_report_status = 'approved';
-    tool.updated_at = now;
+  tool.unlisted = false;
+  tool.ai_report_status = 'approved';
+  tool.updated_at = now;
 
-    // Clean up scan files if any
-    const scanPath = path.join(SCANS_DIR, `${tool.slug}.json`);
-    if (fs.existsSync(scanPath)) {
-      try {
-        fs.unlinkSync(scanPath);
-      } catch {
-        // Fall through
-      }
+  // Clean up scan files if any
+  const scanPath = path.join(SCANS_DIR, `${tool.slug}.json`);
+  if (fs.existsSync(scanPath)) {
+    try {
+      fs.unlinkSync(scanPath);
+    } catch {
+      // Fall through
     }
+  }
 
-    logAudit(principal, 'TOOL_APPROVE', ip, {
-      slug: tool.slug,
-      repo: tool.repo,
-      safety_score: tool.safety_score,
-      verdict: tool.verdict,
-    });
-
-    syncJsonFile(tool);
-
-    return tool;
+  await logAudit(principal, 'TOOL_APPROVE', ip, {
+    slug: tool.slug,
+    repo: tool.repo,
+    safety_score: tool.safety_score,
+    verdict: tool.verdict,
   });
+
+  syncJsonFile(tool);
+
+  return tool;
 }
 
-export function approveReport(
+export async function approveReport(
   slugOrRepo: string,
   principal: 'owner' | 'agent' | string,
   ip: string
-): ToolRecord {
+): Promise<ToolRecord> {
   return approveTool(slugOrRepo, principal, ip);
 }
 
 /**
  * Reject and delete a tool from the queue / catalog.
  */
-export function rejectTool(
+export async function rejectTool(
   slugOrRepo: string,
   reason = 'Owner rejected',
   principal: 'owner' | 'agent' | string,
   ip: string
-): void {
-  db.transaction((tx) => {
-    const tool = getTool(slugOrRepo);
-    const slug = tool ? tool.slug : slugOrRepo.split('/').pop() || slugOrRepo;
+): Promise<void> {
+  const tool = await getTool(slugOrRepo);
+  const slug = tool ? tool.slug : slugOrRepo.split('/').pop() || slugOrRepo;
 
-    tx.delete(tools).where(eq(tools.slug, slug)).run();
+  if (neonConfigured()) {
+    await getNeonDb().delete(tools).where(eq(tools.slug, slug));
+  }
 
-    removeJsonFile(slug);
+  removeJsonFile(slug);
 
-    const scanFilePath = path.join(SCANS_DIR, `${slug}.json`);
-    if (fs.existsSync(scanFilePath)) {
-      try {
-        fs.unlinkSync(scanFilePath);
-      } catch {
-        // Fall through
-      }
+  const scanFilePath = path.join(SCANS_DIR, `${slug}.json`);
+  if (fs.existsSync(scanFilePath)) {
+    try {
+      fs.unlinkSync(scanFilePath);
+    } catch {
+      // Fall through
     }
+  }
 
-    logAudit(principal, 'TOOL_REJECT', ip, {
-      slug,
-      repo: tool?.repo || slugOrRepo,
-      reason,
-    });
+  await logAudit(principal, 'TOOL_REJECT', ip, {
+    slug,
+    repo: tool?.repo || slugOrRepo,
+    reason,
   });
 }
 
 /**
- * Bulk approve tools within a single transaction.
+ * Bulk approve tools.
  */
-export function bulkApprove(
+export async function bulkApprove(
   ids: string[],
   principal: 'owner' | 'agent' | string,
   ip: string
-): ToolRecord[] {
+): Promise<ToolRecord[]> {
   const approved: ToolRecord[] = [];
-  db.transaction(() => {
-    for (const id of ids) {
-      try {
-        const tool = approveTool(id, principal, ip);
-        approved.push(tool);
-      } catch {
-        // Skip individual failure
-      }
+  for (const id of ids) {
+    try {
+      const tool = await approveTool(id, principal, ip);
+      approved.push(tool);
+    } catch {
+      // Skip individual failure
     }
-  });
+  }
   return approved;
 }
 
 /**
  * Retrieve all tools currently in draft state.
  */
-export function getDraftTools(): ToolRecord[] {
-  const rows = db
+export async function getDraftTools(): Promise<ToolRecord[]> {
+  if (!neonConfigured()) return [];
+
+  const rows = await getNeonDb()
     .select()
     .from(tools)
-    .where(eq(tools.ai_report_status, 'draft'))
-    .all();
+    .where(eq(tools.ai_report_status, 'draft'));
 
   return rows.map(entityToRecord);
 }
@@ -616,41 +640,41 @@ export function getDraftTools(): ToolRecord[] {
 /**
  * Rescan an individual tool and record audit entry.
  */
-export function rescanTool(
+export async function rescanTool(
   slugOrRepo: string,
   principal: 'owner' | 'agent' | string,
   ip: string
-): { tool: ToolRecord; diff: DiffEntry[] } {
-  return db.transaction((tx) => {
-    const tool = getTool(slugOrRepo);
-    if (!tool) throw new Error(`Tool "${slugOrRepo}" not found`);
+): Promise<{ tool: ToolRecord; diff: DiffEntry[] }> {
+  const tool = await getTool(slugOrRepo);
+  if (!tool) throw new Error(`Tool "${slugOrRepo}" not found`);
 
-    const prevScannedAt = tool.scanned_at;
-    const now = new Date().toISOString();
+  const prevScannedAt = tool.scanned_at;
+  const now = new Date().toISOString();
 
-    tx.update(tools)
+  if (neonConfigured()) {
+    await getNeonDb()
+      .update(tools)
       .set({
         scanned_at: now,
         updated_at: now,
       })
-      .where(eq(tools.slug, tool.slug))
-      .run();
+      .where(eq(tools.slug, tool.slug));
+  }
 
-    tool.scanned_at = now;
-    tool.updated_at = now;
+  tool.scanned_at = now;
+  tool.updated_at = now;
 
-    const diff: DiffEntry[] = [{ field: 'scanned_at', before: prevScannedAt, after: now }];
+  const diff: DiffEntry[] = [{ field: 'scanned_at', before: prevScannedAt, after: now }];
 
-    logAudit(principal, 'TOOL_RESCAN', ip, {
-      slug: tool.slug,
-      repo: tool.repo,
-      diff,
-    });
-
-    syncJsonFile(tool);
-
-    return { tool, diff };
+  await logAudit(principal, 'TOOL_RESCAN', ip, {
+    slug: tool.slug,
+    repo: tool.repo,
+    diff,
   });
+
+  syncJsonFile(tool);
+
+  return { tool, diff };
 }
 
 /**
@@ -669,12 +693,12 @@ export interface AccuracySelfTestResult {
   mismatches: string[];
 }
 
-export function runAccuracySelfTest(): AccuracySelfTestResult {
+export async function runAccuracySelfTest(): Promise<AccuracySelfTestResult> {
   const checks: AccuracySelfTestResult['checks'] = [];
   const mismatches: string[] = [];
 
   // Check 1: Jellyfin (score 91.8, verdict healthy)
-  const jellyfin = getTool('jellyfin');
+  const jellyfin = await getTool('jellyfin');
   if (!jellyfin) {
     checks.push({
       name: 'Jellyfin Score & Verdict',
@@ -701,7 +725,7 @@ export function runAccuracySelfTest(): AccuracySelfTestResult {
   }
 
   // Check 2: OpenClaw (verdict caution + >= 30 advisories)
-  const openclaw = getTool('openclaw');
+  const openclaw = await getTool('openclaw');
   if (!openclaw) {
     checks.push({
       name: 'OpenClaw Caution & Advisories',
@@ -729,7 +753,7 @@ export function runAccuracySelfTest(): AccuracySelfTestResult {
   }
 
   // Check 3: FileBrowser (archived-flagged, verdict risky)
-  const filebrowser = getTool('filebrowser');
+  const filebrowser = await getTool('filebrowser');
   if (!filebrowser) {
     checks.push({
       name: 'FileBrowser Archived Flag',

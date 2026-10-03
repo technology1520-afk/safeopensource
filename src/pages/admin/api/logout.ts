@@ -14,7 +14,7 @@ export const POST: APIRoute = async ({ cookies, locals, redirect }) => {
   }
 
   if (auth?.principal) {
-    logAudit(auth.principal, 'LOGOUT', auth.ip, {});
+    await logAudit(auth.principal, 'LOGOUT', auth.ip, {});
   }
 
   return redirect('/');

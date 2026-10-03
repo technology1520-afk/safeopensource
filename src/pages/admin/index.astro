@@ -16,14 +16,14 @@ const session = auth.session;
 const csrfToken = session?.csrfToken || '';
 
 // Telemetry & Records
-const allTools = listToolsSummary();
-const queueTools = getPendingQueueTools();
+const allTools = await listToolsSummary();
+const queueTools = await getPendingQueueTools();
 const listedTools = allTools.filter((t) => t.status === 'listed');
 const unlistedTools = allTools.filter((t) => t.status === 'unlisted');
 const flaggedTools = allTools.filter((t) => t.verdict === 'caution' || t.verdict === 'risky');
 const recentJobs = listRecentJobs(6);
-const recentAudit = getRecentAuditEntries(10);
-const selfTest = runAccuracySelfTest();
+const recentAudit = await getRecentAuditEntries(10);
+const selfTest = await runAccuracySelfTest();
 
 const freeMemMb = Math.round(os.freemem() / (1024 * 1024));
 const totalMemMb = Math.round(os.totalmem() / (1024 * 1024));

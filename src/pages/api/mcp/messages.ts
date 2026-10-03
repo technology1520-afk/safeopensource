@@ -20,7 +20,7 @@ const MUTATING_TOOLS = new Set([
 
 export const POST: APIRoute = async ({ request }) => {
   // 1. Authenticate bearer token using timingSafeEqual
-  const auth = authenticateMcpRequest(request);
+  const auth = await authenticateMcpRequest(request);
 
   if (auth.rateLimited) {
     return new Response(

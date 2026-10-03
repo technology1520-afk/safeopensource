@@ -18,7 +18,7 @@ const who = url.searchParams.get('who') || 'all';
 const action = url.searchParams.get('action') || 'all';
 const target = url.searchParams.get('target') || '';
 
-const entries = queryAuditEntries({
+const entries = await queryAuditEntries({
   limit: 100,
   who: who !== 'all' ? who : undefined,
   action: action !== 'all' ? action : undefined,

@@ -5,7 +5,7 @@ export const prerender = false;
 
 export const GET: APIRoute = async ({ request }) => {
   // 1. Authenticate bearer token using constant-time comparison
-  const auth = authenticateMcpRequest(request);
+  const auth = await authenticateMcpRequest(request);
 
   if (auth.rateLimited) {
     return new Response(

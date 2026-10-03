@@ -330,8 +330,8 @@ export function normalizeGitHubUrl(input: string): { normalized?: NormalizedRepo
 /**
  * Check if the repo was scanned in the last 7 days (catalog or scan store)
  */
-export function checkRecentScan(fullRepo: string, slug: string): { tool?: ToolData; daysAgo?: number } {
-  const catalogTool = getTool(slug) || getTool(fullRepo);
+export async function checkRecentScan(fullRepo: string, slug: string): Promise<{ tool?: ToolData; daysAgo?: number }> {
+  const catalogTool = await getTool(slug) || await getTool(fullRepo);
   if (catalogTool) {
     const scannedAt = catalogTool.scanned_at;
     if (scannedAt) {
@@ -371,7 +371,7 @@ export function checkRecentScan(fullRepo: string, slug: string): { tool?: ToolDa
 /**
  * Retrieve recent public scans for social proof strip
  */
-export function getRecentPublicScans(limit = 5): ToolData[] {
+export async function getRecentPublicScans(limit = 5): Promise<ToolData[]> {
   ensureScansDir();
   const recent: ToolData[] = [];
 
@@ -388,7 +388,7 @@ export function getRecentPublicScans(limit = 5): ToolData[] {
 
   const fallbackSlugs = ['jellyfin', 'vaultwarden', 'uptime-kuma', 'immich', 'home-assistant'];
   for (const s of fallbackSlugs) {
-    const t = getTool(s);
+    const t = await getTool(s);
     if (t) recent.push(t as ToolData);
   }
 
@@ -726,7 +726,7 @@ export async function executeScanPipeline(job: ScanJob, onProgress?: (job: ScanJ
   const spdx = ghData.license?.spdx_id || 'NOASSERTION';
   const repoName = ghData.name || repo;
   const description = ghData.description || `Open source software repository monitored by SafeOpenSource.`;
-  const catalogMatch = getTool(slug) || getTool(fullRepo);
+  const catalogMatch = await getTool(slug) || await getTool(fullRepo);
 
   const scorecardDesc = scorecard !== null ? `OpenSSF Scorecard metrics (${scorecard}/10)` : 'unverified OpenSSF telemetry';
 

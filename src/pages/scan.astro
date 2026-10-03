@@ -6,7 +6,7 @@ import VerdictBadge from '../components/VerdictBadge.astro';
 
 export const prerender = false;
 
-const initialRecent = getRecentPublicScans(5);
+const initialRecent = await getRecentPublicScans(5);
 const queueDepth = getActiveScanQueueDepth();
 ---
 

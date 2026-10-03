@@ -47,7 +47,7 @@ if (Astro.request.method === 'POST') {
     ];
 
     // Enrolls into queue as unlisted
-    const tool = addTool(
+    const tool = await addTool(
       {
         repo,
         category,

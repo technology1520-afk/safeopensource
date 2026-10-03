@@ -25,7 +25,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     updateJob(job.id, { status: 'running' });
 
     if (repo !== 'all') {
-      const { tool, diff } = rescanTool(repo, auth.principal, auth.ip);
+      const { tool, diff } = await rescanTool(repo, auth.principal, auth.ip);
       updateJob(job.id, {
         status: 'completed',
         result: { rescanned: [tool.slug], count: 1, diff },
@@ -36,7 +36,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       for (const file of files) {
         const slug = file.replace('.json', '');
         try {
-          rescanTool(slug, auth.principal, auth.ip);
+          await rescanTool(slug, auth.principal, auth.ip);
           rescanned.push(slug);
         } catch {
           // Continue
@@ -48,7 +48,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       });
     }
 
-    logAudit(auth.principal, 'PIPELINE_RESCAN_TRIGGERED', auth.ip, {
+    await logAudit(auth.principal, 'PIPELINE_RESCAN_TRIGGERED', auth.ip, {
       jobId: job.id,
       target: repo,
     });

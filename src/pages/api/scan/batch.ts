@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { fetchAllTools, getAlternatives } from '../../../utils/tools';
+import { getAllTools, getAlternatives } from '../../../utils/tools';
 import type { ToolData } from '../../../types/tool';
 
 export const prerender = false;
@@ -37,7 +37,7 @@ export const POST: APIRoute = async ({ request }) => {
       };
     }).filter((q) => q.name.length > 0);
 
-    const allTools = fetchAllTools();
+    const allTools = getAllTools();
     const results: Array<any> = [];
     const uncataloged: string[] = [];
 
@@ -127,7 +127,7 @@ export const POST: APIRoute = async ({ request }) => {
 };
 
 export const GET: APIRoute = async () => {
-  const allTools = fetchAllTools();
+  const allTools = getAllTools();
   return new Response(
     JSON.stringify({
       status: 'ok',

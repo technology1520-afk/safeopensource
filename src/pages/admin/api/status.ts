@@ -10,8 +10,8 @@ export const GET: APIRoute = async ({ locals }) => {
     return new Response('', { status: 404 });
   }
 
-  const allTools = listToolsSummary();
-  const queueTools = getPendingQueueTools();
+  const allTools = await listToolsSummary();
+  const queueTools = await getPendingQueueTools();
   const listedTools = allTools.filter((t) => t.status === 'listed');
   const unlistedTools = allTools.filter((t) => t.status === 'unlisted');
   const flaggedTools = allTools.filter((t) => t.verdict === 'caution' || t.verdict === 'risky');

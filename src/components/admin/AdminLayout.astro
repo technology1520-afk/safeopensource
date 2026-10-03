@@ -13,8 +13,8 @@ export interface Props {
 const { title, activeTab, csrfToken = '', userEmail = 'operator', disableBlockingBanner = false } = Astro.props;
 
 // Run automated accuracy regression self-test on load
-const selfTest = runAccuracySelfTest();
-const queueCount = getPendingQueueTools().length;
+const selfTest = await runAccuracySelfTest();
+const queueCount = (await getPendingQueueTools()).length;
 ---
 
 <!doctype html>

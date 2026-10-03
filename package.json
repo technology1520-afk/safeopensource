@@ -18,6 +18,7 @@
     "@astrojs/sitemap": "^3.7.4",
     "@lucide/astro": "^1.47.0",
     "@modelcontextprotocol/sdk": "^1.30.0",
+    "@neondatabase/serverless": "^1.2.0",
     "@node-rs/argon2": "^2.2.1",
     "@tailwindcss/vite": "^4.3.3",
     "@types/better-sqlite3": "^9.6.0",

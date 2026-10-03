@@ -146,13 +146,13 @@ export function removeSession(sessionId: string): void {
 /**
  * Validate Bearer token for MCP connections using constant-time timingSafeEqual
  */
-export function authenticateMcpRequest(request: Request): {
+export async function authenticateMcpRequest(request: Request): Promise<{
   authenticated: boolean;
   role: 'admin' | 'readonly' | null;
   ip: string;
   rateLimited?: boolean;
   error?: string;
-} {
+}> {
   const ip = getClientIp(request);
 
   if (isRateLimited(ip)) {
@@ -210,7 +210,7 @@ export function authenticateMcpRequest(request: Request): {
 
   // Invalid key
   const failures = recordAuthFailure(ip);
-  logAudit('anonymous', 'MCP_AUTH_FAILURE', ip, {
+  await logAudit('anonymous', 'MCP_AUTH_FAILURE', ip, {
     method: request.method,
     url: request.url,
   });
@@ -271,8 +271,8 @@ export function createConfiguredMcpServer(role: 'admin' | 'readonly', ip: string
     },
     async () => {
       try {
-        const allTools = listToolsSummary();
-        const queueTools = getPendingQueueTools();
+        const allTools = await listToolsSummary();
+        const queueTools = await getPendingQueueTools();
         const listedTools = allTools.filter((t) => t.status === 'listed');
         const unlistedTools = allTools.filter((t) => t.status === 'unlisted');
         const flaggedTools = allTools.filter((t) => t.verdict === 'caution' || t.verdict === 'risky');
@@ -328,7 +328,7 @@ export function createConfiguredMcpServer(role: 'admin' | 'readonly', ip: string
     },
     async ({ limit = 20 }) => {
       try {
-        const entries = queryAuditEntries({ limit });
+        const entries = await queryAuditEntries({ limit });
         return {
           content: [{ type: 'text', text: JSON.stringify(entries, null, 2) }],
         };
@@ -394,14 +394,14 @@ export function createConfiguredMcpServer(role: 'admin' | 'readonly', ip: string
             for (const file of files) {
               const slug = file.replace('.json', '');
               try {
-                rescanTool(slug, 'agent', ip);
+                await rescanTool(slug, 'agent', ip);
                 rescanned.push(slug);
               } catch {}
             }
           } else {
             for (const repo of repos) {
               try {
-                const { tool } = rescanTool(repo, 'agent', ip);
+                const { tool } = await rescanTool(repo, 'agent', ip);
                 rescanned.push(tool.slug);
               } catch {}
             }
@@ -412,7 +412,7 @@ export function createConfiguredMcpServer(role: 'admin' | 'readonly', ip: string
             result: { rescanned, count: rescanned.length },
           });
 
-          logAudit('agent', 'PIPELINE_RESCAN_TRIGGERED', ip, {
+          await logAudit('agent', 'PIPELINE_RESCAN_TRIGGERED', ip, {
             jobId: job.id,
             target,
             count: rescanned.length,
@@ -450,7 +450,7 @@ export function createConfiguredMcpServer(role: 'admin' | 'readonly', ip: string
       },
       async ({ repo_url, category, name, tagline, logo_url }) => {
         try {
-          const createdTool = addTool({ repo: repo_url, category, name, tagline, logo_url }, 'agent', ip);
+          const createdTool = await addTool({ repo: repo_url, category, name, tagline, logo_url }, 'agent', ip);
           return {
             content: [{ type: 'text', text: JSON.stringify(createdTool, null, 2) }],
           };
@@ -489,7 +489,7 @@ export function createConfiguredMcpServer(role: 'admin' | 'readonly', ip: string
             };
           }
 
-          const { tool, diff } = patchToolContent(repo, fields, 'agent', ip);
+          const { tool, diff } = await patchToolContent(repo, fields, 'agent', ip);
           return {
             content: [{ type: 'text', text: JSON.stringify({ success: true, tool, diff }, null, 2) }],
           };
@@ -535,7 +535,7 @@ export function createConfiguredMcpServer(role: 'admin' | 'readonly', ip: string
         }
 
         try {
-          const { tool, diff } = patchToolContent(repo, fields, 'agent', ip);
+          const { tool, diff } = await patchToolContent(repo, fields, 'agent', ip);
           return {
             content: [{ type: 'text', text: JSON.stringify({ success: true, tool, diff }, null, 2) }],
           };
@@ -559,7 +559,7 @@ export function createConfiguredMcpServer(role: 'admin' | 'readonly', ip: string
       },
       async ({ tool_id }) => {
         try {
-          const tool = approveTool(tool_id, 'agent', ip);
+          const tool = await approveTool(tool_id, 'agent', ip);
           return {
             content: [
               {
@@ -589,7 +589,7 @@ export function createConfiguredMcpServer(role: 'admin' | 'readonly', ip: string
       },
       async ({ tool_id, reason }) => {
         try {
-          rejectTool(tool_id, reason || 'Agent rejected via MCP', 'agent', ip);
+          await rejectTool(tool_id, reason || 'Agent rejected via MCP', 'agent', ip);
           return {
             content: [
               {
@@ -616,7 +616,7 @@ export function createConfiguredMcpServer(role: 'admin' | 'readonly', ip: string
       async () => {
         try {
           const job = createJob('rebuild', 'static-site', 'agent');
-          logAudit('agent', 'STATIC_REBUILD_TRIGGERED', ip, {
+          await logAudit('agent', 'STATIC_REBUILD_TRIGGERED', ip, {
             jobId: job.id,
             target: 'deploy.sh',
           });

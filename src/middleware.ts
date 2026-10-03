@@ -42,7 +42,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   // 2. If an explicit auth attempt failed (e.g. invalid Bearer key)
   if (auth.error) {
-    logAudit('anonymous', 'AUTH_FAILURE', auth.ip, {
+    await logAudit('anonymous', 'AUTH_FAILURE', auth.ip, {
       path: pathname,
       method: context.request.method,
       error: auth.error,

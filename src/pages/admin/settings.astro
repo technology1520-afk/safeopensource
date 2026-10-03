@@ -30,7 +30,7 @@ if (Astro.request.method === 'POST') {
       const adSlotsEnabled = formData.get('ad_slots_enabled') === 'on';
       const starterKitsVisible = formData.get('starter_kits_visible') === 'on';
 
-      updateSettings(
+      await updateSettings(
         {
           announcement: {
             text: bannerText,
@@ -48,7 +48,7 @@ if (Astro.request.method === 'POST') {
       notification = 'Site configuration and banner settings successfully saved.';
     } else if (action === 'rotate_api_key') {
       const currentKey = process.env.ADMIN_API_KEY || '';
-      const rotationResult = rotateApiKey(currentKey, 'admin', 'owner', auth.ip);
+      const rotationResult = await rotateApiKey(currentKey, 'admin', 'owner', auth.ip);
 
       generatedKey = rotationResult.newKey;
       graceExpiresAt = rotationResult.graceExpiresAt;

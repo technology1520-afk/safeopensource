@@ -44,11 +44,11 @@ if (Astro.request.method === 'POST') {
           maxAge: 30 * 60, // 30 minutes
         });
 
-        logAudit('owner', 'LOGIN_SUCCESS', ip, { email });
+        await logAudit('owner', 'LOGIN_SUCCESS', ip, { email });
         return Astro.redirect('/admin');
       } else {
         recordAuthFailure(ip);
-        logAudit('anonymous', 'LOGIN_FAILURE', ip, {
+        await logAudit('anonymous', 'LOGIN_FAILURE', ip, {
           emailAttempted: email,
           reason: !passwordValid ? 'Invalid credentials' : 'Invalid TOTP token',
         });

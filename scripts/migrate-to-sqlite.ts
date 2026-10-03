@@ -1,22 +1,20 @@
 #!/usr/bin/env node
 
 /**
- * Migration Script: Migrate File-Based Storage to SQLite
- * 
- * Sources:
- * - src/data/tools/*.json -> `tools` table
- * - data/audit.jsonl       -> `audit_logs` table
- * 
- * Execution:
- * Runs within an atomic SQLite transaction via Drizzle ORM to ensure
- * consistency and eliminate locks or partial writes.
+ * Catalog Seeder: Sync src/data/tools/*.json -> Neon Postgres `tools` table
+ *
+ * Usage:
+ *   DATABASE_URL="postgresql://..." npx tsx scripts/migrate-to-sqlite.ts
+ *
+ * Requires the schema to exist first:  npx drizzle-kit push
+ * Uses Neon's pooled HTTP driver — batched INSERT ... ON CONFLICT upserts.
+ * Safe to re-run (idempotent).
  */
 
 import fs from 'node:fs';
 import path from 'node:path';
-import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { db, tools, auditLogs, DB_PATH, initDb } from '../src/lib/db/index';
+import { neon } from '@neondatabase/serverless';
 import type { ToolData } from '../src/types/tool';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -38,181 +36,122 @@ function validateTool(tool: any, filename: string): ValidationResult {
   if (!tool.verdict) errors.push(`Missing verdict in ${filename}`);
   if (!tool.components) errors.push(`Missing components in ${filename}`);
   if (!Array.isArray(tool.risk_reasons)) errors.push(`risk_reasons must be an array in ${filename}`);
-
-  return {
-    valid: errors.length === 0,
-    errors,
-  };
+  return { valid: errors.length === 0, errors };
 }
 
-async function migrate() {
-  console.log('=== STARTING SQLITE STORAGE MIGRATION ===\n');
-  console.log(`Database Target: ${DB_PATH}`);
-
-  initDb();
-
-  // 1. Process Tool JSON files
-  console.log(`\nScanning tool definitions from: ${TOOLS_DIR}`);
+function readToolFiles(): { valid: ToolData[]; invalid: number } {
+  const valid: ToolData[] = [];
+  let invalid = 0;
   if (!fs.existsSync(TOOLS_DIR)) {
-    throw new Error(`Tools directory not found at: ${TOOLS_DIR}`);
+    console.error(`Tools directory not found: ${TOOLS_DIR}`);
+    process.exit(1);
   }
-
-  const toolFiles = fs.readdirSync(TOOLS_DIR).filter((f) => f.endsWith('.json'));
-  console.log(`Discovered ${toolFiles.length} tool JSON files.`);
-
-  const validToolsToInsert: any[] = [];
-  let skippedTools = 0;
-
-  for (const file of toolFiles) {
-    const fullPath = path.join(TOOLS_DIR, file);
+  const files = fs.readdirSync(TOOLS_DIR).filter((f) => f.endsWith('.json'));
+  for (const file of files) {
     try {
-      const content = fs.readFileSync(fullPath, 'utf-8');
-      const raw = JSON.parse(content) as ToolData;
-
-      const validation = validateTool(raw, file);
-      if (!validation.valid) {
-        console.warn(`[WARN] Skipping ${file} due to validation errors:`, validation.errors);
-        skippedTools++;
+      const raw = JSON.parse(fs.readFileSync(path.join(TOOLS_DIR, file), 'utf-8'));
+      const check = validateTool(raw, file);
+      if (!check.valid) {
+        console.warn(`[WARN] Skipping ${file}:`, check.errors);
+        invalid++;
         continue;
       }
-
-      const now = new Date().toISOString();
-      const isUnlisted = raw.unlisted === true || (raw as any).status === 'unlisted';
-
-      validToolsToInsert.push({
-        slug: raw.slug.toLowerCase().trim(),
-        repo: raw.repo.trim(),
-        name: raw.name.trim(),
-        tagline: raw.tagline || '',
-        category: raw.category || 'developer-tools',
-        license_spdx: raw.license_spdx || 'Unknown',
-        stars: Number(raw.stars) || 0,
-        contributors: Number(raw.contributors) || 0,
-        last_push_days: Number(raw.last_push_days) || 0,
-        latest_release: raw.latest_release || 'v1.0.0',
-        safety_score: Number(raw.safety_score),
-        verdict: raw.verdict,
-        risk_reasons: Array.isArray(raw.risk_reasons) ? raw.risk_reasons : [],
-        scorecard: typeof raw.scorecard === 'number' ? raw.scorecard : null,
-        components: raw.components,
-        language: raw.language || 'Unknown',
-        self_host_difficulty: raw.self_host_difficulty || 'Medium',
-        install_commands: raw.install_commands || {},
-        website_url: raw.website_url || null,
-        ai_report: raw.ai_report || '',
-        ai_report_status: raw.ai_report_status || 'approved',
-        scanned_at: raw.scanned_at || now,
-        use_cases: raw.use_cases || null,
-        how_to_use: raw.how_to_use || null,
-        requirements: raw.requirements || null,
-        audience: raw.audience || null,
-        who_for: (raw as any).who_for || null,
-        momentum: raw.momentum || null,
-        cves: raw.cves || null,
-        permission_model: raw.permission_model || null,
-        incident_history: raw.incident_history || null,
-        unlisted: isUnlisted,
-        archived: Boolean(raw.archived),
-        advisories_count: Number(raw.advisories_count || raw.cves?.length || 0),
-        provenance: raw.provenance || null,
-        scanned_at_formatted: raw.scanned_at_formatted || null,
-        advisories_source: raw.advisories_source || null,
-        created_at: (raw as any).created_at || raw.scanned_at || now,
-        updated_at: (raw as any).updated_at || now,
-      });
+      valid.push(raw);
     } catch (err: any) {
-      console.error(`[ERROR] Failed to parse ${file}: ${err.message}`);
-      skippedTools++;
+      console.warn(`[WARN] Skipping malformed ${file}: ${err.message}`);
+      invalid++;
     }
   }
+  return { valid, invalid };
+}
 
-  // 2. Process Audit Logs
-  console.log(`\nScanning audit logs from: ${AUDIT_FILE}`);
-  const auditEntriesToInsert: any[] = [];
-  let skippedAudit = 0;
+async function migrate(): Promise<void> {
+  const dbUrl = process.env.DATABASE_URL;
+  if (!dbUrl) {
+    console.error('DATABASE_URL is not set. Provide a Neon Postgres connection string:');
+    console.error('  DATABASE_URL="postgresql://..." npx tsx scripts/migrate-to-sqlite.ts');
+    process.exit(1);
+  }
 
+  console.log('=== STARTING NEON POSTGRES CATALOG SEED ===');
+  const started = Date.now();
+
+  const sql = neon(dbUrl);
+  const { valid, invalid } = readToolFiles();
+  console.log(`Parsed ${valid.length} valid tools (${invalid} skipped)`);
+
+  const columns = [
+    'slug','repo','name','tagline','category','license_spdx','stars','contributors',
+    'last_push_days','latest_release','safety_score','verdict','risk_reasons','scorecard',
+    'components','language','self_host_difficulty','install_commands','website_url','logo_url',
+    'ai_report','ai_report_status','scanned_at','use_cases','how_to_use','requirements',
+    'audience','who_for','momentum','cves','permission_model','incident_history',
+    'unlisted','archived','advisories_count','provenance','scanned_at_formatted',
+    'advisories_source','epss_score','osv_advisories','created_at','updated_at',
+  ];
+
+  const upserted = new Set<string>();
+
+  // neon-http driver: batch queries in a transaction per chunk
+  const CHUNK = 10;
+  for (let i = 0; i < valid.length; i += CHUNK) {
+    const chunk = valid.slice(i, i + CHUNK);
+    const queries = chunk.map((tool) => {
+      upserted.add(tool.slug);
+      const row = columns.map((col) => {
+        const v = (tool as any)[col];
+        if (v === undefined) {
+          if (col === 'ai_report_status') return 'approved';
+          if (col === 'unlisted' || col === 'archived') return false;
+          if (col === 'advisories_count') return 0;
+          return null;
+        }
+        return v;
+      });
+      // Use query() array form for dynamic columns
+      return sql.query(
+        `INSERT INTO tools (${columns.map((c) => `"${c}"`).join(',')})
+         VALUES (${columns.map((_, idx) => `$${idx + 1}`).join(',')})
+         ON CONFLICT (slug) DO UPDATE SET ${columns
+           .filter((c) => c !== 'slug' && c !== 'created_at')
+           .map((c) => `"${c}" = EXCLUDED."${c}"`)
+           .join(',')}`,
+        row
+      );
+    });
+    await sql.transaction(queries);
+    console.log(`  seeded ${Math.min(i + CHUNK, valid.length)}/${valid.length}`);
+  }
+
+  // Mirror audit history if present
   if (fs.existsSync(AUDIT_FILE)) {
-    const lines = fs.readFileSync(AUDIT_FILE, 'utf-8').split('\n').filter(Boolean);
-    console.log(`Found ${lines.length} audit lines.`);
-
-    for (let i = 0; i < lines.length; i++) {
+    const lines = fs.readFileSync(AUDIT_FILE, 'utf-8').split('\n').filter((l) => l.trim());
+    let auditCount = 0;
+    for (const line of lines) {
       try {
-        const item = JSON.parse(lines[i]);
-        const id = item.id || crypto.randomUUID();
-        const timestamp = item.timestamp || item.at || new Date().toISOString();
-        const principal = item.principal || item.who || 'anonymous';
-        const action = item.action || 'UNKNOWN_ACTION';
-        const targetRepo = item.target || item.target_repo || item.slug || item.repo || null;
-        const ip = item.ip || '127.0.0.1';
-        const diff = item.diff || null;
-        const status = item.status === 'failure' ? 'failure' : 'success';
-        const details = item.details || item;
-
-        auditEntriesToInsert.push({
-          id,
-          timestamp,
-          principal,
-          action,
-          target_repo: targetRepo,
-          ip,
-          diff,
-          status,
-          details,
-        });
-      } catch (err: any) {
-        console.warn(`[WARN] Skipping malformed audit line #${i + 1}: ${err.message}`);
-        skippedAudit++;
+        const e = JSON.parse(line);
+        await sql.query(
+          `INSERT INTO audit_logs (id, timestamp, principal, action, target_repo, ip, diff, status, details)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+           ON CONFLICT (id) DO NOTHING`,
+          [e.id, e.timestamp || e.at, e.principal || e.who, e.action, e.target || e.target_repo || null, e.ip || '0.0.0.0', e.diff || null, e.status || 'success', e.details || null]
+        );
+        auditCount++;
+      } catch {
+        // skip malformed lines
       }
     }
-  } else {
-    console.log('No existing audit.jsonl found. Skipping audit log import.');
+    console.log(`Audit logs seeded: ${auditCount}`);
   }
 
-  // 3. Transactional Seed into SQLite
-  console.log('\nBeginning transactional SQLite seed...');
-  const startTime = Date.now();
-
-  db.transaction((tx) => {
-    // Upsert tools
-    for (const tool of validToolsToInsert) {
-      tx.insert(tools)
-        .values(tool)
-        .onConflictDoUpdate({
-          target: tools.slug,
-          set: {
-            ...tool,
-            updated_at: new Date().toISOString(),
-          },
-        })
-        .run();
-    }
-
-    // Upsert audit logs
-    for (const log of auditEntriesToInsert) {
-      tx.insert(auditLogs)
-        .values(log)
-        .onConflictDoUpdate({
-          target: auditLogs.id,
-          set: log,
-        })
-        .run();
-    }
-  });
-
-  const durationMs = Date.now() - startTime;
-
-  // 4. Output Summary Report
-  console.log('\n==========================================');
-  console.log('MIGRATION SUMMARY');
   console.log('==========================================');
-  console.log(`✓ Tools Migrated:      ${validToolsToInsert.length} (Skipped: ${skippedTools})`);
-  console.log(`✓ Audit Logs Migrated: ${auditEntriesToInsert.length} (Skipped: ${skippedAudit})`);
-  console.log(`✓ Transaction Time:    ${durationMs}ms`);
-  console.log(`✓ SQLite WAL Path:     ${DB_PATH}`);
-  console.log('==========================================\n');
+  console.log(`✓ Tools Seeded:       ${upserted.size} (Skipped: ${invalid})`);
+  console.log(`✓ Transaction Time:   ${Date.now() - started}ms`);
+  console.log('✓ Target:             Neon Postgres (DATABASE_URL)');
+  console.log('==========================================');
 }
 
 migrate().catch((err) => {
-  console.error('\nFatal Migration Error:', err);
+  console.error('MIGRATION FAILED:', err.message);
   process.exit(1);
 });

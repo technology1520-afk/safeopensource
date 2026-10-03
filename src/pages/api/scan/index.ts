@@ -70,7 +70,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
 
     // 3. 7-Day Cache Check (unless force is true)
     if (!force) {
-      const { tool: cachedTool, daysAgo } = checkRecentScan(normalized.fullRepo, normalized.slug);
+      const { tool: cachedTool, daysAgo } = await checkRecentScan(normalized.fullRepo, normalized.slug);
       if (cachedTool) {
         if (!cachedTool.scanned_at_formatted && cachedTool.scanned_at) {
           cachedTool.scanned_at_formatted = formatScanTimestamp(cachedTool.scanned_at);
@@ -127,7 +127,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
 };
 
 export const GET: APIRoute = async () => {
-  const recentScans = getRecentPublicScans(5);
+  const recentScans = await getRecentPublicScans(5);
   const queueDepth = getActiveScanQueueDepth();
 
   return new Response(

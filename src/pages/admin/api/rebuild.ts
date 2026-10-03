@@ -15,7 +15,7 @@ export const POST: APIRoute = async ({ locals }) => {
 
   const job = createJob('rebuild', 'static-site', auth.principal);
 
-  logAudit(auth.principal, 'STATIC_REBUILD_TRIGGERED', auth.ip, {
+  await logAudit(auth.principal, 'STATIC_REBUILD_TRIGGERED', auth.ip, {
     jobId: job.id,
     target: 'deploy.sh',
   });

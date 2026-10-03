@@ -9,7 +9,7 @@ interface Props {
 
 const { class: className = '' } = Astro.props;
 const telemetry = getTelemetryStats();
-const recentScans = getRecentPublicScans(5);
+const recentScans = await getRecentPublicScans(5);
 ---
 
 <div class={`w-full scroll-mt-24 ${className}`} id="telemetry-status-container">

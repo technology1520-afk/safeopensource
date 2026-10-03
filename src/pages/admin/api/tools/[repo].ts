@@ -35,7 +35,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
     });
   }
 
-  const tool = getTool(repo);
+  const tool = await getTool(repo);
   if (!tool) {
     return new Response(JSON.stringify({ error: `Tool "${repo}" not found` }), {
       status: 404,
@@ -96,7 +96,7 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
       );
     }
 
-    const { tool, diff } = patchToolContent(repo, parseResult.data, auth.principal, auth.ip);
+    const { tool, diff } = await patchToolContent(repo, parseResult.data, auth.principal, auth.ip);
 
     return new Response(
       JSON.stringify({

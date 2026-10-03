@@ -1,57 +1,21 @@
 import type { ToolData } from '../types/tool';
 import { categories } from '../data/categories';
-import { db, tools, type ToolEntity } from '../lib/db/index';
-import { desc } from 'drizzle-orm';
-
-function entityToToolData(row: ToolEntity): ToolData {
-  return {
-    slug: row.slug,
-    repo: row.repo,
-    name: row.name,
-    tagline: row.tagline,
-    category: row.category,
-    license_spdx: row.license_spdx,
-    stars: row.stars,
-    contributors: row.contributors,
-    last_push_days: row.last_push_days,
-    latest_release: row.latest_release,
-    safety_score: row.safety_score,
-    verdict: row.verdict,
-    risk_reasons: row.risk_reasons,
-    scorecard: row.scorecard,
-    components: row.components,
-    language: row.language,
-    self_host_difficulty: row.self_host_difficulty as any,
-    install_commands: row.install_commands,
-    website_url: row.website_url ?? undefined,
-    logo_url: row.logo_url ?? undefined,
-    ai_report: row.ai_report,
-    ai_report_status: row.ai_report_status,
-    scanned_at: row.scanned_at,
-    use_cases: row.use_cases ?? undefined,
-    how_to_use: row.how_to_use ?? undefined,
-    requirements: row.requirements ?? undefined,
-    audience: row.audience ?? undefined,
-    who_for: row.who_for ?? undefined,
-    momentum: row.momentum ?? undefined,
-    cves: row.cves ?? undefined,
-    permission_model: row.permission_model ?? undefined,
-    incident_history: row.incident_history ?? undefined,
-    unlisted: row.unlisted,
-    archived: row.archived,
-    advisories_count: row.advisories_count,
-    provenance: row.provenance ?? undefined,
-    scanned_at_formatted: row.scanned_at_formatted ?? undefined,
-    advisories_source: row.advisories_source ?? undefined,
-    epss_score: row.epss_score ?? undefined,
-    osv_advisories: row.osv_advisories ?? undefined,
-  };
-}
 
 /**
- * Fallback to JSON files if DB is empty or during early bootstrap
+ * Data layer.
+ *
+ * The catalog (src/data/tools/*.json) is committed to git and loaded at build
+ * time via import.meta.glob — static pages never touch the network.
+ * The dynamic layer (admin panel, MCP server, on-demand scans) reads and
+ * writes the `tools` table in Neon Postgres via the serverless HTTP driver
+ * (see src/lib/db/index.ts). When DATABASE_URL is absent (static build,
+ * local preview), every helper below falls back to the JSON catalog.
  */
-function getFallbackJsonTools(): ToolData[] {
+
+/**
+ * Fallback to committed JSON files — always available, zero network.
+ */
+export function getFallbackJsonTools(): ToolData[] {
   try {
     const toolModules = import.meta.glob<{ default: ToolData }>('../data/tools/*.json', { eager: true });
     return Object.values(toolModules).map((mod) => (mod.default ?? mod) as ToolData);
@@ -60,63 +24,48 @@ function getFallbackJsonTools(): ToolData[] {
   }
 }
 
-/**
- * Query all tools synchronously from the SQLite database via Drizzle ORM.
- * Safe for Astro's static site generation (getStaticPaths) and SSR.
- */
-export function fetchAllTools(): ToolData[] {
-  try {
-    const rows = db.select().from(tools).orderBy(desc(tools.safety_score)).all();
-    if (rows && rows.length > 0) {
-      return rows.map(entityToToolData);
-    }
-  } catch {
-    // Graceful fallback to static JSON
-  }
-  return getFallbackJsonTools();
-}
-
 export function isToolListed(tool: ToolData): boolean {
   if (tool.unlisted === true) return false;
   if ((tool as any).status === 'unlisted') return false;
   return true;
 }
 
+export function sortTools(list: ToolData[]): ToolData[] {
+  return [...list].sort((a, b) => b.safety_score - a.safety_score);
+}
+
+// ---------------------------------------------------------------------------
+// JSON-based synchronous helpers (static build + fallback paths)
+// ---------------------------------------------------------------------------
+
 export function getAllTools(): ToolData[] {
-  return fetchAllTools().filter(isToolListed).sort((a, b) => b.safety_score - a.safety_score);
+  return sortTools(getFallbackJsonTools().filter(isToolListed));
 }
 
 export function getToolBySlug(slug: string): ToolData | undefined {
-  const all = fetchAllTools();
-  const tool = all.find((t) => t.slug === slug);
+  const tool = getFallbackJsonTools().find((t) => t.slug === slug);
   if (!tool || !isToolListed(tool)) return undefined;
   return tool;
 }
 
 export function getToolsByCategory(categorySlug: string): ToolData[] {
-  return fetchAllTools()
-    .filter((t) => isToolListed(t) && t.category === categorySlug)
-    .sort((a, b) => b.safety_score - a.safety_score);
+  return sortTools(getFallbackJsonTools().filter((t) => isToolListed(t) && t.category === categorySlug));
 }
 
 export function getSafestTools(limit = 3): ToolData[] {
-  return fetchAllTools()
-    .filter((t) => isToolListed(t) && t.verdict === 'healthy')
-    .sort((a, b) => b.safety_score - a.safety_score)
-    .slice(0, limit);
+  return getAllTools().filter((t) => t.verdict === 'healthy').slice(0, limit);
 }
 
 export function getFlaggedTools(limit = 3): ToolData[] {
-  return fetchAllTools()
-    .filter((t) => isToolListed(t) && (t.verdict === 'risky' || t.verdict === 'caution'))
+  return getAllTools()
+    .filter((t) => t.verdict === 'risky' || t.verdict === 'caution')
     .sort((a, b) => a.safety_score - b.safety_score)
     .slice(0, limit);
 }
 
 export function getAlternatives(currentTool: ToolData, limit = 3): ToolData[] {
-  return fetchAllTools()
+  return getAllTools()
     .filter((t) => isToolListed(t) && t.category === currentTool.category && t.slug !== currentTool.slug)
-    .sort((a, b) => b.safety_score - a.safety_score)
     .slice(0, limit);
 }
 

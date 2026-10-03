@@ -16,7 +16,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
   const action = url.searchParams.get('action') || undefined;
   const target = url.searchParams.get('target') || undefined;
 
-  const entries = queryAuditEntries({ limit, who, action, target });
+  const entries = await queryAuditEntries({ limit, who, action, target });
 
   return new Response(JSON.stringify(entries), {
     status: 200,

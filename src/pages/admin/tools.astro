@@ -58,7 +58,7 @@ if (Astro.request.method === 'POST') {
   }
 }
 
-const tools = listToolsSummary();
+const tools = await listToolsSummary();
 ---
 
 <AdminLayout title="Tools Catalog" activeTab="tools" csrfToken={csrfToken} userEmail={session?.email}>

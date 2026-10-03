@@ -39,7 +39,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (body.action === 'rotate_key') {
       const currentKey = process.env.ADMIN_API_KEY || '';
       const role = body.role === 'readonly' ? 'readonly' : 'admin';
-      const result = rotateApiKey(currentKey, role, auth.principal, auth.ip);
+      const result = await rotateApiKey(currentKey, role, auth.principal, auth.ip);
 
       return new Response(
         JSON.stringify({
@@ -56,7 +56,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     // Otherwise, normal settings update
-    const updated = updateSettings(body, auth.principal, auth.ip);
+    const updated = await updateSettings(body, auth.principal, auth.ip);
     return new Response(JSON.stringify({ success: true, settings: updated }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },

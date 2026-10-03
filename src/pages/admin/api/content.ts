@@ -64,7 +64,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     fs.writeFileSync(SETTINGS_FILE, JSON.stringify(updated, null, 2) + '\n', 'utf-8');
 
-    logAudit(auth.principal, 'CONTENT_SETTINGS_UPDATE', auth.ip, {
+    await logAudit(auth.principal, 'CONTENT_SETTINGS_UPDATE', auth.ip, {
       updatedKeys: Object.keys(body),
     });
 
